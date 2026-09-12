@@ -17,7 +17,6 @@ interface CartFooterProps {
 
 export const CartFooter = ({ total, count, currencyCode }: CartFooterProps) => {
   const router = useRouter()
-  const cart = useCartStore((state) => state.cart)
   const cartCmsData = useCartStore((state) => state.cartCmsData)
   const isCartEmpty = count < 1
 
@@ -39,28 +38,17 @@ export const CartFooter = ({ total, count, currencyCode }: CartFooterProps) => {
       return
     }
 
-    if (cart?.checkoutUrl) {
-      window.location.href = cart.checkoutUrl
-      return
-    }
-
-    toast.error('Checkout is currently unavailable. Please refresh your cart.')
-
-    router.push('/cart')
+    // In-app checkout doesn't exist yet (Phase 11) -- Medusa carts have no
+    // hosted checkout URL like Shopify's, so this routes to a placeholder.
+    router.push('/checkout')
   }
 
   return (
     <div className="border-muted-foreground bg-background absolute right-0 bottom-0 left-0 z-20 flex w-full flex-col gap-4 px-5 py-4">
       {/* Total Row */}
       <div className="flex w-full flex-col gap-1.5">
-        {cart?.discountSummary?.hasDiscount && cart.discountSummary.totalSavings?.amount && parseFloat(cart.discountSummary.totalSavings.amount) > 0 && (
-          <div className="flex w-full items-center justify-between">
-            <span className="text-[13px] font-medium text-muted-foreground">Discount Savings</span>
-            <span className="text-[13px] font-semibold text-white">
-              -{formatApiCurrency(parseFloat(cart.discountSummary.totalSavings.amount), cart.discountSummary.totalSavings.currencyCode || currencyCode)}
-            </span>
-          </div>
-        )}
+        {/* No promotion module exists yet, so a discount line never renders
+            here -- see cart.service.ts. */}
         <div className="flex w-full items-end justify-between pt-2.5 mt-0.5">
           <span className="text-lg font-semibold text-white">Cart Total:</span>
           <span className="text-lg font-semibold text-white">

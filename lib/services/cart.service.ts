@@ -1,5 +1,11 @@
-import apiClient from '../axios'
+import Cookies from 'js-cookie'
+import medusaClient from '../medusa-axios'
 import cmsClient from '../cms-axios'
+import {
+  ProductService,
+  GetProductRecommendationsParams,
+} from './product.service'
+import { ProductListItem } from '@/types/product'
 
 export interface CartCmsData {
   id: string
@@ -13,142 +19,196 @@ export interface CartLineInput {
   quantity: number
 }
 
+export interface CartLineItem {
+  id: string
+  productId: string
+  variantId: string
+  handle?: string
+  title: string
+  variantTitle?: string
+  quantity: number
+  unitPrice: number
+  compareAtUnitPrice: number | null
+  thumbnail?: string
+}
+
 export interface CartResponse {
   id: string
-  checkoutUrl: string
-  lines?: {
-    edges: any[]
-  }
-  cost?: {
-    totalAmount: {
-      amount: string
-      currencyCode: string
-    }
-  }
-  discountSummary?: {
-    hasDiscount: boolean
-    totalSavings?: {
-      amount: string
-      currencyCode: string
-    }
-  }
-  fees?: {
-    serviceCharge?: {
-      amount: string
-      currencyCode: string
-    }
-    userCharge?: {
-      amount: string
-      currencyCode: string
-    }
-  }
-}
-
-export interface GetCartRecommendationsParams {
-  intent?: 'RELATED' | 'COMPLEMENTARY'
-  limit?: number
-}
-
-export interface CartRecommendationPrice {
-  amount: string
+  customerId: string | null
   currencyCode: string
+  regionId: string | null
+  subtotal: number
+  total: number
+  taxTotal: number
+  items: CartLineItem[]
 }
 
-export interface CartRecommendationVariant {
-  id?: string
-  availableForSale?: boolean
+// Re-exported so `useCartStore.ts` can keep importing the recommendation
+// type from `cart.service.ts` without knowing it's really a product list item.
+export type CartRecommendation = ProductListItem
+
+export type GetCartRecommendationsParams = GetProductRecommendationsParams
+
+// ─── Region resolution ──────────────────────────────────────────────────────
+// Medusa cart creation (`POST /store/carts`) only accepts `region_id`, not the
+// `country_code` param the rest of the app uses for pricing context (confirmed
+// live against the real validator) -- so carts need a real Medusa Region, not
+// just a country code. Only two demo regions exist right now (Test Region US
+// / USD, Europe / EUR) -- see `R-08`/`G-CURR-01`. Real region/currency scoping
+// is still Phase 10, undecided, so this picks the region whose countries
+// include the existing `user_country` cookie, falling back to the first
+// region returned. Cached for the tab's lifetime since regions essentially
+// never change without a backend redeploy.
+let cachedRegionId: string | null = null
+
+const resolveRegionId = async (): Promise<string> => {
+  if (cachedRegionId) return cachedRegionId
+
+  const { data } = await medusaClient.get('/store/regions')
+  const regions: Array<{
+    id: string
+    countries?: Array<{ iso_2: string }>
+  }> = data.regions ?? []
+
+  if (!regions.length) {
+    throw new Error('No regions are configured on the backend')
+  }
+
+  const country =
+    typeof window !== 'undefined'
+      ? Cookies.get('user_country')?.toLowerCase()
+      : undefined
+
+  const matched = country
+    ? regions.find((region) =>
+        region.countries?.some((c) => c.iso_2 === country),
+      )
+    : undefined
+
+  cachedRegionId = (matched ?? regions[0]).id
+  return cachedRegionId
 }
 
-export interface CartRecommendation {
-  id: string
-  title: string
-  handle?: string
-  availableForSale?: boolean
-  featuredImage?: {
-    url?: string
-    altText?: string | null
-  } | null
-  price?: CartRecommendationPrice
-  compareAtPrice?: CartRecommendationPrice
-  discount?: {
-    amount?: string
-    percentage?: number
-  } | null
-  platform?: string[]
-  variants?:
-    | {
-        edges?: Array<{
-          node?: CartRecommendationVariant
-        }>
-      }
-    | CartRecommendationVariant[]
+// ─── Response mapping ───────────────────────────────────────────────────────
+
+function mapCartLineItem(raw: any): CartLineItem {
+  return {
+    id: raw.id,
+    productId: raw.product_id,
+    variantId: raw.variant_id,
+    handle: raw.product_handle,
+    title: raw.product_title || raw.title,
+    variantTitle: raw.variant_title,
+    quantity: raw.quantity,
+    unitPrice: raw.unit_price,
+    compareAtUnitPrice:
+      typeof raw.compare_at_unit_price === 'number'
+        ? raw.compare_at_unit_price
+        : null,
+    thumbnail: raw.thumbnail,
+  }
 }
 
-export interface CartRecommendationsResponse {
-  cartId: string
-  intent: 'RELATED' | 'COMPLEMENTARY'
-  count: number
-  recommendations: CartRecommendation[]
+function mapCart(raw: any): CartResponse {
+  return {
+    id: raw.id,
+    customerId: raw.customer_id ?? null,
+    currencyCode: raw.currency_code,
+    regionId: raw.region_id ?? null,
+    subtotal: raw.subtotal ?? 0,
+    total: raw.total ?? 0,
+    taxTotal: raw.tax_total ?? 0,
+    items: (raw.items ?? []).map(mapCartLineItem),
+  }
 }
 
 export const cartService = {
   createCart: async (): Promise<CartResponse> => {
-    const response = await apiClient.post<CartResponse>('/cart')
-    return response.data
+    const regionId = await resolveRegionId()
+    const { data } = await medusaClient.post('/store/carts', {
+      region_id: regionId,
+    })
+    return mapCart(data.cart)
   },
 
   getCart: async (cartId: string): Promise<CartResponse> => {
     const encodedId = encodeURIComponent(cartId)
-    const response = await apiClient.get<CartResponse>(`/cart/${encodedId}`)
-    return response.data
+    const { data } = await medusaClient.get(`/store/carts/${encodedId}`)
+    return mapCart(data.cart)
   },
 
+  /**
+   * No cart-level recommendations route exists on the backend (confirmed
+   * live: only `/store/products/:id/recommendations` does) -- so this seeds
+   * recommendations off the cart's first line item's product, reusing the
+   * same (uncached, client-safe) product-recommendations pipeline Phase 3
+   * already built for enrichment with price/variant data.
+   */
   getRecommendations: async (
-    cartId: string,
+    productId: string,
     params: GetCartRecommendationsParams = {},
-  ): Promise<CartRecommendationsResponse> => {
-    const encodedId = encodeURIComponent(cartId)
-    const response = await apiClient.get<CartRecommendationsResponse>(
-      `/cart/${encodedId}/recommendations`,
-      {
-        params,
-      },
+  ): Promise<{ recommendations: ProductListItem[] }> => {
+    const recommendations = await ProductService.getRecommendationsByProductId(
+      productId,
+      params,
     )
-    return response.data
+    return { recommendations }
   },
 
-  addToCart: async (cartId: string, lines: CartLineInput[]): Promise<any> => {
-    const response = await apiClient.post('/cart/add', {
-      cartId,
-      lines,
-    })
-    return response.data
+  addToCart: async (
+    cartId: string,
+    lines: CartLineInput[],
+  ): Promise<CartResponse> => {
+    const encodedId = encodeURIComponent(cartId)
+    const [line] = lines
+    const { data } = await medusaClient.post(
+      `/store/carts/${encodedId}/line-items`,
+      { variant_id: line.merchandiseId, quantity: line.quantity },
+    )
+    return mapCart(data.cart)
   },
 
-  transferCart: async (cartId: string): Promise<any> => {
-    const response = await apiClient.post('/cart/transfer', {
-      cartId,
-    })
-    return response.data
-  },
-
-  removeFromCart: async (cartId: string, lineIds: string[]): Promise<any> => {
-    const response = await apiClient.post('/cart/remove', {
-      cartId,
-      lineIds,
-    })
-    return response.data
+  removeFromCart: async (
+    cartId: string,
+    lineIds: string[],
+  ): Promise<CartResponse | undefined> => {
+    const encodedId = encodeURIComponent(cartId)
+    let cart: CartResponse | undefined
+    // Medusa only supports deleting one line item per call (confirmed live
+    // against the real route) -- callers today always pass a single id.
+    for (const lineId of lineIds) {
+      const { data } = await medusaClient.delete(
+        `/store/carts/${encodedId}/line-items/${encodeURIComponent(lineId)}`,
+      )
+      cart = mapCart(data.parent)
+    }
+    return cart
   },
 
   updateCart: async (
     cartId: string,
     lines: { id: string; quantity: number }[],
-  ): Promise<any> => {
-    const response = await apiClient.post('/cart/update', {
-      cartId,
-      lines,
-    })
-    return response.data
+  ): Promise<CartResponse | undefined> => {
+    const encodedId = encodeURIComponent(cartId)
+    let cart: CartResponse | undefined
+    // Same one-line-item-per-call constraint as removeFromCart.
+    for (const line of lines) {
+      const { data } = await medusaClient.post(
+        `/store/carts/${encodedId}/line-items/${encodeURIComponent(line.id)}`,
+        { quantity: line.quantity },
+      )
+      cart = mapCart(data.cart)
+    }
+    return cart
+  },
+
+  transferCart: async (cartId: string): Promise<CartResponse> => {
+    const encodedId = encodeURIComponent(cartId)
+    const { data } = await medusaClient.post(
+      `/store/carts/${encodedId}/customer`,
+      {},
+    )
+    return mapCart(data.cart)
   },
 
   getCartCmsData: async (): Promise<CartCmsData | null> => {

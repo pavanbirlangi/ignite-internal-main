@@ -31,6 +31,12 @@ const nextConfig: NextConfig = {
         protocol: 'https',
         hostname: 'cms.increddy.com',
       },
+      {
+        // Medusa backend's S3 file storage (product thumbnails/images) --
+        // confirmed live 400 from the image optimizer without this entry.
+        protocol: 'https',
+        hostname: '*.s3.*.amazonaws.com',
+      },
     ],
   },
   async rewrites() {

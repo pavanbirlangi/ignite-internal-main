@@ -71,17 +71,10 @@ export function isCartNotFoundError(error: unknown): boolean {
     return false
   }
 
+  // Medusa's real shape (confirmed live): 404 { type: "not_found", message:
+  // "Cart with id '...' not found" | "Cart id not found: ..." } -- neither
+  // message form is consistent enough to match verbatim, so check for both
+  // words instead.
   const message = extractApiErrorMessage(error, '').toLowerCase()
-  if (message.includes('cart does not exist')) {
-    return true
-  }
-
-  const data = error.response?.data as ApiErrorPayload | undefined
-  return Boolean(
-    data?.errors?.some(
-      (item) =>
-        item?.field?.includes('cartId') &&
-        (item?.message || '').toLowerCase().includes('cart does not exist'),
-    ),
-  )
+  return message.includes('cart') && message.includes('not found')
 }

@@ -82,69 +82,43 @@ export function CartPageContent() {
   }, [initCart])
 
   const items = React.useMemo(() => {
-    if (!cart?.lines?.edges) return []
-    const cartCurrencyCode = cart?.cost?.totalAmount?.currencyCode
-    return cart.lines.edges.map((edge: any) => {
-      const node = edge.node
-      const merchandise = node?.merchandise || {}
-      const product = merchandise?.product || {}
-      const shopifyDiscount = node?.shopifyDiscount
-      const hasShopifyDiscount = shopifyDiscount?.hasDiscount === true
-
-      const merchandisePrice = parseFloat(merchandise?.price?.amount || '0')
-      const compareAtPrice = parseFloat(
-        merchandise?.compareAtPrice?.amount || '0',
-      )
-
-      const price =
-        hasShopifyDiscount && node?.cost?.unitAmount?.amount
-          ? parseFloat(node.cost.unitAmount.amount)
-          : merchandisePrice
-
-      const originalPriceAmount = compareAtPrice
+    if (!cart?.items?.length) return []
+    const cartCurrencyCode = cart.currencyCode
+    return cart.items.map((item) => {
+      const price = item.unitPrice
       const originalPrice =
-        originalPriceAmount > price ? originalPriceAmount : undefined
-
-      const shopifyDiscountBreakdowns =
-        hasShopifyDiscount && shopifyDiscount?.breakdowns
-          ? shopifyDiscount.breakdowns.map((b: any) => ({
-              title: b.title,
-              amount: parseFloat(b.discountedAmount?.amount || '0'),
-            }))
+        item.compareAtUnitPrice !== null && item.compareAtUnitPrice > price
+          ? item.compareAtUnitPrice
           : undefined
 
-      const image =
-        merchandise?.image?.url ||
-        merchandise?.image?.src ||
-        product?.featuredImage?.url ||
-        product?.featuredImage?.src ||
-        product?.images?.edges?.[0]?.node?.url ||
-        'https://placehold.co/205x262/1a1a1a/555555?text=No+Image'
-
       return {
-        id: node?.id,
-        handle: product?.handle,
-        merchandiseId: merchandise?.id,
-        title: product?.title || merchandise?.title || 'Unknown Product',
-        platform: (merchandise?.title || '').replace(/\s*\/\s*/g, '/'),
+        id: item.id,
+        handle: item.handle,
+        merchandiseId: item.variantId,
+        title: item.title,
+        platform: item.variantTitle || '',
         price,
-        currencyCode: merchandise?.price?.currencyCode || cartCurrencyCode,
-        quantity: node?.quantity || 1,
-        image,
-        badges: product?.displayTags || [],
+        currencyCode: cartCurrencyCode,
+        quantity: item.quantity,
+        image:
+          item.thumbnail ||
+          'https://placehold.co/205x262/1a1a1a/555555?text=No+Image',
+        badges: [],
         originalPrice,
-        availableForSale: merchandise?.availableForSale ?? true,
-        hasShopifyDiscount,
-        shopifyDiscountBreakdowns,
+        availableForSale: true,
       }
     })
   }, [cart])
 
-  const subtotal = parseFloat(cart?.cost?.totalAmount?.amount || '0')
+  // No promotion module exists yet (confirmed live) -- "Your cart total"
+  // deliberately shows the pre-tax subtotal, matching Base Price, rather
+  // than the tax-inclusive total the backend also returns with no line item
+  // to explain it. See MEDUSA_MIGRATION_BACKEND_REQUIREMENTS.md.
+  const subtotal = cart?.subtotal ?? 0
   const basePrice = React.useMemo(() => {
     return items.reduce((sum, item) => sum + item.price * (item.quantity || 1), 0)
   }, [items])
-  const subtotalCurrencyCode = cart?.cost?.totalAmount?.currencyCode
+  const subtotalCurrencyCode = cart?.currencyCode
   const summaryCurrency =
     subtotalCurrencyCode || items[0]?.currencyCode || 'USD'
   const itemCount = items.reduce((sum, item) => sum + (item.quantity || 1), 0)
@@ -211,13 +185,9 @@ export function CartPageContent() {
       return
     }
 
-    if (cart?.checkoutUrl) {
-      window.location.href = cart.checkoutUrl
-    } else {
-      toast.error(
-        'Checkout is currently unavailable. Please refresh your cart.',
-      )
-    }
+    // In-app checkout doesn't exist yet (Phase 11) -- Medusa carts have no
+    // hosted checkout URL like Shopify's, so this routes to a placeholder.
+    router.push('/checkout')
   }
 
   return (

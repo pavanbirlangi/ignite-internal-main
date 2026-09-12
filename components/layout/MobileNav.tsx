@@ -13,11 +13,8 @@ export default function MobileNav() {
   const { cart } = useCartStore()
 
   const cartCount = useMemo(() => {
-    if (!cart?.lines?.edges) return 0
-    return cart.lines.edges.reduce(
-      (acc: number, edge: any) => acc + (edge.node?.quantity || 0),
-      0,
-    )
+    if (!cart?.items?.length) return 0
+    return cart.items.reduce((acc, item) => acc + (item.quantity || 0), 0)
   }, [cart])
 
   const navItems = [

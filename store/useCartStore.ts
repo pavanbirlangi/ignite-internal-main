@@ -38,13 +38,12 @@ const clearCartIdCookie = () => {
 }
 
 const getCartLineQuantity = (cart: CartResponse | null, lineId: string) => {
-  const line = cart?.lines?.edges?.find(
-    (edge: any) => edge?.node?.id === lineId,
-  )
-  const quantity = line?.node?.quantity
+  const quantity = cart?.items?.find((item) => item.id === lineId)?.quantity
 
   return typeof quantity === 'number' ? quantity : null
 }
+
+const getSeedProductId = (cart: CartResponse | null) => cart?.items?.[0]?.productId
 
 interface CartState {
   cartId: string | null
@@ -70,6 +69,22 @@ interface CartState {
   clearCart: () => void
   loadCartCmsData: () => Promise<void>
   transferGuestCartToUser: () => Promise<void>
+}
+
+// Every cart mutation route already returns the full updated cart in its
+// response (confirmed live against the real backend) -- so the only extra
+// work worth doing after applying it is refreshing recommendations, and
+// only when the cart's seed product actually changed (recommendations are
+// keyed off the first line item, see cart.service.ts). Skipping both the
+// redundant `GET /store/carts/:id` refetch and needless recommendation
+// refetches is what actually made add/update/remove feel slow -- each one
+// used to chain 3-4 sequential network round-trips before the UI unblocked.
+const maybeRefreshRecommendations = (
+  get: () => CartState,
+  previousCart: CartResponse | null,
+) => {
+  if (getSeedProductId(previousCart) === getSeedProductId(get().cart)) return
+  void get().loadRecommendations()
 }
 
 export const useCartStore = create<CartState>()((set, get) => ({
@@ -134,11 +149,11 @@ export const useCartStore = create<CartState>()((set, get) => ({
 
     try {
       set({ isLoading: true, error: null })
+      const previousCart = get().cart
       const cart = await cartService.getCart(cartId)
 
-
-      set({ cart: cart, isLoading: false })
-      await get().loadRecommendations({ intent: 'RELATED', limit: 4 })
+      set({ cart, isLoading: false })
+      maybeRefreshRecommendations(get, previousCart)
     } catch (error: any) {
       const errorMessage = extractApiErrorMessage(error, 'Failed to load cart')
       console.error('Error loading cart', error)
@@ -159,16 +174,18 @@ export const useCartStore = create<CartState>()((set, get) => ({
   },
 
   loadRecommendations: async (params = { intent: 'RELATED', limit: 4 }) => {
-    const cartId = get().cartId || getCartIdFromCookie()
+    // No cart-level recommendations route exists on the backend -- seed off
+    // the cart's first line item's product instead (see cart.service.ts).
+    const productId = get().cart?.items?.[0]?.productId
 
-    if (!cartId) {
+    if (!productId) {
       set({ recommendations: [], isRecommendationsLoading: false })
       return
     }
 
     try {
       set({ isRecommendationsLoading: true, recommendationsError: null })
-      const response = await cartService.getRecommendations(cartId, params)
+      const response = await cartService.getRecommendations(productId, params)
       set({
         recommendations: response.recommendations || [],
         isRecommendationsLoading: false,
@@ -188,7 +205,7 @@ export const useCartStore = create<CartState>()((set, get) => ({
   },
 
   addItem: async (merchandiseId: string, quantity: number) => {
-    const { initCart, loadCart } = get()
+    const { initCart } = get()
 
     let targetCartId = get().cartId || getCartIdFromCookie()
     if (!targetCartId) {
@@ -207,8 +224,12 @@ export const useCartStore = create<CartState>()((set, get) => ({
 
     try {
       set({ isLoading: true, error: null })
-      await cartService.addToCart(targetCartId, [{ merchandiseId, quantity }])
-      await loadCart()
+      const previousCart = get().cart
+      const updatedCart = await cartService.addToCart(targetCartId, [
+        { merchandiseId, quantity },
+      ])
+      set({ cart: updatedCart, isLoading: false })
+      maybeRefreshRecommendations(get, previousCart)
       toast.success('Added to cart')
     } catch (error: any) {
       const errorMessage = extractApiErrorMessage(
@@ -232,10 +253,12 @@ export const useCartStore = create<CartState>()((set, get) => ({
             return
           }
 
-          await cartService.addToCart(freshCartId, [
+          const previousCart = get().cart
+          const retryCart = await cartService.addToCart(freshCartId, [
             { merchandiseId, quantity },
           ])
-          await loadCart()
+          set({ cart: retryCart, isLoading: false })
+          maybeRefreshRecommendations(get, previousCart)
           toast.success('Added to cart')
           return
         } catch (retryError) {
@@ -255,7 +278,7 @@ export const useCartStore = create<CartState>()((set, get) => ({
   },
 
   removeItem: async (lineIds: string[]) => {
-    const { loadCart, cartId: currentCartId } = get()
+    const { cartId: currentCartId } = get()
     let cartId = currentCartId || getCartIdFromCookie()
     if (!cartId) return
 
@@ -269,8 +292,12 @@ export const useCartStore = create<CartState>()((set, get) => ({
 
     try {
       set({ loadingItems: [...get().loadingItems, ...lineIds], error: null })
-      await cartService.removeFromCart(cartId, lineIds)
-      await loadCart()
+      const previousCart = get().cart
+      const updatedCart = await cartService.removeFromCart(cartId, lineIds)
+      if (updatedCart) {
+        set({ cart: updatedCart })
+        maybeRefreshRecommendations(get, previousCart)
+      }
       toast.success('Removed from cart')
     } catch (error: any) {
       const errorMessage = extractApiErrorMessage(
@@ -300,7 +327,7 @@ export const useCartStore = create<CartState>()((set, get) => ({
   },
 
   updateItem: async (lineId: string, quantity: number) => {
-    const { loadCart, cartId: currentCartId } = get()
+    const { cartId: currentCartId } = get()
     let cartId = currentCartId || getCartIdFromCookie()
     if (!cartId) return
 
@@ -314,8 +341,14 @@ export const useCartStore = create<CartState>()((set, get) => ({
 
     try {
       set({ loadingItems: [...get().loadingItems, lineId], error: null })
-      await cartService.updateCart(cartId, [{ id: lineId, quantity }])
-      await loadCart()
+      const previousCart = get().cart
+      const updatedCart = await cartService.updateCart(cartId, [
+        { id: lineId, quantity },
+      ])
+      if (updatedCart) {
+        set({ cart: updatedCart })
+        maybeRefreshRecommendations(get, previousCart)
+      }
 
       const actualQuantity = getCartLineQuantity(get().cart, lineId)
       if (actualQuantity !== quantity) {
@@ -392,9 +425,10 @@ export const useCartStore = create<CartState>()((set, get) => ({
 
     try {
       set({ isLoading: true, error: null })
-      await cartService.transferCart(cartId)
-      // After transfer, load the cart again to get the updated status/data
-      await loadCart()
+      const previousCart = get().cart
+      const updatedCart = await cartService.transferCart(cartId)
+      set({ cart: updatedCart, isLoading: false })
+      maybeRefreshRecommendations(get, previousCart)
     } catch (error: any) {
       console.error('Error transferring cart', error)
       // Even if transfer fails (e.g. cart already transferred or invalid),

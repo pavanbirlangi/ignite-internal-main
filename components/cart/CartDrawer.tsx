@@ -95,74 +95,45 @@ export function CartDrawer() {
   }, [initCart])
 
   const cartItems = React.useMemo(() => {
-    if (!cart?.lines?.edges) return []
-    const cartCurrencyCode = cart?.cost?.totalAmount?.currencyCode
-    return cart.lines.edges.map((edge: any) => {
-      const node = edge.node
-      const merchandise = node?.merchandise || {}
-      const product = merchandise?.product || {}
-      const shopifyDiscount = node?.shopifyDiscount
-      const hasShopifyDiscount = shopifyDiscount?.hasDiscount === true
-
-      const merchandisePrice = parseAmount(merchandise?.price?.amount)
-      const compareAtPrice = parseAmount(merchandise?.compareAtPrice?.amount)
-
-      const price =
-        hasShopifyDiscount && node?.cost?.unitAmount?.amount
-          ? parseAmount(node.cost.unitAmount.amount)
-          : merchandisePrice
-
-      const originalPriceAmount = compareAtPrice
+    if (!cart?.items?.length) return []
+    const cartCurrencyCode = cart.currencyCode
+    return cart.items.map((item) => {
+      const price = item.unitPrice
       const originalPrice =
-        originalPriceAmount > price ? originalPriceAmount : undefined
-
-      const combinedDiscountPercentage =
+        item.compareAtUnitPrice !== null && item.compareAtUnitPrice > price
+          ? item.compareAtUnitPrice
+          : undefined
+      const discountPercentage =
         originalPrice && originalPrice > price
           ? Math.round(((originalPrice - price) / originalPrice) * 100)
           : undefined
 
-      const shopifyDiscountBreakdowns =
-        hasShopifyDiscount && shopifyDiscount?.breakdowns
-          ? shopifyDiscount.breakdowns.map((b: any) => ({
-              title: b.title,
-              amount: parseAmount(b.discountedAmount?.amount),
-            }))
-          : undefined
-
-      // Resolve image: try every possible location the API may return it
-      const image =
-        merchandise?.image?.url ||
-        merchandise?.image?.src ||
-        product?.featuredImage?.url ||
-        product?.featuredImage?.src ||
-        product?.images?.edges?.[0]?.node?.url ||
-        'https://placehold.co/64x80/1a1a1a/555555?text=No+Image'
-
       return {
-        id: node?.id,
-        handle: product?.handle,
-        merchandiseId: merchandise?.id,
-        title: product?.title || merchandise?.title || 'Unknown Product',
-        platform: (merchandise?.title || '').replace(/\s*\/\s*/g, '/'),
+        id: item.id,
+        handle: item.handle,
+        merchandiseId: item.variantId,
+        title: item.title,
+        platform: item.variantTitle || '',
         price,
-        currencyCode: merchandise?.price?.currencyCode || cartCurrencyCode,
+        currencyCode: cartCurrencyCode,
         originalPrice,
-        discountPercentage: combinedDiscountPercentage,
-        quantity: node?.quantity || 1,
-        image,
-        availableForSale: merchandise?.availableForSale ?? true,
-        hasShopifyDiscount,
-        shopifyDiscountBreakdowns,
+        discountPercentage,
+        quantity: item.quantity,
+        image:
+          item.thumbnail ||
+          'https://placehold.co/64x80/1a1a1a/555555?text=No+Image',
+        availableForSale: true,
       }
     })
   }, [cart])
 
-  const subtotal = parseFloat(cart?.cost?.totalAmount?.amount || '0')
+  // No promotion module exists yet -- footer/order-summary totals show the
+  // pre-tax subtotal, not the tax-inclusive total. See cart.service.ts.
   const itemsSubtotal = React.useMemo(
     () => cartItems.reduce((acc, item) => acc + item.price * item.quantity, 0),
     [cartItems],
   )
-  const subtotalCurrencyCode = cart?.cost?.totalAmount?.currencyCode
+  const subtotalCurrencyCode = cart?.currencyCode
   const cartCount = cartItems.reduce((acc, item) => acc + item.quantity, 0)
 
   const recommendationItems = React.useMemo(() => {
@@ -254,13 +225,9 @@ export function CartDrawer() {
         {/* Scrollable Content */}
         <div
           className={`scrollbar-hide flex flex-1 flex-col gap-8 no-scrollbar overflow-y-auto p-6 ${
-            cartCount > 0
-              ? cart?.discountSummary?.hasDiscount &&
-                cart.discountSummary.totalSavings?.amount &&
-                parseFloat(cart.discountSummary.totalSavings.amount) > 0
-                ? 'pb-72'
-                : 'pb-64'
-              : 'pb-6'
+            // No promotion module exists yet, so a discount line never
+            // renders in CartFooter -- see cart.service.ts.
+            cartCount > 0 ? 'pb-64' : 'pb-6'
           }`}
         >
           {/* Cart Items List */}

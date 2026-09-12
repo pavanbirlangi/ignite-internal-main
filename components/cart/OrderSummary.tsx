@@ -25,8 +25,6 @@ export function OrderSummary({
   onCheckout,
 }: OrderSummaryProps) {
   const cartCmsData = useCartStore((state) => state.cartCmsData)
-  const discountSummary = useCartStore((state) => state.cart?.discountSummary)
-  const fees = useCartStore((state) => state.cart?.fees)
 
   return (
     <div className="static w-full lg:sticky lg:top-40">
@@ -46,52 +44,8 @@ export function OrderSummary({
               </span>
             </div>
 
-            {discountSummary?.hasDiscount &&
-              discountSummary.totalSavings?.amount &&
-              parseFloat(discountSummary.totalSavings.amount) > 0 && (
-                <div className="flex items-center justify-between">
-                  <span className="text-muted-foreground text-[14px] font-medium">
-                    Discount Savings
-                  </span>
-                  <span className="text-[14px] font-semibold text-white">
-                    -
-                    {formatCurrency(
-                      parseFloat(discountSummary.totalSavings.amount),
-                      discountSummary.totalSavings.currencyCode || currency,
-                    )}
-                  </span>
-                </div>
-              )}
-
-            {fees?.serviceCharge?.amount &&
-              parseFloat(fees.serviceCharge.amount) > 0 && (
-                <div className="flex items-center justify-between">
-                  <span className="text-muted-foreground text-[14px] font-medium">
-                    Service Fee
-                  </span>
-                  <span className="text-[14px] font-semibold text-white">
-                    {formatCurrency(
-                      parseFloat(fees.serviceCharge.amount),
-                      fees.serviceCharge.currencyCode || currency,
-                    )}
-                  </span>
-                </div>
-              )}
-
-            {fees?.userCharge?.amount &&
-              parseFloat(fees.userCharge.amount) > 0 && (
-                <div className="flex items-center justify-between">
-                  <span className="text-muted-foreground text-[14px] font-medium">
-                    User Fee
-                  </span>
-                  <span className="text-[14px] font-semibold text-white">
-                    {formatCurrency(
-                      parseFloat(fees.userCharge.amount),
-                      fees.userCharge.currencyCode || currency,
-                    )}
-                  </span>
-                </div>
-              )}
+            {/* No promotion module or fee-line decision exists yet, so
+                discount/fee rows never render -- see cart.service.ts. */}
 
             <div className="mt-1 flex items-start justify-between border-t border-white/10 pt-3">
               <CardTitle className="text-[18px] font-semibold text-white">

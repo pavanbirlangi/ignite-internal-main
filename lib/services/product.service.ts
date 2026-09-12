@@ -505,6 +505,20 @@ export const ProductService = {
   },
 
   /**
+   * Same recommendations pipeline, but for callers that already have a
+   * product id (e.g. cart.service.ts, reading it off a cart line item) and
+   * run client-side -- `unstable_cache` (used by `getProductRecommendations`
+   * above) is server-only and throws an "incrementalCache missing" invariant
+   * if called from the browser (confirmed live). This skips that wrapper.
+   */
+  getRecommendationsByProductId: async (
+    productId: string,
+    params: GetProductRecommendationsParams = {},
+  ): Promise<ProductListItem[]> => {
+    return _fetchProductRecommendations(productId, params)
+  },
+
+  /**
    * Fetches product features. No backend equivalent exists (was folded into
    * product metadata / rating per the migration plan) -- returns null so
    * callers' existing null-handling renders nothing rather than erroring.

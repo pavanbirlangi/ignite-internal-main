@@ -152,7 +152,9 @@ export default function Navbar({
     router.push(buildProductRoute(product))
   }
 
-  if (pathname?.includes('/cart')) {
+  // CartNavbar (Cart -> Checkout -> Redeem step flow) renders its own
+  // navbar/logo for this route group, so the global one hides itself.
+  if (pathname?.includes('/cart') || pathname?.includes('/checkout')) {
     return null
   }
 

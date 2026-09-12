@@ -1,5 +1,6 @@
 import React from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import Xbox from '@/components/icons/XboxIcon'
 import HeartIcon from '../icons/HeartIcon'
 import CartPlusIcon from '../icons/CartPlusIcon'
@@ -20,7 +21,8 @@ interface ProductCardProps {
 }
 
 const StoreCard: React.FC<ProductCardProps> = ({ product, wishlisted }) => {
-  const { addItem, loadCart, isLoading: isCartLoading } = useCartStore()
+  const router = useRouter()
+  const { addItem, isLoading: isCartLoading } = useCartStore()
   const { mutate: addToWishlist, isPending: isAdding } = useAddToWishlist()
   const { mutate: removeFromWishlist, isPending: isRemoving } =
     useRemoveFromWishlist()
@@ -72,20 +74,11 @@ const StoreCard: React.FC<ProductCardProps> = ({ product, wishlisted }) => {
       openModal('login')
       return
     }
-     await addItem(variantId, 1)
+    await addItem(variantId, 1)
 
-    let checkoutUrl = useCartStore.getState().cart?.checkoutUrl
-    if (!checkoutUrl) {
-      await loadCart()
-      checkoutUrl = useCartStore.getState().cart?.checkoutUrl
-    }
-
-    if (checkoutUrl) {
-      window.location.href = checkoutUrl
-      return
-    }
-
-    toast.error('Checkout is currently unavailable. Please try again.')
+    // In-app checkout doesn't exist yet (Phase 11) -- Medusa carts have no
+    // hosted checkout URL like Shopify's, so this routes to a placeholder.
+    router.push('/checkout')
   }
 
   const handleWishlistToggle = (e: React.MouseEvent) => {
