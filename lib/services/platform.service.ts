@@ -1,4 +1,4 @@
-import apiClient from '../axios';
+import medusaClient from '../medusa-axios'
 
 export interface Platform {
   name: string;
@@ -7,7 +7,9 @@ export interface Platform {
 
 export const PlatformService = {
   getPlatforms: async (): Promise<{ platforms: Platform[] }> => {
-    const response = await apiClient.get('/platforms');
-    return response.data;
+    const response = await medusaClient.get('/store/facets', {
+      params: { field: 'platform' },
+    })
+    return { platforms: response.data.facets ?? [] }
   },
 };

@@ -393,7 +393,15 @@ export default async function ProductPage({ params }: PageProps) {
           recommended: labels.recommendedSystemRequirements,
         }}
       />
-      <Gallery featuredImage={featuredImage} product={product} heading={labels.galleryHeading} />
+      <Gallery
+        featuredImage={featuredImage}
+        product={
+          cmsData?.gallery?.length
+            ? { ...product, gallery: cmsData.gallery }
+            : product
+        }
+        heading={labels.galleryHeading}
+      />
       <RatingReviews
         product={product}
         labels={{

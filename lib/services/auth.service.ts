@@ -78,6 +78,10 @@ export interface ResetPasswordResponse {
   token: { accessToken: string; expiresAt: string } | null
 }
 
+export interface GoogleAuthInitResponse {
+  location: string
+}
+
 /**
  * Decodes a JWT payload without verifying the signature (verification always
  * happens server-side; this is purely to read non-sensitive claims like `exp`
@@ -272,5 +276,79 @@ export const authService = {
     }
 
     return { token: null }
+  },
+  /**
+   * Starts the Google OAuth flow. Medusa's Google provider accepts a
+   * `callback_url` override (confirmed against @medusajs/auth-google's
+   * source and verified live) that redirects the browser straight back to
+   * our own frontend route instead of Medusa's raw JSON callback response --
+   * that URL must be registered as an Authorized Redirect URI in the Google
+   * Cloud Console OAuth client, or Google will reject it.
+   */
+  googleAuthInit: async (
+    callbackUrl: string,
+  ): Promise<GoogleAuthInitResponse> => {
+    const { data } = await medusaClient.get('/auth/customer/google', {
+      data: { callback_url: callbackUrl },
+    })
+    return { location: data.location }
+  },
+  /**
+   * Completes the Google OAuth flow given the `code`/`state` Google redirected
+   * back with. Mirrors the emailpass two-step registration: a first-time
+   * Google login returns an actor-less token (no linked customer yet), so we
+   * create the customer record from the Google profile claims embedded in the
+   * token's `user_metadata`, then call the core token-refresh endpoint (using
+   * the SAME old token as bearer) to get back a fresh, customer-linked token
+   * -- verified live via the equivalent emailpass path, since a real Google
+   * consent flow can't be driven headlessly to test this directly.
+   */
+  completeGoogleAuth: async (
+    code: string,
+    state: string,
+  ): Promise<LoginResponse> => {
+    // callback_url doesn't need to be re-sent here -- Medusa already stored it
+    // server-side against this `state` value when the flow was initiated.
+    const { data } = await medusaClient.get(
+      '/auth/customer/google/callback',
+      { params: { code, state } },
+    )
+
+    const payload = decodeJwtPayload(data.token)
+    const hasLinkedCustomer = Boolean(payload?.actor_id)
+
+    let finalToken: string = data.token
+
+    if (!hasLinkedCustomer) {
+      const userMetadata = (payload?.user_metadata ?? {}) as {
+        email?: string
+        given_name?: string
+        family_name?: string
+      }
+
+      await medusaClient.post(
+        '/store/customers',
+        {
+          email: userMetadata.email,
+          first_name: userMetadata.given_name || '',
+          last_name: userMetadata.family_name || '',
+        },
+        { headers: { Authorization: `Bearer ${data.token}` } },
+      )
+
+      const refreshed = await medusaClient.post(
+        '/auth/token/refresh',
+        {},
+        { headers: { Authorization: `Bearer ${data.token}` } },
+      )
+      finalToken = refreshed.data.token
+    }
+
+    return {
+      token: {
+        accessToken: finalToken,
+        expiresAt: tokenExpiryIso(finalToken),
+      },
+    }
   },
 }

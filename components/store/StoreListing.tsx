@@ -128,10 +128,10 @@ const StoreListing = ({ translations }: StoreListingProps) => {
 
   const { data, isLoading, isError } = useProducts({
     first: ITEMS_PER_PAGE,
-    after:
-      filters.currentPage === 1
-        ? undefined
-        : filters.cursors[filters.currentPage],
+    // Medusa's pagination is page-based, not cursor-based -- `after` is
+    // repurposed by product.service.ts as a page-number string, so any page
+    // can be requested directly without needing a cached cursor chain.
+    after: filters.currentPage === 1 ? undefined : String(filters.currentPage),
     query: filters.searchQuery || undefined,
     sortKey: sortKey as 'TITLE' | 'PRICE' | 'BEST_SELLING' | 'CREATED_AT',
     reverse,
@@ -157,16 +157,8 @@ const StoreListing = ({ translations }: StoreListingProps) => {
   // Determine standard structure based on new API response format
   const products = data?.products || []
 
-  // Save the cursor for the next page so we can paginate forward
-  useEffect(() => {
-    if (data?.pageInfo?.endCursor) {
-      filters.setCursors(filters.currentPage + 1, data.pageInfo.endCursor)
-    }
-  }, [data?.pageInfo?.endCursor, filters.currentPage])
-
-  const hasNextPage = data?.pageInfo?.hasNextPage
-  const totalPages = hasNextPage ? filters.currentPage + 1 : filters.currentPage
   const totalCount = data?.totalCount || 0
+  const totalPages = Math.max(1, Math.ceil(totalCount / ITEMS_PER_PAGE))
 
   const { data: categoriesData } = useCategories()
   const dynamicCategories = categoriesData?.categories || []

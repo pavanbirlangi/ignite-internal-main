@@ -1,9 +1,10 @@
 import { cache } from 'react'
 import { unstable_cache } from 'next/cache'
-import apiClient from '../axios'
-import { formatPrice } from '@/lib/currency'
+import medusaClient from '../medusa-axios'
 import type {
   Product,
+  ProductVariant,
+  ProductVariantPrice,
   GetProductsResponse,
   ProductListItem,
 } from '@/types/product'
@@ -44,209 +45,347 @@ export interface GetCollectionProductsParams {
   after?: string
 }
 
-const toPriceString = (value: unknown): string | undefined => {
-  if (typeof value === 'string' || typeof value === 'number') {
-    return String(value)
-  }
+// ─── Metadata readers ─────────────────────────────────────────────────────
+// instant_delivery/on_sale/featured/platform/region/works_on/genre/edition/
+// activation_guide_* all live in product.metadata (confirmed live against the
+// real backend, Phase 3) -- there are no dedicated Medusa fields for any of
+// these.
 
-  if (value && typeof value === 'object') {
-    const record = value as Record<string, unknown>
-    const amount = record.amount
-    const currencyCode = record.currencyCode
-
-    if (
-      (typeof amount === 'string' || typeof amount === 'number') &&
-      typeof currencyCode === 'string' &&
-      currencyCode.trim()
-    ) {
-      return formatPrice(amount, currencyCode)
-    }
-
-    if (typeof amount === 'string' || typeof amount === 'number') {
-      return String(amount)
-    }
-  }
-
-  return undefined
+function metaBool(metadata: Record<string, unknown> | null | undefined, key: string): boolean {
+  return metadata?.[key] === true
 }
 
-const normalizeRecommendationItem = (item: unknown): ProductListItem | null => {
-  if (!item || typeof item !== 'object') {
-    return null
-  }
-
-  const record = item as Record<string, unknown>
-
-  const id = typeof record.id === 'string' ? record.id : ''
-  const title = typeof record.title === 'string' ? record.title : ''
-  const handle = typeof record.handle === 'string' ? record.handle : ''
-  const description =
-    typeof record.description === 'string' ? record.description : ''
-  const productType =
-    typeof record.productType === 'string' ? record.productType : ''
-
-  if (!id || !title || !handle) {
-    return null
-  }
-
-  const normalized: ProductListItem = {
-    id,
-    title,
-    handle,
-    description,
-    productType,
-    featuredImage:
-      record.featuredImage && typeof record.featuredImage === 'object'
-        ? (record.featuredImage as ProductListItem['featuredImage'])
-        : undefined,
-    image: typeof record.image === 'string' ? record.image : undefined,
-    priceRange:
-      record.priceRange && typeof record.priceRange === 'object'
-        ? (record.priceRange as ProductListItem['priceRange'])
-        : undefined,
-    compareAtPriceRange:
-      record.compareAtPriceRange &&
-      typeof record.compareAtPriceRange === 'object'
-        ? (record.compareAtPriceRange as ProductListItem['compareAtPriceRange'])
-        : undefined,
-    price: record.price as ProductListItem['price'],
-    compareAtPrice: record.compareAtPrice as ProductListItem['compareAtPrice'],
-    originalPrice: toPriceString(record.originalPrice),
-    discount: record.discount as ProductListItem['discount'],
-    instantDelivery:
-      typeof record.instantDelivery === 'boolean'
-        ? record.instantDelivery
-        : undefined,
-    onSale: typeof record.onSale === 'boolean' ? record.onSale : undefined,
-    featured:
-      typeof record.featured === 'boolean' ? record.featured : undefined,
-    gameLogo:
-      record.gameLogo && typeof record.gameLogo === 'object'
-        ? {
-            name:
-              typeof (record.gameLogo as Record<string, unknown>).name ===
-              'string'
-                ? ((record.gameLogo as Record<string, unknown>).name as string)
-                : undefined,
-            icon:
-              typeof (record.gameLogo as Record<string, unknown>).icon ===
-              'string'
-                ? ((record.gameLogo as Record<string, unknown>).icon as string)
-                : undefined,
-          }
-        : undefined,
-    tags: Array.isArray(record.tags)
-      ? record.tags.filter((tag): tag is string => typeof tag === 'string')
-      : undefined,
-    platform: Array.isArray(record.platform)
-      ? record.platform.filter(
-          (platform): platform is string => typeof platform === 'string',
-        )
-      : undefined,
-    region: Array.isArray(record.region)
-      ? record.region.filter(
-          (region): region is string => typeof region === 'string',
-        )
-      : undefined,
-    edition: Array.isArray(record.edition)
-      ? record.edition.filter(
-          (edition): edition is string => typeof edition === 'string',
-        )
-      : undefined,
-    variants:
-      Array.isArray(record.variants) ||
-      (record.variants && typeof record.variants === 'object')
-        ? (record.variants as ProductListItem['variants'])
-        : undefined,
-    variantOptions: Array.isArray(record.variantOptions)
-      ? (record.variantOptions as ProductListItem['variantOptions'])
-      : undefined,
-  }
-
-  return normalized
+function metaStringArray(metadata: Record<string, unknown> | null | undefined, key: string): string[] {
+  const value = metadata?.[key]
+  return Array.isArray(value) ? value.filter((v): v is string => typeof v === 'string') : []
 }
 
-const normalizeProductListPayload = (payload: unknown): ProductListItem[] => {
-  if (Array.isArray(payload)) {
-    return payload
-      .map((item) => normalizeRecommendationItem(item))
-      .filter((item): item is ProductListItem => Boolean(item))
-  }
-
-  if (payload && typeof payload === 'object') {
-    const record = payload as Record<string, unknown>
-    const list = record.products ?? record.recommendations ?? record.data
-
-    if (Array.isArray(list)) {
-      return list
-        .map((item) => normalizeRecommendationItem(item))
-        .filter((item): item is ProductListItem => Boolean(item))
-    }
-  }
-
-  return []
+function metaString(metadata: Record<string, unknown> | null | undefined, key: string): string | undefined {
+  const value = metadata?.[key]
+  return typeof value === 'string' && value ? value : undefined
 }
 
-const normalizeProductPayload = (payload: unknown): Product | null => {
-  if (payload && typeof payload === 'object') {
-    const record = payload as Record<string, unknown>
-    const candidate = (record.product ?? record.data ?? payload) as unknown
+// ─── Money mapping ────────────────────────────────────────────────────────
+// Medusa v2 stores amounts as decimal major-unit numbers (confirmed Phase 1),
+// same convention formatPrice/formatCurrency already expect -- ProductVariantPrice
+// just needs the value as a string.
 
-    if (candidate && typeof candidate === 'object') {
-      const product = candidate as Record<string, unknown>
-      if (
-        typeof product.id === 'string' &&
-        typeof product.title === 'string' &&
-        typeof product.handle === 'string'
-      ) {
-        return candidate as Product
+function toVariantPrice(amount: number, currencyCode: string): ProductVariantPrice {
+  return { amount: String(amount), currencyCode: currencyCode.toUpperCase() }
+}
+
+interface DigitalAvailability {
+  variant_id: string
+  is_license_key_product: boolean
+  unused_key_count: number
+  fulfillment_mode: string | null
+}
+
+function mapVariant(
+  raw: any,
+  digitalAvailability: DigitalAvailability | undefined,
+): ProductVariant {
+  const calc = raw.calculated_price
+  const hasDiscount =
+    calc && calc.original_amount > calc.calculated_amount
+
+  const price = calc
+    ? toVariantPrice(calc.calculated_amount, calc.currency_code)
+    : { amount: '0', currencyCode: 'USD' }
+
+  const compareAtPrice = hasDiscount
+    ? toVariantPrice(calc.original_amount, calc.currency_code)
+    : null
+
+  const discount = hasDiscount
+    ? {
+        amount: String(calc.original_amount - calc.calculated_amount),
+        percentage: Math.round(
+          ((calc.original_amount - calc.calculated_amount) / calc.original_amount) * 100,
+        ),
       }
-    }
+    : null
+
+  const selectedOptions = Array.isArray(raw.options)
+    ? raw.options.map((o: any) => ({
+        name: o.option?.title ?? '',
+        value: o.value ?? '',
+      }))
+    : []
+
+  const image = raw.thumbnail
+    ? { url: raw.thumbnail, altText: raw.title ?? null }
+    : { url: '', altText: null }
+
+  // Digital-goods availability (license-key stock), not Medusa's own
+  // inventory system -- digital products don't use manage_inventory.
+  const availableForSale = digitalAvailability
+    ? digitalAvailability.unused_key_count > 0
+    : true
+
+  return {
+    id: raw.id,
+    title: raw.title ?? '',
+    price,
+    compareAtPrice,
+    availableForSale,
+    quantityAvailable: digitalAvailability?.unused_key_count ?? 0,
+    selectedOptions,
+    image,
+    discount,
   }
-
-  return null
 }
 
-// ─── Raw fetchers (used by cached wrappers below) ────────────────────────────
-
-const _fetchProductByHandle = async (
-  handle: string,
-  country?: string,
-): Promise<Product> => {
-  const response = await apiClient.get(`/products/${handle}`, {
-    params: country ? { country } : {},
-  })
-  const product = normalizeProductPayload(response.data as unknown)
-
-  if (!product) {
-    throw new Error(`Invalid product payload for handle: ${handle}`)
-  }
-
-  return product
-}
-
-const _fetchProductRecommendations = async (
-  handle: string,
-  params: GetProductRecommendationsParams = {},
-  country?: string,
-): Promise<ProductListItem[]> => {
-  const response = await apiClient.get(`/products/${handle}/recommendations`, {
-    params: { ...params, country },
-  })
-  return normalizeProductListPayload(response.data as unknown)
-}
-
-const _fetchProductFeatures = async (
-  handle: string,
-): Promise<ProductFeatures | null> => {
+async function fetchDigitalAvailability(
+  productId: string,
+): Promise<Map<string, DigitalAvailability>> {
   try {
-    const response = await apiClient.get<ProductFeatures>(`/products/${handle}/features`)
-    return response.data
+    const { data } = await medusaClient.get(
+      `/store/products/${productId}/digital-availability`,
+    )
+    const map = new Map<string, DigitalAvailability>()
+    for (const v of data.variants ?? []) {
+      map.set(v.variant_id, v)
+    }
+    return map
+  } catch {
+    return new Map()
+  }
+}
+
+async function fetchRatingSummary(
+  productId: string,
+): Promise<{ average_rating: number; count: number } | null> {
+  try {
+    const { data } = await medusaClient.get(
+      `/store/products/${productId}/reviews`,
+      { params: { perPage: 1 } },
+    )
+    return {
+      average_rating: data.average_rating ?? 0,
+      count: data.count ?? 0,
+    }
   } catch {
     return null
   }
 }
 
+function mapProductDetail(
+  raw: any,
+  digitalAvailability: Map<string, DigitalAvailability>,
+  ratingSummary: { average_rating: number; count: number } | null,
+): Product {
+  const metadata = raw.metadata ?? {}
+  const variants = (raw.variants ?? []).map((v: any) =>
+    mapVariant(v, digitalAvailability.get(v.id)),
+  )
+  const firstVariant = variants[0]
+
+  const images = (raw.images ?? []).map((img: any) => ({
+    url: img.url,
+    altText: raw.title ?? null,
+  }))
+
+  const featuredImage = raw.thumbnail
+    ? { url: raw.thumbnail, altText: raw.title ?? null }
+    : (images[0] ?? null)
+
+  const totalStock = Array.from(digitalAvailability.values()).reduce(
+    (sum, v) => sum + v.unused_key_count,
+    0,
+  )
+  const inStock = digitalAvailability.size > 0
+    ? totalStock > 0
+    : true
+
+  const activationGuideHtml = metaString(metadata, 'activation_guide_html')
+
+  return {
+    id: raw.id,
+    title: raw.title ?? '',
+    handle: raw.handle,
+    availableForSale: firstVariant?.availableForSale ?? true,
+    totalInventory: totalStock,
+    description: raw.description ?? '',
+    descriptionHtml: raw.description ?? '',
+    images: { edges: images.map((node: any) => ({ node })) },
+    gallery: images.map((img: any) => ({
+      type: 'IMAGE' as const,
+      url: img.url,
+      altText: img.altText,
+    })),
+    variants,
+    options: (raw.options ?? []).map((o: any) => ({
+      name: o.title,
+      values: (o.values ?? []).map((v: any) => v.value),
+    })),
+    instantDelivery: metaBool(metadata, 'instant_delivery'),
+    onSale: metaBool(metadata, 'on_sale'),
+    featured: metaBool(metadata, 'featured'),
+    platform: metaStringArray(metadata, 'platform'),
+    region: metaStringArray(metadata, 'region'),
+    backgroundImage: images[0] ?? featuredImage,
+    featuredImage,
+    rating: ratingSummary
+      ? { scale_min: '0', scale_max: '5', value: String(ratingSummary.average_rating) }
+      : null,
+    inStock,
+    stockQuantity: totalStock,
+    price: firstVariant?.price,
+    compareAtPrice: firstVariant?.compareAtPrice ?? null,
+    discount: firstVariant?.discount ?? null,
+    activationGuide: activationGuideHtml
+      ? {
+          guide: activationGuideHtml,
+          name: metaString(metadata, 'activation_guide_name') ?? '',
+          icon: metaString(metadata, 'activation_guide_icon') ?? null,
+          _type: '',
+          _handle: '',
+        }
+      : undefined,
+    tags: raw.tags ?? [],
+    importantNotice: undefined,
+  }
+}
+
+function mapProductListItem(raw: any): ProductListItem {
+  const metadata = raw.metadata ?? {}
+  const variants = (raw.variants ?? []).map((v: any) => {
+    const calc = v.calculated_price
+    return {
+      id: v.id,
+      title: v.title,
+      availableForSale: true,
+      selectedOptions: Array.isArray(v.options)
+        ? v.options.map((o: any) => ({ name: o.option?.title ?? '', value: o.value ?? '' }))
+        : [],
+      price: calc ? toVariantPrice(calc.calculated_amount, calc.currency_code) : undefined,
+      compareAtPrice:
+        calc && calc.original_amount > calc.calculated_amount
+          ? toVariantPrice(calc.original_amount, calc.currency_code)
+          : undefined,
+    }
+  })
+
+  const firstCalc = raw.variants?.[0]?.calculated_price
+  const hasDiscount = firstCalc && firstCalc.original_amount > firstCalc.calculated_amount
+
+  const price = firstCalc ? toVariantPrice(firstCalc.calculated_amount, firstCalc.currency_code) : undefined
+  const compareAtPrice = hasDiscount
+    ? toVariantPrice(firstCalc.original_amount, firstCalc.currency_code)
+    : undefined
+
+  return {
+    id: raw.id,
+    title: raw.title ?? '',
+    handle: raw.handle,
+    description: raw.description ?? '',
+    productType: raw.type?.value ?? '',
+    collections: raw.collection
+      ? { edges: [{ node: { title: raw.collection.title, handle: raw.collection.handle } }] }
+      : undefined,
+    featuredImage: raw.thumbnail ? { url: raw.thumbnail, altText: raw.title ?? null } : null,
+    priceRange: price ? { minVariantPrice: price } : undefined,
+    compareAtPriceRange: compareAtPrice ? { minVariantPrice: compareAtPrice } : undefined,
+    price,
+    compareAtPrice,
+    discount: hasDiscount
+      ? {
+          amount: String(firstCalc.original_amount - firstCalc.calculated_amount),
+          percentage: Math.round(
+            ((firstCalc.original_amount - firstCalc.calculated_amount) / firstCalc.original_amount) * 100,
+          ),
+        }
+      : undefined,
+    instantDelivery: metaBool(metadata, 'instant_delivery'),
+    onSale: metaBool(metadata, 'on_sale'),
+    featured: metaBool(metadata, 'featured'),
+    tags: raw.tags ?? [],
+    platform: metaStringArray(metadata, 'platform'),
+    region: metaStringArray(metadata, 'region'),
+    edition: metaStringArray(metadata, 'edition'),
+    variants,
+  }
+}
+
+// ─── Country code resolution ──────────────────────────────────────────────
+// Reused as-is from the pre-Medusa cookie convention; now passed straight
+// through to Medusa as `country_code` (confirmed live -- no region_id lookup
+// needed). Real region/currency scoping is still Phase 10 work.
+
+const getCountryCode = async (): Promise<string | undefined> => {
+  if (typeof window !== 'undefined') return undefined
+  try {
+    const { cookies } = await import('next/headers')
+    const cookieStore = await cookies()
+    return cookieStore.get('user_country')?.value?.toLowerCase()
+  } catch {
+    return undefined
+  }
+}
+
+// ─── Raw fetchers ──────────────────────────────────────────────────────────
+
+const PRODUCT_FIELDS =
+  '*variants.calculated_price,+metadata,+images,+options.values,+variants.options.value'
+
+const _fetchProductByHandle = async (
+  handle: string,
+  country?: string,
+): Promise<Product> => {
+  const { data } = await medusaClient.get('/store/products', {
+    params: {
+      handle,
+      country_code: country,
+      fields: PRODUCT_FIELDS,
+    },
+  })
+
+  const raw = data.products?.[0]
+  if (!raw) {
+    throw new Error(`Invalid product payload for handle: ${handle}`)
+  }
+
+  const [digitalAvailability, ratingSummary] = await Promise.all([
+    fetchDigitalAvailability(raw.id),
+    fetchRatingSummary(raw.id),
+  ])
+
+  return mapProductDetail(raw, digitalAvailability, ratingSummary)
+}
+
+const _fetchProductRecommendations = async (
+  productId: string,
+  _params: GetProductRecommendationsParams = {},
+): Promise<ProductListItem[]> => {
+  // `intent` (related/complementary) is accepted by the backend but not yet
+  // differentiated server-side (confirmed live) -- both return the same
+  // category-based "related products" list.
+  const { data } = await medusaClient.get(
+    `/store/products/${productId}/recommendations`,
+  )
+  // Recommendations route only returns id/title/handle/thumbnail (no price) --
+  // enrich with a second call for full list-card data.
+  const ids = (data.products ?? []).map((p: any) => p.id)
+  if (!ids.length) return []
+  return _fetchProductsByIds(ids)
+}
+
+const _fetchProductsByIds = async (
+  ids: string[],
+  country?: string,
+): Promise<ProductListItem[]> => {
+  if (!ids.length) return []
+  const { data } = await medusaClient.get('/store/products', {
+    params: {
+      id: ids,
+      country_code: country,
+      fields: PRODUCT_FIELDS,
+      limit: ids.length,
+    },
+  })
+  return (data.products ?? []).map(mapProductListItem)
+}
 
 // ─── Cross-request Next.js Data Cache wrappers (ISR-style, 60s TTL) ──────────
 
@@ -258,25 +397,13 @@ const _cachedGetProductByHandle = unstable_cache(
 )
 
 const _cachedGetProductRecommendations = unstable_cache(
-  async (
-    handle: string,
-    params: GetProductRecommendationsParams = {},
-    country?: string,
-  ) => _fetchProductRecommendations(handle, params, country),
+  async (productId: string, params: GetProductRecommendationsParams = {}) =>
+    _fetchProductRecommendations(productId, params),
   ['product-recommendations'],
   { revalidate: 60, tags: ['product'] },
 )
 
-const _cachedGetProductFeatures = unstable_cache(
-  async (handle: string) => _fetchProductFeatures(handle),
-  ['product-features'],
-  { revalidate: 60, tags: ['product', 'features'] },
-)
-
 // ─── Per-request React cache deduplication ────────────────────────────────────
-// Wraps the cross-request cache so that within a single server render
-// (e.g. generateMetadata + ProductPage both calling getProductByHandle)
-// the underlying fetch is only executed once.
 
 const _dedupedGetProductByHandle = cache(
   async (handle: string, country?: string) =>
@@ -285,25 +412,80 @@ const _dedupedGetProductByHandle = cache(
 
 // ─── Public ProductService ───────────────────────────────────────────────────
 
-const getCountryCode = async () => {
-  if (typeof window !== 'undefined') return undefined
-  try {
-    const { cookies } = await import('next/headers')
-    const cookieStore = await cookies()
-    return cookieStore.get('user_country')?.value
-  } catch {
-    return undefined
-  }
-}
-
 export const ProductService = {
+  /**
+   * Rebuilt against `GET /store/products/filtered` (custom route, confirmed
+   * live) for category/genre/platform/worksOn/region/edition/instantDelivery/
+   * onSale/featured/q filtering + page-based pagination, then enriched with a
+   * second call to core `/store/products` for pricing (the filtered route
+   * doesn't return prices -- confirmed live).
+   *
+   * `sortKey`/`reverse` and `minPrice`/`maxPrice` have no backend support yet
+   * (no sort param on the filtered route; no promotion/pricing module for
+   * price-range filtering -- both confirmed live). Sort is applied
+   * client-side on the returned page as a stopgap; price range is a no-op
+   * until backend support exists (see MEDUSA_MIGRATION_BACKEND_REQUIREMENTS.md).
+   *
+   * `after` is repurposed as a plain page-number string (not an opaque
+   * cursor) since Medusa's pagination is page-based, not cursor-based.
+   */
   getProducts: async (
     params: GetProductsParams,
   ): Promise<GetProductsResponse> => {
-    const response = await apiClient.get<GetProductsResponse>('/products', {
-      params,
+    const country = await getCountryCode()
+    const page = params.after ? Number(params.after) : 1
+    const limit = params.first ?? 20
+
+    const { data } = await medusaClient.get('/store/products/filtered', {
+      params: {
+        category: params.category,
+        genre: params.genre,
+        platform: params.platform,
+        works_on: params.worksOn,
+        region: params.region,
+        edition: params.edition,
+        instant_delivery: params.instantDelivery,
+        on_sale: params.onSale,
+        featured: params.featured,
+        q: params.query,
+        page,
+        limit,
+      },
     })
-    return response.data
+
+    const ids = (data.products ?? []).map((p: any) => p.id)
+    let products = await _fetchProductsByIds(ids, country)
+
+    // Preserve the filtered route's order (relevance/recency) rather than
+    // whatever order the enrichment call happens to return in.
+    const orderIndex = new Map<string, number>(
+      ids.map((id: string, i: number) => [id, i]),
+    )
+    products.sort(
+      (a, b) => (orderIndex.get(a.id) ?? 0) - (orderIndex.get(b.id) ?? 0),
+    )
+
+    if (params.sortKey === 'PRICE') {
+      products = [...products].sort((a, b) => {
+        const av = Number(a.price?.amount ?? 0)
+        const bv = Number(b.price?.amount ?? 0)
+        return params.reverse ? bv - av : av - bv
+      })
+    } else if (params.sortKey === 'TITLE') {
+      products = [...products].sort((a, b) =>
+        params.reverse ? b.title.localeCompare(a.title) : a.title.localeCompare(b.title),
+      )
+    }
+
+    const pagination = data.pagination ?? {}
+    return {
+      totalCount: pagination.total_items ?? products.length,
+      pageInfo: {
+        hasNextPage: Boolean(pagination.has_next_page),
+        endCursor: pagination.has_next_page ? String(page + 1) : null,
+      },
+      products,
+    }
   },
 
   /** Fetches product by handle. Deduplicated per-request + cached 60s across requests. */
@@ -312,20 +494,25 @@ export const ProductService = {
     return _dedupedGetProductByHandle(handle, country)
   },
 
-  /** Fetches product recommendations. Cached 60s across requests. */
+  /** Fetches product recommendations. Cached 60s across requests. Takes a handle for API-shape continuity but resolves to the product id internally. */
   getProductRecommendations: async (
     handle: string,
     params: GetProductRecommendationsParams = {},
   ): Promise<ProductListItem[]> => {
     const country = await getCountryCode()
-    return _cachedGetProductRecommendations(handle, params, country)
+    const product = await _dedupedGetProductByHandle(handle, country)
+    return _cachedGetProductRecommendations(product.id, params)
   },
 
-  /** Fetches product features. Cached 60s across requests. */
+  /**
+   * Fetches product features. No backend equivalent exists (was folded into
+   * product metadata / rating per the migration plan) -- returns null so
+   * callers' existing null-handling renders nothing rather than erroring.
+   */
   getProductFeatures: async (
-    handle: string,
+    _handle: string,
   ): Promise<ProductFeatures | null> => {
-    return _cachedGetProductFeatures(handle)
+    return null
   },
 
   getCollectionProductsByHandle: cache(
@@ -337,10 +524,15 @@ export const ProductService = {
       const finalCountry = country || (await getCountryCode())
       const cachedFn = unstable_cache(
         async (h: string, p: GetCollectionProductsParams, c?: string) => {
-          const response = await apiClient.get(`/collections/${h}/products`, {
-            params: { ...p, country: c },
+          const { data } = await medusaClient.get('/store/products', {
+            params: {
+              collection_handle: h,
+              country_code: c,
+              fields: PRODUCT_FIELDS,
+              limit: p.first ?? 20,
+            },
           })
-          return normalizeProductListPayload(response.data as unknown)
+          return (data.products ?? []).map(mapProductListItem)
         },
         ['collection-products-by-handle'],
         { revalidate: 60, tags: ['collection', 'product'] },

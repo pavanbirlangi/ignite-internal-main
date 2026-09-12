@@ -1,4 +1,4 @@
-import apiClient from '../axios';
+import medusaClient from '../medusa-axios'
 
 export interface Genre {
   name: string;
@@ -7,8 +7,14 @@ export interface Genre {
 
 export const GenreService = {
   getGenres: async (search?: string): Promise<{ genres: Genre[] }> => {
-    const params = search ? { search } : undefined;
-    const response = await apiClient.get('/genres', { params });
-    return response.data;
+    const response = await medusaClient.get('/store/facets', {
+      params: { field: 'genre' },
+    })
+    let genres: Genre[] = response.data.facets ?? []
+    if (search) {
+      const lower = search.toLowerCase()
+      genres = genres.filter((g) => g.name.toLowerCase().includes(lower))
+    }
+    return { genres }
   },
 };
