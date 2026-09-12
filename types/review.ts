@@ -1,18 +1,19 @@
 export interface ProductReview {
   id: string
   name: string
-  email?: string
   rating: number
   title: string
   body: string
   createdAt?: string
+  // Kept as the magic string the existing UI already checks for
+  // (`review.verified === 'verified-purchase'`), rather than a boolean, so
+  // review-card.tsx needed zero changes.
   verified?: string
-  source?: string
-  helpfulCount?: number
-  productTitle?: string
-  productHandle?: string
+  // Medusa's review model has no concept of a reviewer-uploaded photo --
+  // always undefined, kept only so review-card.tsx's existing fallback-icon
+  // ternary compiles unchanged.
   profile_photo?: string
-  pictures?: string[]
+  responseBody?: string | null
 }
 
 export interface ProductReviewSummary {
@@ -31,26 +32,21 @@ export interface ProductReviewsResponse {
 }
 
 export interface GetReviewsParams {
-  handle?: string
-  productId?: string
+  productId: string
   page?: number
   perPage?: number
-  rating?: number
 }
 
 export interface SubmitReviewPayload {
-  handle: string
-  productHandle?: string
-  id?: string
-  productId?: string
-  name: string
-  email: string
+  productId: string
+  orderId: string
   rating: number
-  title: string
+  title?: string
   body: string
 }
 
-export interface SubmitReviewResponse {
-  message?: string
-  success?: boolean
+export interface EligibleReviewOrder {
+  id: string
+  displayId: number
+  createdAt: string
 }

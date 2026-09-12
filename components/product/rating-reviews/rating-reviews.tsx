@@ -42,7 +42,7 @@ export default function RatingReviews({ product, labels }: RatingReviewsProps) {
     hasNextPage,
     isFetchingNextPage,
   } = useReviews({
-    handle: product.handle,
+    productId: product.id,
     perPage: 4,
   })
 

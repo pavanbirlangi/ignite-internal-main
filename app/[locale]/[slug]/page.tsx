@@ -234,7 +234,7 @@ export default async function ProductPage({ params }: PageProps) {
         limit: 8,
       }),
       CmsProductService.getProductCmsData(slug),
-      reviewService.getReviews({ handle: slug, perPage: 1 }),
+      reviewService.getReviews({ productId: product.id, perPage: 1 }),
       ProductService.getProductFeatures(slug),
     ])
 
