@@ -10,56 +10,31 @@ import {
 const PROTECTED_ROUTES = ['/dashboard']
 const UNAUTH_REDIRECT_PATH = '/'
 
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null
-}
-
-function hasNullCustomerOrUser(payload: unknown): boolean {
-  if (!isRecord(payload)) {
-    return false
-  }
-
-  const nestedData = isRecord(payload.data) ? payload.data : null
-  const customer = payload.customer ?? nestedData?.customer
-  const user = payload.user ?? nestedData?.user
-
-  return customer === null || user === null
-}
-
 async function isProtectedRouteSessionValid(
   accessToken: string,
-  country: string,
 ): Promise<boolean> {
-  const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL
-  if (!apiBaseUrl) {
+  const backendUrl = process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL
+  const publishableKey = process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY
+  if (!backendUrl || !publishableKey) {
     // Avoid locking out users due to missing runtime config in middleware.
     return true
   }
 
   try {
-    const accountUrl = new URL(apiBaseUrl)
-    accountUrl.pathname = `${accountUrl.pathname.replace(/\/$/, '')}/account/me`
-    accountUrl.searchParams.set('country', country)
-
-    const response = await fetch(accountUrl.toString(), {
+    const response = await fetch(`${backendUrl}/store/customers/me`, {
       method: 'GET',
       headers: {
         Authorization: `Bearer ${accessToken}`,
+        'x-publishable-api-key': publishableKey,
         'Content-Type': 'application/json',
       },
       cache: 'no-store',
     })
 
+    // Confirmed live: Medusa returns 401 {"message":"Unauthorized"} for a
+    // missing/invalid/expired token -- no "200 with null customer" case like
+    // the old Shopify-backed API had.
     if (response.status === 401 || response.status === 403) {
-      return false
-    }
-
-    if (!response.ok) {
-      return true
-    }
-
-    const payload = await response.json().catch(() => null)
-    if (hasNullCustomerOrUser(payload)) {
       return false
     }
 
@@ -174,10 +149,7 @@ export async function proxy(request: NextRequest) {
   }
 
   if (protectedPath && accessToken) {
-    const isSessionValid = await isProtectedRouteSessionValid(
-      accessToken,
-      country,
-    )
+    const isSessionValid = await isProtectedRouteSessionValid(accessToken)
 
     if (!isSessionValid) {
       const redirectUrl = new URL(

@@ -1,6 +1,7 @@
 import axios from 'axios'
 import Cookies from 'js-cookie'
 import { extractApiErrorMessage } from './utils/api-error'
+import { triggerUnauthorizedLogout } from './utils/auth-session'
 
 const apiClient = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL,
@@ -8,54 +9,6 @@ const apiClient = axios.create({
     'Content-Type': 'application/json',
   },
 })
-
-let isUnauthorizedLogoutInProgress = false
-
-const getLocalizedHomePath = () => {
-  if (typeof window === 'undefined') return '/'
-
-  const [firstSegment] = window.location.pathname.split('/').filter(Boolean)
-  if (firstSegment && /^[a-z]{2}$/i.test(firstSegment)) {
-    return `/${firstSegment.toLowerCase()}`
-  }
-
-  return '/'
-}
-
-const redirectAfterUnauthorizedLogout = () => {
-  if (typeof window === 'undefined') return
-
-  const homePath = getLocalizedHomePath()
-  if (window.location.pathname !== homePath) {
-    window.location.assign(homePath)
-    return
-  }
-
-  window.location.reload()
-}
-
-const triggerUnauthorizedLogout = async () => {
-  if (typeof window === 'undefined' || isUnauthorizedLogoutInProgress) {
-    return
-  }
-
-  const token = Cookies.get('access_token')
-  if (!token) {
-    return
-  }
-
-  isUnauthorizedLogoutInProgress = true
-
-  try {
-    const { useUserStore } = await import('@/store/useUserStore')
-    useUserStore.getState().logout()
-    redirectAfterUnauthorizedLogout()
-  } catch (logoutError) {
-    console.error('Failed to auto-logout after 401 response:', logoutError)
-  } finally {
-    isUnauthorizedLogoutInProgress = false
-  }
-}
 
 apiClient.interceptors.request.use(
   async (config) => {

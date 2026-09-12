@@ -4,20 +4,19 @@ import { getWebPageJsonLd } from '@/lib/seo'
 
 export default async function ResetPasswordPage({
   params,
+  searchParams,
 }: {
-  params: Promise<{ locale: string; id: string; token: string }>
+  params: Promise<{ locale: string }>
+  searchParams: Promise<{ token?: string }>
 }) {
-  const { locale, id, token } = await params
+  const { locale } = await params
+  const { token } = await searchParams
   const webPageJsonLd = getWebPageJsonLd({
     locale,
     pathname: 'account/reset',
     name: 'Reset Your Password | Increddy',
     description: 'Set a new password for your Increddy account.',
   })
-
-  // Decoding the ID and token if they are URL-encoded
-  const decodedId = decodeURIComponent(id)
-  const decodedToken = decodeURIComponent(token)
 
   return (
     <>
@@ -37,7 +36,14 @@ export default async function ResetPasswordPage({
               Enter your new password below.
             </p>
           </div>
-          <ResetPasswordForm id={decodedId} token={decodedToken} />
+          {token ? (
+            <ResetPasswordForm token={decodeURIComponent(token)} />
+          ) : (
+            <p className="text-destructive text-sm">
+              This reset link is missing its token. Please request a new
+              password reset email.
+            </p>
+          )}
         </div>
       </section>
     </>

@@ -7,7 +7,6 @@ import { cn } from '@/lib/utils'
 import MobileNav from '@/components/layout/MobileNav'
 import { Toaster } from 'sonner'
 import QueryProvider from '@/components/providers/QueryProvider'
-import { OAuthCallbackHandler } from '@/components/auth/OAuthCallbackHandler'
 import NextTopLoader from 'nextjs-toploader'
 import { FooterService } from '@/lib/services/footer.service'
 import { NavbarService } from '@/lib/services/navbar.service'
@@ -134,7 +133,6 @@ export default async function RootLayout({
         <QueryProvider>
           <NextTopLoader color="#2468DF" showSpinner={false} />
           <ScrollToTop />
-          <OAuthCallbackHandler />
           <Navbar navbarData={navbarData} />
           <main className="flex flex-col gap-24">{children}</main>
           <ConditionalFooter footerData={footerData} translations={footerTranslations} />

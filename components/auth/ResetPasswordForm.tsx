@@ -25,13 +25,7 @@ const resetSchema = z
 
 type ResetFormValues = z.infer<typeof resetSchema>
 
-export function ResetPasswordForm({
-  id,
-  token,
-}: {
-  id: string
-  token: string
-}) {
+export function ResetPasswordForm({ token }: { token: string }) {
   const [isLoading, setIsLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
@@ -53,42 +47,31 @@ export function ResetPasswordForm({
     setIsLoading(true)
 
     try {
-      const response = await authService.customerReset({
-        id,
+      const response = await authService.resetPassword({
+        token,
         password: data.password,
-        resetToken: token,
       })
 
-      if (
-        response.customerUserErrors &&
-        response.customerUserErrors.length > 0
-      ) {
-        response.customerUserErrors.forEach((error) => {
-          toast.error(error.message)
-        })
-        return
-      }
-
-      if (response.customerAccessToken) {
-        // Store token in cookies
-        Cookies.set('access_token', response.customerAccessToken.accessToken, {
-          expires: new Date(response.customerAccessToken.expiresAt),
+      if (response.token) {
+        Cookies.set('access_token', response.token.accessToken, {
+          expires: new Date(response.token.expiresAt),
           path: '/',
         })
 
-        // Update user store
         useUserStore.getState().setIsAuthenticated(true)
 
         toast.success('Password reset successful. You are now logged in.')
-
-        // Redirect to homepage
         router.push('/')
       } else {
-        toast.error('Failed to reset password. Please try again.')
+        toast.success('Password updated. Please log in with your new password.')
+        router.push('/')
       }
     } catch (err: any) {
       console.error('Reset failed:', err)
-      toast.error('An unexpected error occurred. Please try again.')
+      const message =
+        err?.response?.data?.message ||
+        'This reset link is invalid or has expired. Please request a new one.'
+      toast.error(message)
     } finally {
       setIsLoading(false)
     }

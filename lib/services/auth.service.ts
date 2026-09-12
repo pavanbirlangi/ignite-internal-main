@@ -1,5 +1,4 @@
-import apiClient from '@/lib/axios'
-import axios from 'axios'
+import medusaClient from '@/lib/medusa-axios'
 
 export interface RegisterPayload {
   email: string
@@ -68,160 +67,210 @@ export interface DeleteImagePayload {
 }
 
 export interface ResetPasswordPayload {
-  id: string
+  token: string
   password: string
-  resetToken: string
 }
 
 export interface ResetPasswordResponse {
-  customer: {
-    email: string
-  } | null
-  customerAccessToken: {
-    accessToken: string
-    expiresAt: string
-  } | null
-  customerUserErrors: Array<{
-    field: string[]
-    message: string
-  }>
+  // A fresh session token if we could log the customer straight back in after
+  // the reset, or null if the update succeeded but we couldn't establish a new
+  // session automatically (caller should send them to log in manually).
+  token: { accessToken: string; expiresAt: string } | null
 }
 
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null
-}
+/**
+ * Decodes a JWT payload without verifying the signature (verification always
+ * happens server-side; this is purely to read non-sensitive claims like `exp`
+ * or `entity_id` client-side). Works in both browser and SSR contexts.
+ */
+function decodeJwtPayload(token: string): Record<string, unknown> | null {
+  try {
+    const base64Url = token.split('.')[1]
+    if (!base64Url) return null
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/')
 
-function asString(value: unknown): string {
-  return typeof value === 'string' ? value : ''
-}
+    const decoded =
+      typeof window !== 'undefined' && typeof window.atob === 'function'
+        ? window.atob(base64)
+        : Buffer.from(base64, 'base64').toString('binary')
 
-function asNullableString(value: unknown): string | null {
-  return typeof value === 'string' ? value : null
-}
+    const jsonPayload = decodeURIComponent(
+      decoded
+        .split('')
+        .map((c) => '%' + c.charCodeAt(0).toString(16).padStart(2, '0'))
+        .join(''),
+    )
 
-function normalizeAccountResponse(payload: unknown): AccountResponse {
-  if (!isRecord(payload)) {
-    throw new Error('Invalid account response')
+    return JSON.parse(jsonPayload)
+  } catch {
+    return null
   }
+}
 
-  const nestedData = isRecord(payload.data) ? payload.data : null
-  const candidate =
-    nestedData?.customer ??
-    nestedData?.user ??
-    payload.customer ??
-    payload.user ??
-    payload
-
-  if (candidate === null || !isRecord(candidate)) {
-    throw new Error('Customer data not found in response')
+function tokenExpiryIso(token: string): string {
+  const payload = decodeJwtPayload(token)
+  const exp = payload?.exp
+  if (typeof exp === 'number') {
+    return new Date(exp * 1000).toISOString()
   }
+  // Fall back to a conservative 24h if the token has no readable exp claim.
+  return new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
+}
 
-  const id = asString(candidate.id)
-  const email = asString(candidate.email)
-
-  if (!id || !email) {
-    throw new Error('Invalid customer object structure: missing id or email')
-  }
-
-  const firstName = asString(candidate.firstName)
-  const lastName = asString(candidate.lastName)
-  const displayNameFromApi = asString(candidate.displayName)
+function normalizeAccountResponse(customer: {
+  id: string
+  first_name?: string | null
+  last_name?: string | null
+  email: string
+  phone?: string | null
+  metadata?: Record<string, unknown> | null
+}): AccountResponse {
+  const firstName = customer.first_name || ''
+  const lastName = customer.last_name || ''
+  const dob = customer.metadata?.dob
+  const profilePhoto = customer.metadata?.profile_photo
 
   return {
-    id,
+    id: customer.id,
     firstName,
     lastName,
-    displayName: displayNameFromApi || `${firstName} ${lastName}`.trim(),
-    email,
-    phone: asNullableString(candidate.phone),
-    profile_photo: asNullableString(candidate.profile_photo),
-    profile_photo_id: asNullableString(candidate.profile_photo_id),
-    dob: asNullableString(candidate.dob),
+    displayName: `${firstName} ${lastName}`.trim(),
+    email: customer.email,
+    phone: customer.phone || null,
+    profile_photo: typeof profilePhoto === 'string' ? profilePhoto : null,
+    profile_photo_id: null,
+    dob: typeof dob === 'string' ? dob : null,
   }
-}
-
-const toSafeString = (value: string | null | undefined) => value ?? ''
-
-const sanitizeUpdateAccountPayload = (
-  payload: UpdateAccountPayload,
-): Partial<Record<keyof UpdateAccountPayload, string>> => {
-  const sanitizedPayload: Partial<Record<keyof UpdateAccountPayload, string>> =
-    {}
-
-  for (const [key, value] of Object.entries(payload) as Array<
-    [keyof UpdateAccountPayload, string | null | undefined]
-  >) {
-    if (value !== undefined) {
-      sanitizedPayload[key] = toSafeString(value)
-    }
-  }
-
-  return sanitizedPayload
 }
 
 export const authService = {
   register: async (payload: RegisterPayload): Promise<RegisterResponse> => {
-    const response = await apiClient.post<RegisterResponse>(
-      '/auth/register',
-      payload,
+    // Medusa's customer registration is two steps: first create the auth
+    // identity (get a registration-scoped token), then create the actual
+    // customer record using that token as bearer auth.
+    const { data: authData } = await medusaClient.post(
+      '/auth/customer/emailpass/register',
+      { email: payload.email, password: payload.password },
     )
-    return response.data
+
+    const { data: customerData } = await medusaClient.post(
+      '/store/customers',
+      {
+        email: payload.email,
+        first_name: payload.firstName,
+        last_name: payload.lastName,
+      },
+      { headers: { Authorization: `Bearer ${authData.token}` } },
+    )
+
+    return {
+      customer: {
+        id: customerData.customer.id,
+        email: customerData.customer.email,
+        firstName: customerData.customer.first_name || '',
+        lastName: customerData.customer.last_name || '',
+      },
+    }
   },
   login: async (payload: LoginPayload): Promise<LoginResponse> => {
-    const response = await apiClient.post<LoginResponse>('/auth/login', payload)
-    return response.data
+    const { data } = await medusaClient.post('/auth/customer/emailpass', {
+      email: payload.email,
+      password: payload.password,
+    })
+
+    return {
+      token: {
+        accessToken: data.token,
+        expiresAt: tokenExpiryIso(data.token),
+      },
+    }
   },
   recover: async (payload: RecoverPayload): Promise<RecoverResponse> => {
-    const response = await apiClient.post<RecoverResponse>(
-      '/auth/recover',
-      payload,
-    )
-    return response.data
+    // Medusa's reset-password endpoint intentionally doesn't reveal whether an
+    // account exists for the given email (returns success either way), so we
+    // always show the same generic message regardless of the real outcome.
+    await medusaClient.post('/auth/customer/emailpass/reset-password', {
+      identifier: payload.email,
+    })
+    return {
+      message:
+        'If an account exists for this email, a password reset link has been sent.',
+    }
   },
   getAccount: async (): Promise<AccountResponse> => {
-    const response = await apiClient.get('/account/me')
-    return normalizeAccountResponse(response.data)
+    const { data } = await medusaClient.get('/store/customers/me')
+    return normalizeAccountResponse(data.customer)
   },
   updateAccount: async (
     payload: UpdateAccountPayload,
   ): Promise<AccountResponse> => {
-    const safePayload = sanitizeUpdateAccountPayload(payload)
-    const response = await apiClient.put<AccountResponse>(
-      '/account/me',
-      safePayload,
-    )
-    return normalizeAccountResponse(response.data)
+    const body: Record<string, unknown> = {}
+
+    if (payload.firstName !== undefined) body.first_name = payload.firstName
+    if (payload.lastName !== undefined) body.last_name = payload.lastName
+    if (payload.phone) body.phone = payload.phone
+
+    // `dob` (and, once supported, `profile_photo`) live in Medusa's generic
+    // customer.metadata JSON column -- there's no dedicated field for either.
+    if (payload.dob !== undefined) {
+      body.metadata = { dob: payload.dob || null }
+    }
+
+    const { data } = await medusaClient.post('/store/customers/me', body)
+    return normalizeAccountResponse(data.customer)
   },
   uploadAccountImage: async (
-    file: File | Blob,
+    _file: File | Blob,
   ): Promise<UploadImageResponse> => {
-    const formData = new FormData()
-    if (file instanceof File) {
-      formData.append('image', file, file.name)
-    } else {
-      formData.append('image', file, 'profile-image')
-    }
-    const response = await apiClient.post<UploadImageResponse>(
-      '/account/upload-image',
-      formData,
-      {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      },
+    // Blocked: Medusa has no store-facing file upload route today (confirmed
+    // during Phase 2 verification -- GET /store/uploads is a 404, and no
+    // equivalent exists). Tracked in MEDUSA_MIGRATION_BACKEND_REQUIREMENTS.md.
+    throw new Error(
+      'Profile photo upload is not available yet -- it needs a new backend endpoint.',
     )
-    return response.data
   },
-  deleteAccountImage: async (payload: DeleteImagePayload): Promise<void> => {
-    await apiClient.delete('/account/delete-image', { data: payload })
+  deleteAccountImage: async (_payload: DeleteImagePayload): Promise<void> => {
+    throw new Error(
+      'Profile photo removal is not available yet -- it needs a new backend endpoint.',
+    )
   },
-  customerReset: async (
+  resetPassword: async (
     payload: ResetPasswordPayload,
   ): Promise<ResetPasswordResponse> => {
-    const response = await axios.post<ResetPasswordResponse>(
-      `${process.env.NEXT_PUBLIC_APP_URL}/api/auth/reset-password`,
-      payload,
+    const { data } = await medusaClient.post(
+      '/auth/customer/emailpass/update',
+      { password: payload.password },
+      { headers: { Authorization: `Bearer ${payload.token}` } },
     )
-    return response.data
+
+    // If the update response already carries a fresh session token, use it
+    // directly. Otherwise, fall back to reading the identity (entity_id is
+    // the customer's email, confirmed against the backend's own reset-token
+    // workflow) out of the reset token and logging in fresh with the new
+    // password. If neither works, the caller sends the customer to log in
+    // manually -- their password is still updated either way.
+    if (typeof data?.token === 'string') {
+      return {
+        token: {
+          accessToken: data.token,
+          expiresAt: tokenExpiryIso(data.token),
+        },
+      }
+    }
+
+    const email = decodeJwtPayload(payload.token)?.entity_id
+    if (typeof email === 'string' && email) {
+      try {
+        const loginResult = await authService.login({
+          email,
+          password: payload.password,
+        })
+        return loginResult
+      } catch {
+        return { token: null }
+      }
+    }
+
+    return { token: null }
   },
 }
