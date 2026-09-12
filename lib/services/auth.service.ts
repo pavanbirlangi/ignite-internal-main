@@ -288,8 +288,14 @@ export const authService = {
   googleAuthInit: async (
     callbackUrl: string,
   ): Promise<GoogleAuthInitResponse> => {
-    const { data } = await medusaClient.get('/auth/customer/google', {
-      data: { callback_url: callbackUrl },
+    // POST, not GET: the route handles both identically (Medusa core aliases
+    // POST to the same handler as GET), but browsers don't reliably send a
+    // body on a GET request -- confirmed live, the callback_url override was
+    // silently dropped client-side even though it worked in server-side
+    // testing, causing Google to reject with the backend's default callback
+    // URL instead of ours.
+    const { data } = await medusaClient.post('/auth/customer/google', {
+      callback_url: callbackUrl,
     })
     return { location: data.location }
   },
