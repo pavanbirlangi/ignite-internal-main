@@ -19,10 +19,10 @@ export const useRemoveFromWishlist = () => {
   return useMutation({
     mutationFn: (productId: string) =>
       wishlistService.removeFromWishlist(productId),
-    onSuccess: (data) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['wishlist'] })
       queryClient.invalidateQueries({ queryKey: ['wishlist-status'] })
-      toast.success(data.message || 'Removed from wishlist')
+      toast.success('Removed from wishlist')
     },
     onError: (error: any) => {
       console.error('Error removing from wishlist:', error)
@@ -38,10 +38,10 @@ export const useAddToWishlist = () => {
 
   return useMutation({
     mutationFn: (productId: string) => wishlistService.addToWishlist(productId),
-    onSuccess: (data) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['wishlist'] })
       queryClient.invalidateQueries({ queryKey: ['wishlist-status'] })
-      toast.success(data.message || 'Added to wishlist')
+      toast.success('Added to wishlist')
     },
     onError: (error: any) => {
       console.error('Error adding to wishlist:', error)

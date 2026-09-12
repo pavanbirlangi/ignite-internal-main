@@ -519,6 +519,18 @@ export const ProductService = {
   },
 
   /**
+   * Fetches full list-card data (pricing/variants included) for a known set
+   * of product ids, in one call -- e.g. wishlist.service.ts, whose own list
+   * route only returns `{id, title, handle, thumbnail}` per product
+   * (confirmed live) and needs the same enrichment `getProducts` already
+   * does for the store grid. Runs client-side, no cache wrapper involved.
+   */
+  getProductsByIds: async (ids: string[]): Promise<ProductListItem[]> => {
+    const country = await getCountryCode()
+    return _fetchProductsByIds(ids, country)
+  },
+
+  /**
    * Fetches product features. No backend equivalent exists (was folded into
    * product metadata / rating per the migration plan) -- returns null so
    * callers' existing null-handling renders nothing rather than erroring.

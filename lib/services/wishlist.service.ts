@@ -1,125 +1,90 @@
-import apiClient from '../axios'
+import medusaClient from '../medusa-axios'
+import { ProductService } from './product.service'
+import type { ProductListItem } from '@/types/product'
 
-export interface WishlistAddResponse {
-  message: string
-  success: boolean
+export interface GetWishlistParams {
+  page?: number
+  limit?: number
+  search?: string
 }
 
-export interface WishlistRemoveResponse {
-  message: string
-  success: boolean
+export interface WishlistPagination {
+  page: number
+  limit: number
+  totalItems: number
+  totalPages: number
+  hasNextPage: boolean
+  hasPrevPage: boolean
+}
+
+export interface WishlistResponse {
+  products: ProductListItem[]
+  pagination: WishlistPagination
 }
 
 export interface WishlistStatusResponse {
   isInWishlist: boolean
 }
 
-export interface WishlistVariantPrice {
-  amount: string
-  currencyCode: string
-}
-
-export interface WishlistVariant {
-  id: string
-  title: string
-  availableForSale: boolean
-  price: WishlistVariantPrice
-  compareAtPrice: WishlistVariantPrice | null
-  selectedOptions?: { name: string; value: string }[]
-  discount?: { amount: string; percentage: number } | null
-}
-
-export interface WishlistProduct {
-  id: string
-  title: string
-  handle: string
-  description?: string
-  productType: string
-  availableForSale?: boolean
-  tags?: string[]
-  collections?: {
-    edges: {
-      node: { title: string; handle: string }
-    }[]
-  }
-  featuredImage: {
-    url: string
-    altText: string | null
-  }
-  priceRange?: {
-    minVariantPrice: WishlistVariantPrice
-  }
-  compareAtPriceRange?: {
-    minVariantPrice: WishlistVariantPrice
-  }
-  price?: WishlistVariantPrice
-  compareAtPrice?: WishlistVariantPrice | null
-  discount?: { amount: string; percentage: number } | null
-  instantDelivery?: boolean
-  onSale?: boolean
-  featured?: boolean
-  gameLogo?: { name?: string; icon?: string } | null
-  worksOn?: string[]
-  platform?: string[]
-  region?: string[]
-  edition?: string[]
-  genre?: string
-  variants: WishlistVariant[]
-  variantOptions?: { name: string; value: string }[][]
-}
-
-export interface WishlistResponse {
-  items: WishlistProduct[]
-  pageInfo: {
-    hasNextPage: boolean
-    endCursor: string | null
-    totalCount: number
-  }
-}
-
-export interface GetWishlistParams {
-  first?: number
-  after?: string
-  search?: string
-}
-
 export const wishlistService = {
-  addToWishlist: async (productId: string): Promise<WishlistAddResponse> => {
-    const response = await apiClient.post<WishlistAddResponse>(
-      '/wishlist/add',
-      {
-        productId,
-      },
-    )
-    return response.data
-  },
-
-  getWishlist: async (params: GetWishlistParams): Promise<WishlistResponse> => {
-    const response = await apiClient.get<WishlistResponse>('/wishlist', {
-      params,
+  addToWishlist: async (productId: string): Promise<void> => {
+    await medusaClient.post('/store/customers/me/wishlist', {
+      product_id: productId,
     })
-    return response.data
   },
 
-  removeFromWishlist: async (
-    productId: string,
-  ): Promise<WishlistRemoveResponse> => {
-    const response = await apiClient.post<WishlistRemoveResponse>(
-      '/wishlist/remove',
-      {
-        productId,
-      },
+  removeFromWishlist: async (productId: string): Promise<void> => {
+    await medusaClient.delete(
+      `/store/customers/me/wishlist/${encodeURIComponent(productId)}`,
     )
-    return response.data
   },
 
   checkWishlistStatus: async (
     productId: string,
   ): Promise<WishlistStatusResponse> => {
-    const encodedId = encodeURIComponent(productId)
-    const response = await apiClient.get<WishlistStatusResponse>(
-      `/wishlist/check/${encodedId}`,
+    const { data } = await medusaClient.get(
+      `/store/customers/me/wishlist/${encodeURIComponent(productId)}`,
     )
-    return response.data
+    return { isInWishlist: !!data.is_in_wishlist }
+  },
+
+  /**
+   * The list route only returns `{id, title, handle, thumbnail}` per product
+   * (confirmed live, despite its own code comment claiming otherwise) -- no
+   * pricing/variants -- so this enriches with a second call, same pattern as
+   * `product.service.ts`'s store-grid/recommendations enrichment.
+   */
+  getWishlist: async (params: GetWishlistParams = {}): Promise<WishlistResponse> => {
+    const { data } = await medusaClient.get('/store/customers/me/wishlist', {
+      params: {
+        page: params.page ?? 1,
+        limit: params.limit ?? 20,
+        search: params.search,
+      },
+    })
+
+    const bareProducts: Array<{ id: string }> = data.products ?? []
+    const ids = bareProducts.map((p) => p.id)
+    const enriched = await ProductService.getProductsByIds(ids)
+
+    // Preserve the wishlist's own order (most-recently-added first) rather
+    // than whatever order the enrichment call happens to return in.
+    const orderIndex = new Map(ids.map((id, i) => [id, i]))
+    const products: ProductListItem[] = [...enriched].sort(
+      (a, b) => (orderIndex.get(a.id) ?? 0) - (orderIndex.get(b.id) ?? 0),
+    )
+
+    const pagination = data.pagination ?? {}
+    return {
+      products,
+      pagination: {
+        page: pagination.page ?? 1,
+        limit: pagination.limit ?? 20,
+        totalItems: pagination.total_items ?? products.length,
+        totalPages: pagination.total_pages ?? 1,
+        hasNextPage: Boolean(pagination.has_next_page),
+        hasPrevPage: Boolean(pagination.has_prev_page),
+      },
+    }
   },
 }

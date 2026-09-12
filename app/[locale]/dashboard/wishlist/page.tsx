@@ -4,7 +4,6 @@ import Pagination from '@/components/store/Pagination'
 import { useCallback, useState } from 'react'
 import { useWishlist } from '@/hooks/useWishlist'
 import { useDebounce } from '@/hooks/useDebounce'
-import { mapWishlistProductToProduct } from '@/lib/mappers/wishlist.mapper'
 import StoreCard from '@/components/store/StoreCard'
 
 const ITEMS_PER_PAGE = 10
@@ -14,50 +13,27 @@ const Wishlist = () => {
   const debouncedSearch = useDebounce(search, 500)
 
   const [currentPage, setCurrentPage] = useState(1)
-  const [cursorHistory, setCursorHistory] = useState<(string | undefined)[]>([
-    undefined,
-  ])
-
-  const activeCursor = cursorHistory[currentPage - 1]
 
   const { data, isLoading } = useWishlist({
-    first: ITEMS_PER_PAGE,
-    after: activeCursor,
+    page: currentPage,
+    limit: ITEMS_PER_PAGE,
     search: debouncedSearch || undefined,
   })
 
-  const wishlistItems = data?.items || []
-  const totalCount = data?.pageInfo.totalCount || 0
-  const hasNextPage = data?.pageInfo.hasNextPage ?? false
-  const endCursor = data?.pageInfo.endCursor ?? null
-  const totalPages = Math.max(Math.ceil(totalCount / ITEMS_PER_PAGE), 1)
+  const wishlistItems = data?.products || []
+  const totalPages = Math.max(data?.pagination.totalPages ?? 1, 1)
 
   const handlePageChange = useCallback(
     (page: number) => {
       if (page < 1 || page > totalPages || page === currentPage) return
-
-      if (page === currentPage + 1 && hasNextPage && endCursor) {
-        setCursorHistory((prev) => {
-          const updated = [...prev]
-          if (!updated[page - 1]) {
-            updated[page - 1] = endCursor
-          }
-          return updated
-        })
-        setCurrentPage(page)
-      } else if (page < currentPage && cursorHistory[page - 1] !== undefined) {
-        setCurrentPage(page)
-      } else if (page === 1) {
-        setCurrentPage(1)
-      }
+      setCurrentPage(page)
     },
-    [currentPage, totalPages, hasNextPage, endCursor, cursorHistory],
+    [currentPage, totalPages],
   )
 
   const handleSearchChange = (value: string) => {
     setSearch(value)
     setCurrentPage(1)
-    setCursorHistory([undefined])
   }
 
   return (
@@ -87,11 +63,7 @@ const Wishlist = () => {
             ))
           ) : wishlistItems.length > 0 ? (
             wishlistItems.map((wp) => (
-              <StoreCard
-                key={wp.id}
-                product={mapWishlistProductToProduct(wp)}
-                wishlisted
-              />
+              <StoreCard key={wp.id} product={wp} wishlisted />
             ))
           ) : (
             <div className="text-muted-foreground col-span-full flex h-72 items-center justify-center text-center">
