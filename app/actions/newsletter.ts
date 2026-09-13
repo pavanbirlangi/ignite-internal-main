@@ -1,18 +1,11 @@
 'use server'
 
+import { newsletterService } from '@/lib/services/newsletter.service'
+import { extractApiErrorMessage } from '@/lib/utils/api-error'
+
 type SubscribeResult = {
   success: boolean
   message: string
-}
-
-function getApiBaseUrl() {
-  const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL
-
-  if (!apiBaseUrl) {
-    throw new Error('API URL is not configured')
-  }
-
-  return apiBaseUrl.replace(/\/+$/, '')
 }
 
 export async function subscribeToNewsletter(
@@ -28,34 +21,16 @@ export async function subscribeToNewsletter(
   }
 
   try {
-    const response = await fetch(`${getApiBaseUrl()}/subscribe`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        email: normalizedEmail,
-      }),
-      cache: 'no-store',
-    })
-
-    const payload = await response.json().catch(() => null)
-
-    if (!response.ok) {
-      return {
-        success: false,
-        message: payload?.message || payload?.error || 'Subscription failed',
-      }
-    }
+    await newsletterService.subscribe(normalizedEmail)
 
     return {
       success: true,
-      message: payload?.message || 'Subscribed successfully',
+      message: 'Subscribed successfully',
     }
   } catch (error) {
     return {
       success: false,
-      message: error instanceof Error ? error.message : 'Subscription failed',
+      message: extractApiErrorMessage(error, 'Subscription failed'),
     }
   }
 }
