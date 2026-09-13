@@ -3,51 +3,32 @@ export interface LibraryItemCategory {
   handle: string
 }
 
-export interface LibraryItemGameLogo {
-  name: string
-  icon: string
-}
-
-export interface LibraryItemFeaturedImage {
+export interface LibraryItemImage {
   url: string
   altText: string | null
 }
 
-export interface LibraryItemPrice {
-  amount: string
-  currencyCode: string
-}
-
-export interface LibraryItemOption {
-  name: string
-  value: string
-}
+export type LibraryKeyStatus = 'pending_manual' | 'assigned' | 'revealed' | 'refunded'
 
 export interface LibraryItem {
   orderId: string
-  orderNumber: number
   purchasedAt: string
-  financialStatus: string
   productId: string
   handle: string
   title: string
-  quantity: number
   variantId: string
   variantTitle: string
-  selectedOptions: LibraryItemOption[]
-  featuredImage: LibraryItemFeaturedImage | null
-  price: LibraryItemPrice | null
-  categories: LibraryItemCategory[]
+  featuredImage: LibraryItemImage | null
   productType: string
+  keyStatus: LibraryKeyStatus
+  // Permanently empty -- confirmed live the backend hardcodes category/platform/product-option
+  // data to null on this route (v1 scope, no real facet data wired in yet). Kept only so the
+  // existing components' already-graceful empty-state handling keeps working unchanged.
+  categories: LibraryItemCategory[]
+  platform: string[]
   tags: string[]
   displayTags?: string[]
-  platform: string[]
-  region: string[]
-  edition: string[]
-  worksOn: string[]
-  instantDelivery: boolean
-  onSale: boolean
-  gameLogo: LibraryItemGameLogo | null
+  selectedOptions: { name: string; value: string }[]
 }
 
 export interface LibraryPagination {
@@ -59,15 +40,6 @@ export interface LibraryPagination {
   hasPrevPage: boolean
 }
 
-export interface LibraryFilters {
-  sort?: string
-  order?: string
-  category?: string
-  platform?: string
-  productType?: string
-  search?: string
-}
-
 export interface LibraryFacets {
   categories: LibraryItemCategory[]
   platforms: string[]
@@ -77,12 +49,10 @@ export interface LibraryFacets {
 export interface LibraryResponse {
   items: LibraryItem[]
   pagination: LibraryPagination
-  filters: LibraryFilters
   facets: LibraryFacets
 }
 
 export interface GetLibraryParams {
-  country?: string
   sort?: string
   order?: 'asc' | 'desc' | string
   category?: string

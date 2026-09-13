@@ -13,8 +13,7 @@ import {
 import { generateReceiptPdf } from '@/lib/orders/generate-receipt-pdf'
 import { generateKeysPdf } from '@/lib/orders/generate-keys-pdf'
 import { orderService, type OrderDetails } from '@/lib/services/order.service'
-import { keysService, type LicenseKey } from '@/lib/services/keys.service'
-import { useUserStore } from '@/store/useUserStore'
+import { keysService, type KeyAssignment } from '@/lib/services/keys.service'
 import type { OrderDetailsClientProps } from '@/types/OrderDetailsTypes'
 import type { ProductDetails } from '@/components/library/reveal-product-modal/types'
 
@@ -32,9 +31,8 @@ export default function OrderDetailsClient({
   )
 
   // License keys state (for PDF download only – modal fetches its own)
-  const [keysData, setKeysData] = useState<LicenseKey[]>([])
+  const [keysData, setKeysData] = useState<KeyAssignment[]>([])
   const [keysLoading, setKeysLoading] = useState(false)
-  const userEmail = useUserStore((state) => state.user?.email)
 
   useEffect(() => {
     let isMounted = true
@@ -79,9 +77,10 @@ export default function OrderDetailsClient({
     }
   }, [orderId])
 
-  // Fetch license keys for PDF download
+  // Fetch license keys for PDF download. Session-authenticated, no email
+  // needed (confirmed live -- see keys.service.ts).
   useEffect(() => {
-    if (!order?.id || !userEmail) return
+    if (!order?.id) return
 
     let cancelled = false
     setKeysData([])
@@ -89,7 +88,7 @@ export default function OrderDetailsClient({
 
     async function fetchKeys() {
       try {
-        const keys = await keysService.getKeys(order!.id, userEmail!)
+        const keys = await keysService.getOrderKeys(order!.id)
         if (!cancelled) {
           setKeysData(keys)
         }
@@ -107,7 +106,7 @@ export default function OrderDetailsClient({
     return () => {
       cancelled = true
     }
-  }, [order?.id, userEmail])
+  }, [order?.id])
 
   const lineItems = order?.lineItems?.edges ?? []
 

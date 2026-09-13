@@ -1,6 +1,6 @@
 import { jsPDF } from 'jspdf'
 import type { OrderDetails } from '@/lib/services/order.service'
-import type { LicenseKey } from '@/lib/services/keys.service'
+import type { KeyAssignment } from '@/lib/services/keys.service'
 import { formatOrderDate } from './order-formatters'
 
 const BRAND_BLUE = [59, 130, 246] as const
@@ -31,7 +31,7 @@ function ensurePage(doc: jsPDF, y: number, needed: number): number {
 
 export function generateKeysPdf(
   order: OrderDetails,
-  keysData: LicenseKey[] = [],
+  keysData: KeyAssignment[] = [],
 ): void {
   const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' })
   const pageWidth = doc.internal.pageSize.getWidth()
@@ -95,11 +95,16 @@ export function generateKeysPdf(
         ? ` — ${variant.title}`
         : ''
 
-    // Match real keys by variant_id
-    const variantGid = variant?.id ?? ''
+    // Match real keys by variant id. Note: `order` still comes from the
+    // not-yet-migrated order.service.ts (Phase 9), so `variant?.id` here
+    // won't match a real Medusa variant id until that's rebuilt -- this
+    // filter is correct against the new keys API, just not fully wired
+    // end-to-end until Phase 9 lands.
+    const variantId = variant?.id ?? ''
     const keys = keysData
-      .filter((k) => k.variant_id === variantGid)
-      .map((k) => k.license_key)
+      .filter((k) => k.variantId === variantId)
+      .map((k) => k.key)
+      .filter((k): k is string => !!k)
 
     if (keys.length === 0) {
       keys.push('No keys available')

@@ -5,7 +5,7 @@ import { useState } from 'react'
 import { ActivationGuideModal } from '@/components/shared/ActivationGuideModal'
 
 interface ModalFooterProps {
-  revealDate: string
+  revealDate: string | null
   guideLoading?: boolean
   activationGuide?: {
     guide: string
@@ -87,14 +87,16 @@ export const ModalFooter = ({
             </a>
           </Button> */}
         </div>
-        <div className="text-right">
-          <p className="text-muted-foreground text-xs font-semibold">
-            Key revealed on
-          </p>
-          <p className="text-sm font-medium text-white">
-            {formatRevealDate(revealDate)}
-          </p>
-        </div>
+        {revealDate && (
+          <div className="text-right">
+            <p className="text-muted-foreground text-xs font-semibold">
+              Key revealed on
+            </p>
+            <p className="text-sm font-medium text-white">
+              {formatRevealDate(revealDate)}
+            </p>
+          </div>
+        )}
       </div>
 
       <p className="text-muted-foreground border-card border-t-[0.5px] border-b-[0.5px] py-4 text-center text-xs font-medium md:text-left">

@@ -13,9 +13,9 @@ import { ProductHeader } from './reveal-product-modal/ProductHeader'
 import { KeyList } from './reveal-product-modal/KeyList'
 import { ModalFooter } from './reveal-product-modal/ModalFooter'
 import { ProductDetails } from './reveal-product-modal/types'
-import { keysService } from '@/lib/services/keys.service'
-import { useUserStore } from '@/store/useUserStore'
+import { keysService, KeyAssignment } from '@/lib/services/keys.service'
 import { ProductService } from '@/lib/services/product.service'
+import { extractApiErrorMessage } from '@/lib/utils/api-error'
 
 interface RevealProductModalProps {
   isOpen: boolean
@@ -23,31 +23,34 @@ interface RevealProductModalProps {
   product: ProductDetails
 }
 
-// Simple in-memory cache so repeated opens are instant
-const keysCache = new Map<string, string[]>()
+// Simple in-memory cache so repeated opens are instant. No email in the cache
+// key -- the route is session-authenticated with a server-side ownership
+// check, not looked up by email at all (confirmed live).
+const keysCache = new Map<string, KeyAssignment[]>()
 
 export function RevealProductModal({
   isOpen,
   onClose,
   product,
 }: RevealProductModalProps) {
-  const [keys, setKeys] = React.useState<string[]>([])
+  const [assignments, setAssignments] = React.useState<KeyAssignment[]>([])
   const [loading, setLoading] = React.useState(false)
   const [error, setError] = React.useState<string | null>(null)
   const [activationGuide, setActivationGuide] = React.useState<
     { guide: string; name: string; icon?: string | null } | undefined
   >(undefined)
   const [guideLoading, setGuideLoading] = React.useState(false)
-  const userEmail = useUserStore((state) => state.user?.email)
 
   React.useEffect(() => {
-    if (!isOpen || !product.orderId || !userEmail) return
+    if (!isOpen || !product.orderId) return
 
-    const cacheKey = `${userEmail}|${product.orderId}|${product.variantId}`
+    const cacheKey = `${product.orderId}|${product.variantId}`
 
-    // Serve from cache if available
-    if (keysCache.has(cacheKey)) {
-      setKeys(keysCache.get(cacheKey)!)
+    // Serve from cache if available -- but never re-serve a still-pending
+    // result, since an admin may have awarded a real key since it was cached.
+    const cached = keysCache.get(cacheKey)
+    if (cached && !cached.some((a) => a.status === 'pending_manual')) {
+      setAssignments(cached)
       setLoading(false)
       setError(null)
       return
@@ -58,23 +61,21 @@ export function RevealProductModal({
     async function fetchKeys() {
       setLoading(true)
       setError(null)
-      setKeys([])
 
       try {
-        const data = await keysService.getKeys(product.orderId, userEmail!)
+        const data = await keysService.getOrderKeys(product.orderId)
         if (!cancelled) {
-          // Filter keys to the selected variant only
-          const variantKeys = product.variantId
-            ? data.filter((k) => k.variant_id === product.variantId)
+          // Filter to the selected variant only (an order can contain other products)
+          const variantAssignments = product.variantId
+            ? data.filter((a) => a.variantId === product.variantId)
             : data
-          const licenseKeys = variantKeys.map((k) => k.license_key)
-          keysCache.set(cacheKey, licenseKeys)
-          setKeys(licenseKeys)
+          keysCache.set(cacheKey, variantAssignments)
+          setAssignments(variantAssignments)
         }
       } catch (err) {
         if (!cancelled) {
           console.error('Failed to fetch keys:', err)
-          setError('Failed to load keys. Please try again.')
+          setError(extractApiErrorMessage(err, 'Failed to load your key. Please try again.'))
         }
       } finally {
         if (!cancelled) {
@@ -88,7 +89,13 @@ export function RevealProductModal({
     return () => {
       cancelled = true
     }
-  }, [isOpen, product.orderId, product.variantId, userEmail])
+  }, [isOpen, product.orderId, product.variantId])
+
+  const isPending =
+    assignments.length > 0 &&
+    assignments.every((a) => a.status === 'pending_manual')
+  const keys = assignments.map((a) => a.key).filter((k): k is string => !!k)
+  const latestRevealedAt = assignments.find((a) => a.revealedAt)?.revealedAt
 
   React.useEffect(() => {
     if (!isOpen || !product.handle) return
@@ -98,16 +105,14 @@ export function RevealProductModal({
 
     async function fetchActivationGuide() {
       try {
-        const shopifyProduct = await ProductService.getProductByHandle(
+        const productDetail = await ProductService.getProductByHandleUncached(
           product.handle,
         )
-        if (shopifyProduct?.activationGuide) {
-          setActivationGuide(shopifyProduct.activationGuide)
-        } else {
-          setActivationGuide(undefined)
-        }
-      } catch {
-        // activation guide is optional
+        setActivationGuide(productDetail?.activationGuide ?? undefined)
+      } catch (err) {
+        // Activation guide is optional -- log so a real failure is visible,
+        // but don't block the key reveal on it.
+        console.error('Failed to load activation guide:', err)
       } finally {
         setGuideLoading(false)
       }
@@ -155,6 +160,12 @@ export function RevealProductModal({
                   <div className="flex items-center justify-center rounded-xl bg-red-500/10 p-4">
                     <p className="text-sm text-red-400">{error}</p>
                   </div>
+                ) : isPending ? (
+                  <div className="bg-secondary flex items-center justify-center rounded-xl p-4">
+                    <p className="text-muted-foreground text-sm">
+                      Your key is being prepared -- check back soon.
+                    </p>
+                  </div>
                 ) : keys.length > 0 ? (
                   <KeyList keys={keys} />
                 ) : (
@@ -168,7 +179,7 @@ export function RevealProductModal({
             </div>
 
             <ModalFooter
-              revealDate={product.revealDate}
+              revealDate={latestRevealedAt ?? null}
               activationGuide={activationGuide}
               guideLoading={guideLoading || loading}
             />

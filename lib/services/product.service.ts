@@ -494,6 +494,19 @@ export const ProductService = {
     return _dedupedGetProductByHandle(handle, country)
   },
 
+  /**
+   * Same fetch, but for callers that run client-side (e.g. the library
+   * reveal modal's activation-guide lookup) -- `unstable_cache` (used by
+   * `getProductByHandle` above) is server-only and throws an
+   * "incrementalCache missing" invariant if called from the browser
+   * (confirmed live: this exact call has been silently failing there since
+   * Phase 3, swallowed by an empty catch block). Skips that wrapper.
+   */
+  getProductByHandleUncached: async (handle: string): Promise<Product> => {
+    const country = await getCountryCode()
+    return _fetchProductByHandle(handle, country)
+  },
+
   /** Fetches product recommendations. Cached 60s across requests. Takes a handle for API-shape continuity but resolves to the product id internally. */
   getProductRecommendations: async (
     handle: string,
