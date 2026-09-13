@@ -221,7 +221,12 @@ export default function OrderDetailsClient({
           <div className="flex flex-col gap-3 sm:flex-row">
             <button
               onClick={handleDownloadReceipt}
-              disabled={!order}
+              disabled={!order || order.financialStatus !== 'PAID'}
+              title={
+                order && order.financialStatus !== 'PAID'
+                  ? 'A receipt is available once payment is confirmed'
+                  : undefined
+              }
               className="border-muted-foreground flex h-10 cursor-pointer items-center justify-center gap-2 rounded-[6px] border px-6 text-sm font-medium text-white transition-colors hover:bg-white/5 disabled:cursor-not-allowed disabled:opacity-50"
             >
               <Download className="h-4 w-4" />

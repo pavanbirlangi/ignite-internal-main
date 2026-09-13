@@ -6,10 +6,11 @@ import OrderConfirmationStatus from '@/components/orders/OrderConfirmationStatus
 import { TransactionDetailsGrid } from '@/components/orders/TransactionDetailsGrid'
 import { buildOrderConfirmationViewModel } from '@/lib/orders/order-confirmation'
 import { orderService, type OrderDetails } from '@/lib/services/order.service'
-import { useParams } from 'next/navigation'
+import { useParams, useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 
 export default function OrderConfirmationPageContent() {
+  const router = useRouter()
   const params = useParams<{ id?: string | string[] }>()
   const orderId = Array.isArray(params.id) ? params.id[0] : params.id
   const [order, setOrder] = useState<OrderDetails | null>(null)
@@ -90,7 +91,11 @@ export default function OrderConfirmationPageContent() {
             savingDiscount="-"
           />
         )}
-        {!error && <StillExperiencingIssues onCreateTicket={() => {}} />}
+        {!error && (
+          <StillExperiencingIssues
+            onCreateTicket={() => router.push('/help/create-ticket')}
+          />
+        )}
       </div>
     </main>
   )
