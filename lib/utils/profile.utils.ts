@@ -2,7 +2,6 @@ import { isValidPhoneNumber } from 'libphonenumber-js'
 
 export const MAX_PROFILE_IMAGE_SIZE = 5 * 1024 * 1024 // 5MB
 export const PHONE_REGEX = /^\+?[1-9]\d{7,14}$/
-export const SHOPIFY_FILE_GID_REGEX = /^gid:\/\/shopify\/[A-Za-z]+\//
 
 export const extractApiErrorMessage = (
   error: any,
@@ -69,13 +68,6 @@ export const validateDobValue = (value: string): string => {
     throw new Error('Date of birth cannot be in the future')
 
   return normalized
-}
-
-export const normalizeProfilePhotoValue = (
-  value: string | null | undefined,
-): string => {
-  const normalized = (value || '').trim()
-  return SHOPIFY_FILE_GID_REGEX.test(normalized) ? normalized : ''
 }
 
 export const splitDisplayName = (

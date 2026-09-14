@@ -59,31 +59,29 @@ export const reviewService = {
   },
 
   /**
-   * Medusa has no guest-review path and no single "orders eligible for
-   * review" endpoint -- so this fetches the logged-in customer's own orders
-   * (core `GET /store/orders`, confirmed live) and filters to the ones that
-   * actually contain this product. Whether a given order has *already* been
-   * reviewed isn't checked here (no endpoint for it either); the submit call
-   * itself surfaces a clear "already submitted" error if so (confirmed live)
-   * -- scoped narrowly to review-submission's own needs rather than building
-   * out the general order service, which is Phase 9's job.
+   * `GET /store/products/:id/review-eligibility` -- customer-authenticated,
+   * added to the backend specifically to close this gap (was previously a
+   * client-side filter over the customer's full order history, with
+   * "already reviewed" only discovered late via the submit call's rejection
+   * -- see the requirements doc's R-14 for the before/after). Confirmed
+   * live the route returns orders in whatever order `query.graph` happened
+   * to return them (not sorted), so the most-recent-first sort still
+   * happens client-side here, same as before.
    */
   getEligibleOrdersForReview: async (
     productId: string,
   ): Promise<EligibleReviewOrder[]> => {
-    const { data } = await medusaClient.get('/store/orders', {
-      params: { fields: 'id,display_id,created_at,items.product_id' },
-    })
+    const { data } = await medusaClient.get(
+      `/store/products/${encodeURIComponent(productId)}/review-eligibility`,
+    )
 
     const orders: any[] = data.orders ?? []
     return orders
-      .filter((order) =>
-        (order.items ?? []).some((item: any) => item.product_id === productId),
-      )
       .map((order) => ({
-        id: order.id,
-        displayId: order.display_id,
-        createdAt: order.created_at,
+        id: order.order_id,
+        displayId: Number(order.order_display_id) || 0,
+        createdAt: order.purchased_at,
+        alreadyReviewed: Boolean(order.already_reviewed),
       }))
       .sort(
         (a, b) =>

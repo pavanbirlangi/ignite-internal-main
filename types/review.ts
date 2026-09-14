@@ -49,4 +49,5 @@ export interface EligibleReviewOrder {
   id: string
   displayId: number
   createdAt: string
+  alreadyReviewed: boolean
 }

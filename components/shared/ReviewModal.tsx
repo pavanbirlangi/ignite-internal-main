@@ -60,9 +60,15 @@ export function ReviewModal({
   const { mutateAsync: submitReview, isPending: isSubmitting } =
     useSubmitReview()
 
-  // Defaults to the most recent eligible order until the user picks a
+  // The backend now flags per-order whether it's already been reviewed
+  // (previously only discoverable late, via the submit call's rejection) --
+  // the default selection should skip straight past those rather than
+  // landing on one that's guaranteed to fail.
+  const reviewableOrders = eligibleOrders?.filter((o) => !o.alreadyReviewed)
+
+  // Defaults to the most recent reviewable order until the user picks a
   // different one -- derived rather than synced via an effect.
-  const effectiveOrderId = selectedOrderId || eligibleOrders?.[0]?.id || ''
+  const effectiveOrderId = selectedOrderId || reviewableOrders?.[0]?.id || ''
 
   const closeModal = () => {
     onOpenChange?.(false)
@@ -128,8 +134,9 @@ export function ReviewModal({
     closeModal()
   }
 
-  const hasEligibleOrders = Boolean(eligibleOrders?.length)
-  const canWriteReview = isAuthenticated && hasEligibleOrders
+  const hasAnyOrders = Boolean(eligibleOrders?.length)
+  const hasReviewableOrders = Boolean(reviewableOrders?.length)
+  const canWriteReview = isAuthenticated && hasReviewableOrders
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -219,9 +226,14 @@ export function ReviewModal({
             <div className="bg-secondary rounded-[12px] p-6 text-center text-sm text-white">
               Checking your orders...
             </div>
-          ) : !hasEligibleOrders ? (
+          ) : !hasAnyOrders ? (
             <div className="bg-secondary rounded-[12px] p-6 text-center text-white">
               You need to have purchased this product to leave a review.
+            </div>
+          ) : !hasReviewableOrders ? (
+            <div className="bg-secondary rounded-[12px] p-6 text-center text-white">
+              You&apos;ve already reviewed this product for every eligible
+              order.
             </div>
           ) : (
             <>
@@ -239,9 +251,14 @@ export function ReviewModal({
                     </SelectTrigger>
                     <SelectContent>
                       {eligibleOrders.map((order) => (
-                        <SelectItem key={order.id} value={order.id}>
+                        <SelectItem
+                          key={order.id}
+                          value={order.id}
+                          disabled={order.alreadyReviewed}
+                        >
                           Order #{order.displayId} --{' '}
                           {new Date(order.createdAt).toLocaleDateString()}
+                          {order.alreadyReviewed ? ' (already reviewed)' : ''}
                         </SelectItem>
                       ))}
                     </SelectContent>

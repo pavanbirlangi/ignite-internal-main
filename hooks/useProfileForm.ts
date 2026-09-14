@@ -5,7 +5,6 @@ import { useUserStore } from '@/store/useUserStore'
 import {
   MAX_PROFILE_IMAGE_SIZE,
   extractApiErrorMessage,
-  normalizeProfilePhotoValue,
   splitDisplayName,
   validatePhoneValue,
   validateDobValue,
@@ -18,7 +17,6 @@ export interface ProfileFormData {
   email: string
   phone: string
   profilePhoto: string
-  profilePhotoId: string
   dob: string
 }
 
@@ -35,7 +33,6 @@ export function useProfileForm(initialData: ProfileFormData) {
   const [phone, setPhone] = useState(initialData.phone)
   const [dob, setDob] = useState(initialData.dob)
   const [profilePhoto, setProfilePhoto] = useState(initialData.profilePhoto)
-  const [profilePhotoId, setProfilePhotoId] = useState(initialData.profilePhotoId)
 
   const [isSendingReset, setIsSendingReset] = useState(false)
   const [resetSent, setResetSent] = useState(false)
@@ -53,7 +50,6 @@ export function useProfileForm(initialData: ProfileFormData) {
     setPhone(initialData.phone)
     setDob(initialData.dob)
     setProfilePhoto(initialData.profilePhoto)
-    setProfilePhotoId(initialData.profilePhotoId)
   }, [
     initialData.firstName,
     initialData.lastName,
@@ -62,7 +58,6 @@ export function useProfileForm(initialData: ProfileFormData) {
     initialData.phone,
     initialData.dob,
     initialData.profilePhoto,
-    initialData.profilePhotoId,
   ])
 
   const applyAccount = (account: {
@@ -73,7 +68,6 @@ export function useProfileForm(initialData: ProfileFormData) {
     email: string
     phone: string | null
     profile_photo: string | null
-    profile_photo_id: string | null
     dob: string | null
   }) => {
     setFirstName(account.firstName)
@@ -85,7 +79,6 @@ export function useProfileForm(initialData: ProfileFormData) {
     setPhone(account.phone || '')
     setDob(account.dob || '')
     setProfilePhoto(account.profile_photo || '')
-    setProfilePhotoId(account.profile_photo_id || '')
     setUser(account)
   }
 
@@ -113,25 +106,6 @@ export function useProfileForm(initialData: ProfileFormData) {
       nextPayload.dob = dob
     }
 
-    // If profile_photo override is explicitly null, send empty string to clear it
-    if (overrides.profile_photo === null) {
-      nextPayload.profile_photo = ''
-      return nextPayload
-    }
-
-    const photoSource =
-      overrides.profile_photo !== undefined
-        ? overrides.profile_photo
-        : profilePhoto
-
-    const normalizedPhoto = normalizeProfilePhotoValue(photoSource)
-
-    if (normalizedPhoto) {
-      nextPayload.profile_photo = normalizedPhoto
-    } else {
-      delete nextPayload.profile_photo
-    }
-
     return nextPayload
   }
 
@@ -156,11 +130,7 @@ export function useProfileForm(initialData: ProfileFormData) {
               : displayName,
           email: payload.email ?? email,
           phone: payload.phone ?? phone,
-          profile_photo:
-            payload.profile_photo !== undefined
-              ? payload.profile_photo ?? ''
-              : profilePhoto,
-          profile_photo_id: profilePhotoId || null,
+          profile_photo: profilePhoto,
           dob: payload.dob ?? dob,
         })
       }
@@ -212,11 +182,19 @@ export function useProfileForm(initialData: ProfileFormData) {
 
     setIsUploadingImage(true)
     try {
-      const { gid } = await authService.uploadAccountImage(file)
-      await updateAccount(
-        getPayload({ profile_photo: normalizeProfilePhotoValue(gid) }),
-        'Profile image updated',
-      )
+      // Upload + save happen atomically server-side -- no separate
+      // updateAccount call needed.
+      const { profilePhoto: uploadedPhoto } =
+        await authService.uploadAccountImage(file)
+
+      try {
+        const latestAccount = await authService.getAccount()
+        applyAccount(latestAccount)
+      } catch {
+        setProfilePhoto(uploadedPhoto || '')
+      }
+
+      toast.success('Profile image updated')
     } catch (error: any) {
       console.error('Failed to upload profile image:', error)
       toast.error(
@@ -228,26 +206,17 @@ export function useProfileForm(initialData: ProfileFormData) {
   }
 
   const handleDeleteImage = async () => {
-    if (!profilePhoto && !profilePhotoId) return
-
-    const gid = profilePhotoId
-    if (!gid) {
-      toast.error('Cannot delete image: missing image identifier')
-      return
-    }
+    if (!profilePhoto) return
 
     setIsDeletingImage(true)
     try {
-      await authService.deleteAccountImage({ gid })
+      await authService.deleteAccountImage()
 
-      // Refresh other account fields from server
       try {
         const latestAccount = await authService.getAccount()
-        applyAccount({ ...latestAccount, profile_photo: null, profile_photo_id: null })
+        applyAccount(latestAccount)
       } catch {
-        // Fallback: just clear photo locally
         setProfilePhoto('')
-        setProfilePhotoId('')
       }
       toast.success('Profile image removed')
     } catch (error: any) {

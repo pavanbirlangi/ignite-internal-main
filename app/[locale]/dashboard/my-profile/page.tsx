@@ -13,7 +13,6 @@ export default function MyProfile() {
     email: user?.email || '',
     phone: user?.phone || '',
     profilePhoto: user?.profile_photo || '',
-    profilePhotoId: user?.profile_photo_id || '',
     dob: user?.dob || '',
   }
 

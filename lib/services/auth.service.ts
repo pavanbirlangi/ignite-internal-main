@@ -44,7 +44,6 @@ export interface AccountResponse {
   email: string
   phone: string | null
   profile_photo: string | null
-  profile_photo_id: string | null
   dob: string | null
 }
 
@@ -54,16 +53,10 @@ export interface UpdateAccountPayload {
   email?: string | null
   phone?: string | null
   dob?: string | null
-  profile_photo?: string | null
 }
 
 export interface UploadImageResponse {
-  message: string
-  gid: string
-}
-
-export interface DeleteImagePayload {
-  gid: string
+  profilePhoto: string | null
 }
 
 export interface ResetPasswordPayload {
@@ -142,7 +135,6 @@ function normalizeAccountResponse(customer: {
     email: customer.email,
     phone: customer.phone || null,
     profile_photo: typeof profilePhoto === 'string' ? profilePhoto : null,
-    profile_photo_id: null,
     dob: typeof dob === 'string' ? dob : null,
   }
 }
@@ -214,8 +206,10 @@ export const authService = {
     if (payload.lastName !== undefined) body.last_name = payload.lastName
     if (payload.phone) body.phone = payload.phone
 
-    // `dob` (and, once supported, `profile_photo`) live in Medusa's generic
-    // customer.metadata JSON column -- there's no dedicated field for either.
+    // `dob` lives in Medusa's generic customer.metadata JSON column -- there's
+    // no dedicated field for it. `profile_photo` also lives there, but has its
+    // own dedicated upload/delete endpoints below rather than going through
+    // this general-purpose update call.
     if (payload.dob !== undefined) {
       body.metadata = { dob: payload.dob || null }
     }
@@ -223,20 +217,32 @@ export const authService = {
     const { data } = await medusaClient.post('/store/customers/me', body)
     return normalizeAccountResponse(data.customer)
   },
-  uploadAccountImage: async (
-    _file: File | Blob,
-  ): Promise<UploadImageResponse> => {
-    // Blocked: Medusa has no store-facing file upload route today (confirmed
-    // during Phase 2 verification -- GET /store/uploads is a 404, and no
-    // equivalent exists). Tracked in MEDUSA_MIGRATION_BACKEND_REQUIREMENTS.md.
-    throw new Error(
-      'Profile photo upload is not available yet -- it needs a new backend endpoint.',
+  /**
+   * `POST /store/customers/me/upload-image` -- customer-authenticated,
+   * multipart. Uploads the file to S3 (confirmed live) and atomically writes
+   * the resulting URL onto customer.metadata.profile_photo server-side --
+   * no separate `updateAccount` call needed afterward.
+   */
+  uploadAccountImage: async (file: File | Blob): Promise<UploadImageResponse> => {
+    const formData = new FormData()
+    formData.append('files', file)
+
+    const { data } = await medusaClient.post(
+      '/store/customers/me/upload-image',
+      formData,
+      { headers: { 'Content-Type': 'multipart/form-data' } },
     )
+
+    return { profilePhoto: data.profile_photo ?? null }
   },
-  deleteAccountImage: async (_payload: DeleteImagePayload): Promise<void> => {
-    throw new Error(
-      'Profile photo removal is not available yet -- it needs a new backend endpoint.',
-    )
+  /**
+   * `DELETE /store/customers/me/upload-image` -- clears
+   * customer.metadata.profile_photo server-side. No payload needed (unlike
+   * the old Shopify-GID flow this replaces, there's nothing to identify --
+   * it always targets the authenticated customer's own single photo).
+   */
+  deleteAccountImage: async (): Promise<void> => {
+    await medusaClient.delete('/store/customers/me/upload-image')
   },
   resetPassword: async (
     payload: ResetPasswordPayload,
