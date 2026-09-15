@@ -196,6 +196,27 @@ export const cartService = {
     return cart
   },
 
+  // Moves an already-existing cart onto a different Medusa region (confirmed
+  // live against the core validator: `POST /store/carts/:id` accepts
+  // `region_id`, same route `checkout.service.ts` uses for email). Medusa
+  // recomputes every line item's unit price and the cart totals against the
+  // new region's currency as part of `updateCartWorkflow` -- this is what
+  // actually keeps an existing cart's currency in sync after the user
+  // switches region via RegionToggle, since region creation
+  // (`resolveRegionId()` above) only ever runs once, at cart creation time.
+  updateCartRegion: async (
+    cartId: string,
+    regionId: string,
+  ): Promise<CartResponse> => {
+    const encodedId = encodeURIComponent(cartId)
+    const { data } = await medusaClient.post(
+      `/store/carts/${encodedId}`,
+      { region_id: regionId },
+      { params: { fields: CART_FIELDS } },
+    )
+    return mapCart(data.cart)
+  },
+
   transferCart: async (cartId: string): Promise<CartResponse> => {
     const encodedId = encodeURIComponent(cartId)
     const { data } = await medusaClient.post(

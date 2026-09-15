@@ -16,9 +16,13 @@ export default function ConditionalFooter({ footerData, translations }: Conditio
   const pathname = usePathname()
 
   // Define routes where footer should be hidden
-  // We check if the pathname contains /cart or /dashboard
+  // We check if the pathname contains /cart, /dashboard, or /checkout
   // Since these are usually top-level segments after the locale
-  const hideFooterRoutes = ['cart', 'dashboard']
+  // Checkout in particular must not expose the footer's RegionToggle --
+  // switching currency mid-checkout doesn't touch the cart/Stripe session
+  // already in flight, so all currency decisions need to be made before
+  // checkout is reached.
+  const hideFooterRoutes = ['cart', 'dashboard', 'checkout']
   
   const segments = pathname.split('/')
   // segments[0] is ""

@@ -9,6 +9,7 @@ import {
 import { toast } from 'sonner'
 import { useUserStore } from './useUserStore'
 import { useAuthModalStore } from './useAuthModalStore'
+import { useCurrencyStore } from './useCurrencyStore'
 import {
   extractApiErrorMessage,
   isCartNotFoundError,
@@ -70,6 +71,28 @@ interface CartState {
   clearCart: () => void
   loadCartCmsData: () => Promise<void>
   transferGuestCartToUser: () => Promise<void>
+}
+
+// A cart is only ever assigned a region once, at creation time
+// (`cartService.createCart()`'s `resolveRegionId()`) -- switching currency
+// via RegionToggle/LanguageModal only ever updates `useCurrencyStore`'s
+// cookies/state, it never touches an already-existing cart. Without this,
+// an existing cart just keeps quoting prices in whatever currency it was
+// first created in, regardless of what region the rest of the site (and the
+// user) has since switched to -- this is what migrates it to match.
+const syncCartRegion = async (
+  set: (partial: Partial<CartState>) => void,
+  cart: CartResponse,
+): Promise<CartResponse> => {
+  const desiredRegionId = useCurrencyStore.getState().regionId
+  if (!desiredRegionId || cart.regionId === desiredRegionId) return cart
+
+  set({ isMigratingRegion: true })
+  try {
+    return await cartService.updateCartRegion(cart.id, desiredRegionId)
+  } finally {
+    set({ isMigratingRegion: false })
+  }
 }
 
 // Every cart mutation route already returns the full updated cart in its
@@ -151,7 +174,8 @@ export const useCartStore = create<CartState>()((set, get) => ({
     try {
       set({ isLoading: true, error: null })
       const previousCart = get().cart
-      const cart = await cartService.getCart(cartId)
+      let cart = await cartService.getCart(cartId)
+      cart = await syncCartRegion(set, cart)
 
       set({ cart, isLoading: false })
       maybeRefreshRecommendations(get, previousCart)
@@ -226,6 +250,9 @@ export const useCartStore = create<CartState>()((set, get) => ({
     try {
       set({ isLoading: true, error: null })
       const previousCart = get().cart
+      if (previousCart) {
+        await syncCartRegion(set, previousCart)
+      }
       const updatedCart = await cartService.addToCart(targetCartId, [
         { merchandiseId, quantity },
       ])
