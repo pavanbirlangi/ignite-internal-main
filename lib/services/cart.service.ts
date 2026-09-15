@@ -6,6 +6,7 @@ import {
   GetProductRecommendationsParams,
 } from './product.service'
 import { ProductListItem } from '@/types/product'
+import { resolveRegionForCountry } from '../utils/region-resolver'
 
 export interface CartCmsData {
   id: string
@@ -52,41 +53,15 @@ export type GetCartRecommendationsParams = GetProductRecommendationsParams
 // ─── Region resolution ──────────────────────────────────────────────────────
 // Medusa cart creation (`POST /store/carts`) only accepts `region_id`, not the
 // `country_code` param the rest of the app uses for pricing context (confirmed
-// live against the real validator) -- so carts need a real Medusa Region, not
-// just a country code. Only two demo regions exist right now (Test Region US
-// / USD, Europe / EUR) -- see `R-08`/`G-CURR-01`. Real region/currency scoping
-// is still Phase 10, undecided, so this picks the region whose countries
-// include the existing `user_country` cookie, falling back to the first
-// region returned. Cached for the tab's lifetime since regions essentially
-// never change without a backend redeploy.
-let cachedRegionId: string | null = null
-
+// live against the real validator) -- so carts need a real Medusa Region.
+// Shared with useCurrencyStore.ts (Phase 10) via region-resolver.ts, rather
+// than each maintaining its own independent country->region match, so a
+// cart's currency can never drift from what the rest of the app is showing.
 const resolveRegionId = async (): Promise<string> => {
-  if (cachedRegionId) return cachedRegionId
-
-  const { data } = await medusaClient.get('/store/regions')
-  const regions: Array<{
-    id: string
-    countries?: Array<{ iso_2: string }>
-  }> = data.regions ?? []
-
-  if (!regions.length) {
-    throw new Error('No regions are configured on the backend')
-  }
-
   const country =
-    typeof window !== 'undefined'
-      ? Cookies.get('user_country')?.toLowerCase()
-      : undefined
-
-  const matched = country
-    ? regions.find((region) =>
-        region.countries?.some((c) => c.iso_2 === country),
-      )
-    : undefined
-
-  cachedRegionId = (matched ?? regions[0]).id
-  return cachedRegionId
+    typeof window !== 'undefined' ? Cookies.get('user_country') : undefined
+  const region = await resolveRegionForCountry(country)
+  return region.id
 }
 
 // ─── Response mapping ───────────────────────────────────────────────────────

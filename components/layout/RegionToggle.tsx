@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react'
 import LanguageModal from './LanguageModal'
-import { countries, languages } from '@/lib/region-data'
+import { languages } from '@/lib/region-data'
 import Image from 'next/image'
 import { useCurrencyStore } from '@/store/useCurrencyStore'
 

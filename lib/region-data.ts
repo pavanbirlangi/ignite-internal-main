@@ -1,12 +1,3 @@
-// Automatically generated from Driffle's exact supported locales
-export const countries = [
-  { value: 'US', label: 'United States', flag: '🇺🇸' },
-  { value: 'GB', label: 'United Kingdom', flag: '🇬🇧' },
-  { value: 'AT', label: 'Austria', flag: '🇦🇹' },
-  { value: 'IN', label: 'India', flag: '🇮🇳' },
-  { value: 'RO', label: 'Romania', flag: '🇷🇴' },
-]
-
 export const currencies = [
   { value: 'ALL', label: 'Albanian Lek (ALL)' },
   { value: 'DZD', label: 'Algerian Dinar (DZD)' },

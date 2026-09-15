@@ -141,7 +141,16 @@ const FilterSidebar: React.FC<FilterSidebarProps> = ({ className = '' }) => {
   const [isGenresOpen, setIsGenresOpen] = useState(true)
   const [isWorksOnOpen, setIsWorksOnOpen] = useState(false)
   const [isRegionOpen, setIsRegionOpen] = useState(false)
-  const currencyCode = useCurrencyStore((state) => state.currency)
+  // Reads a fixed 'USD' until initLocation() has actually resolved a real
+  // region client-side, rather than the store's raw `currency` value -- that
+  // value comes from `Cookies.get()`, which returns undefined during SSR (no
+  // `document` server-side) but the real cookie value in the browser, so
+  // rendering it unconditionally caused a real hydration mismatch (server
+  // renders the "USD" fallback, client immediately swaps to e.g. "INR").
+  // Same guard RegionToggle.tsx already uses for the same reason.
+  const isCurrencyInitialized = useCurrencyStore((state) => state.isInitialized)
+  const storeCurrencyCode = useCurrencyStore((state) => state.currency)
+  const currencyCode = isCurrencyInitialized ? storeCurrencyCode : 'USD'
 
   // Fetch dynamic categories
   const { data: categoriesData } = useCategories()

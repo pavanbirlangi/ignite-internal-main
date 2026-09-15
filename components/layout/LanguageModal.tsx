@@ -17,31 +17,9 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { X } from 'lucide-react'
-import { currencies, languages, getCountryForCurrency } from '@/lib/region-data'
-import { marketsService } from '@/lib/services/markets.service'
+import { languages } from '@/lib/region-data'
+import { getRegions, type MedusaRegion } from '@/lib/utils/region-resolver'
 import { useCurrencyStore } from '@/store/useCurrencyStore'
-
-const priorityCurrencyOrder = ['USD', 'EUR', 'HKD', 'INR', 'GBP']
-const priorityCurrencyMap = new Map(
-  priorityCurrencyOrder.map((code, index) => [code, index]),
-)
-
-const sortCurrencies = (list: { value: string; label: string }[]) => {
-  return [...list].sort((a, b) => {
-    const aCode = a.value.toUpperCase()
-    const bCode = b.value.toUpperCase()
-    const aPriority = priorityCurrencyMap.get(aCode)
-    const bPriority = priorityCurrencyMap.get(bCode)
-
-    if (aPriority !== undefined && bPriority !== undefined) {
-      return aPriority - bPriority
-    }
-    if (aPriority !== undefined) return -1
-    if (bPriority !== undefined) return 1
-
-    return a.label.localeCompare(b.label)
-  })
-}
 
 export default function LanguageModal({
   children,
@@ -49,59 +27,58 @@ export default function LanguageModal({
   children: React.ReactNode
 }) {
   const [open, setOpen] = useState(false)
-  const storeCurrency = useCurrencyStore((state) => state.currency)
+  const storeRegionId = useCurrencyStore((state) => state.regionId)
   const storeLanguage = useCurrencyStore((state) => state.language)
   const setRegion = useCurrencyStore((state) => state.setRegion)
 
-  const [currency, setCurrency] = useState(storeCurrency)
+  const [regionId, setRegionId] = useState(storeRegionId)
   const [language, setLanguage] = useState(storeLanguage)
-  const [availableCurrencies, setAvailableCurrencies] = useState<
-    { value: string; label: string }[]
-  >([])
+  // Real regions only -- whatever the admin has actually configured in
+  // Medusa, not a hardcoded world-currency list. A store with one region
+  // shows one option, a store with ten shows ten; nothing to maintain here
+  // as the catalog's supported markets change.
+  const [availableRegions, setAvailableRegions] = useState<MedusaRegion[]>([])
 
   const handleOpenChange = (nextOpen: boolean) => {
     setOpen(nextOpen)
     if (nextOpen) {
-      setCurrency(storeCurrency)
+      setRegionId(storeRegionId)
       setLanguage(storeLanguage)
     }
   }
 
-  // Fetch available currencies from the currencies API on mount
   useEffect(() => {
-    const fetchCurrencies = async () => {
-      const fetchedCurrencies = await marketsService.getCurrencies()
-      if (fetchedCurrencies.length > 0) {
-        const finalCurrencies = fetchedCurrencies.map((currencyCode) => {
-          const normalizedCode = currencyCode.toUpperCase()
-          const existing = currencies.find((c) => c.value === normalizedCode)
-          return existing || { value: normalizedCode, label: normalizedCode }
-        })
-        const unique = Array.from(
-          new Map(finalCurrencies.map((c) => [c.value, c])).values(),
-        )
-        setAvailableCurrencies(sortCurrencies(unique))
-      } else {
-        setAvailableCurrencies(sortCurrencies(currencies))
-      }
-    }
-    fetchCurrencies()
+    getRegions()
+      .then(setAvailableRegions)
+      .catch((error) => console.error('Failed to load regions:', error))
   }, [])
 
   const [isSaving, setIsSaving] = useState(false)
 
-  const selectedCurrency =
-    availableCurrencies.length > 0 &&
-    !availableCurrencies.some((c) => c.value === currency)
-      ? availableCurrencies.find((c) => c.value === 'USD')?.value ||
-        availableCurrencies[0].value
-      : currency
+  const selectedRegionId =
+    availableRegions.length > 0 &&
+    !availableRegions.some((r) => r.id === regionId)
+      ? availableRegions[0].id
+      : regionId
 
   const handleSave = async () => {
+    const selectedRegion = availableRegions.find(
+      (r) => r.id === selectedRegionId,
+    )
+    if (!selectedRegion) {
+      console.error('No region selected -- regions may not have loaded yet')
+      return
+    }
+
     try {
       setIsSaving(true)
-      const countryToSave = getCountryForCurrency(selectedCurrency)
-      await setRegion(countryToSave, selectedCurrency, language)
+      const country = (selectedRegion.countries[0] || 'us').toUpperCase()
+      await setRegion(
+        selectedRegion.id,
+        country,
+        selectedRegion.currencyCode,
+        language,
+      )
 
       // Route changing logic based on language (not country)
       const currentPath = window.location.pathname
@@ -123,9 +100,11 @@ export default function LanguageModal({
         newPath = `/${newLangPrefix}${currentPath === '/' ? '' : currentPath}`
       }
 
-      // Redirect with ?currency= so the proxy sets fresh cookies authoritatively
-      // The proxy will strip the param after processing, resulting in a clean URL
-      window.location.href = `${newPath}?currency=${encodeURIComponent(selectedCurrency)}`
+      // setRegion() above already wrote the region/currency/country cookies
+      // directly -- no need for the old ?currency= query-param round trip
+      // through proxy.ts, they're already set by the time this navigation's
+      // request goes out.
+      window.location.href = newPath
     } catch (error) {
       console.error('Failed to change region:', error)
       setIsSaving(false)
@@ -160,24 +139,24 @@ export default function LanguageModal({
           <div className="flex flex-col gap-6">
             <div className="flex flex-col gap-2">
               <label className="text-muted-foreground md:font-base text-xs font-semibold">
-                Currency
+                Region / Currency
               </label>
-              <Select value={selectedCurrency} onValueChange={setCurrency}>
+              <Select value={selectedRegionId} onValueChange={setRegionId}>
                 <SelectTrigger className="bg-secondary h-14 w-full rounded-[12px] border-none font-medium text-white focus:ring-0">
-                  <SelectValue placeholder="Select Currency" />
+                  <SelectValue placeholder="Select Region" />
                 </SelectTrigger>
                 <SelectContent
                   position="popper"
                   side="bottom"
                   className="border-border bg-secondary rounded-[12px] text-white"
                 >
-                  {availableCurrencies.map((c) => (
+                  {availableRegions.map((region) => (
                     <SelectItem
-                      key={c.value}
-                      value={c.value}
+                      key={region.id}
+                      value={region.id}
                       className="cursor-pointer rounded-lg py-3 font-medium focus:bg-white/10 focus:text-white"
                     >
-                      {c.label}
+                      {region.name} ({region.currencyCode})
                     </SelectItem>
                   ))}
                 </SelectContent>

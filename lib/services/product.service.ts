@@ -308,17 +308,62 @@ function mapProductListItem(raw: any): ProductListItem {
   }
 }
 
-// ─── Country code resolution ──────────────────────────────────────────────
-// Reused as-is from the pre-Medusa cookie convention; now passed straight
-// through to Medusa as `country_code` (confirmed live -- no region_id lookup
-// needed). Real region/currency scoping is still Phase 10 work.
-
-const getCountryCode = async (): Promise<string | undefined> => {
+// ─── Region resolution ──────────────────────────────────────────────────────
+// The `country_code` param this used to pass straight through to Medusa's
+// core `/store/products` route turns out not to actually work as pricing
+// context -- confirmed live once real per-currency pricing existed to tell
+// the difference (Phase 10): `?country_code=in`/`de`/`gb` all silently fail
+// to resolve a region (either falling back to the store's default currency
+// or returning no price at all), while `?region_id=<real id>` works
+// correctly and consistently for every configured region. The
+// `country_code` claim in earlier phases' comments was only ever "confirmed"
+// back when a single region existed, so a wrong/no-context resolution and a
+// correct one looked identical. Fixed here to resolve and pass a real
+// `region_id` throughout, via the same shared resolver cart.service.ts uses.
+//
+// Deliberately returns `undefined` client-side rather than reading a client
+// cookie: this function backs the `unstable_cache`-wrapped Server-Component
+// fetchers below, and a `'use client'` component calling one of those
+// directly already throws a loud, easy-to-catch `incrementalCache missing`
+// invariant (see §5 of the migration handoff docs -- this exact crash class
+// has already caught four real bugs across Phases 4/5/6/8). Making this
+// function quietly "work" client-side would silence that safety net instead
+// of fixing the actual mistake. Client code needing region context must use
+// one of the explicitly uncached wrappers below, which use
+// `getClientRegionId` instead.
+const getRegionId = async (): Promise<string | undefined> => {
   if (typeof window !== 'undefined') return undefined
+  let country: string | undefined
   try {
     const { cookies } = await import('next/headers')
     const cookieStore = await cookies()
-    return cookieStore.get('user_country')?.value?.toLowerCase()
+    country = cookieStore.get('user_country')?.value?.toLowerCase()
+  } catch {
+    return undefined
+  }
+  try {
+    const { resolveRegionForCountry } = await import('../utils/region-resolver')
+    const region = await resolveRegionForCountry(country)
+    return region.id
+  } catch {
+    return undefined
+  }
+}
+
+// Client-safe counterpart, used only by the uncached wrappers explicitly
+// meant to be called from `'use client'` code (getProductByHandleUncached,
+// getRecommendationsByProductId, getProductsByIds). Prefers the region id
+// useCurrencyStore already resolved and cached in a cookie, avoiding a
+// redundant /store/regions round trip on every product fetch.
+const getClientRegionId = async (): Promise<string | undefined> => {
+  if (typeof window === 'undefined') return getRegionId()
+  const { default: Cookies } = await import('js-cookie')
+  const cachedRegionId = Cookies.get('user_region_id')
+  if (cachedRegionId) return cachedRegionId
+  try {
+    const { resolveRegionForCountry } = await import('../utils/region-resolver')
+    const region = await resolveRegionForCountry(Cookies.get('user_country'))
+    return region.id
   } catch {
     return undefined
   }
@@ -331,12 +376,12 @@ const PRODUCT_FIELDS =
 
 const _fetchProductByHandle = async (
   handle: string,
-  country?: string,
+  regionId?: string,
 ): Promise<Product> => {
   const { data } = await medusaClient.get('/store/products', {
     params: {
       handle,
-      country_code: country,
+      region_id: regionId,
       fields: PRODUCT_FIELDS,
     },
   })
@@ -357,6 +402,7 @@ const _fetchProductByHandle = async (
 const _fetchProductRecommendations = async (
   productId: string,
   _params: GetProductRecommendationsParams = {},
+  regionId?: string,
 ): Promise<ProductListItem[]> => {
   // `intent` (related/complementary) is accepted by the backend but not yet
   // differentiated server-side (confirmed live) -- both return the same
@@ -368,18 +414,18 @@ const _fetchProductRecommendations = async (
   // enrich with a second call for full list-card data.
   const ids = (data.products ?? []).map((p: any) => p.id)
   if (!ids.length) return []
-  return _fetchProductsByIds(ids)
+  return _fetchProductsByIds(ids, regionId)
 }
 
 const _fetchProductsByIds = async (
   ids: string[],
-  country?: string,
+  regionId?: string,
 ): Promise<ProductListItem[]> => {
   if (!ids.length) return []
   const { data } = await medusaClient.get('/store/products', {
     params: {
       id: ids,
-      country_code: country,
+      region_id: regionId,
       fields: PRODUCT_FIELDS,
       limit: ids.length,
     },
@@ -390,15 +436,18 @@ const _fetchProductsByIds = async (
 // ─── Cross-request Next.js Data Cache wrappers (ISR-style, 60s TTL) ──────────
 
 const _cachedGetProductByHandle = unstable_cache(
-  async (handle: string, country?: string) =>
-    _fetchProductByHandle(handle, country),
+  async (handle: string, regionId?: string) =>
+    _fetchProductByHandle(handle, regionId),
   ['product-by-handle'],
   { revalidate: 60, tags: ['product'] },
 )
 
 const _cachedGetProductRecommendations = unstable_cache(
-  async (productId: string, params: GetProductRecommendationsParams = {}) =>
-    _fetchProductRecommendations(productId, params),
+  async (
+    productId: string,
+    params: GetProductRecommendationsParams = {},
+    regionId?: string,
+  ) => _fetchProductRecommendations(productId, params, regionId),
   ['product-recommendations'],
   { revalidate: 60, tags: ['product'] },
 )
@@ -406,8 +455,8 @@ const _cachedGetProductRecommendations = unstable_cache(
 // ─── Per-request React cache deduplication ────────────────────────────────────
 
 const _dedupedGetProductByHandle = cache(
-  async (handle: string, country?: string) =>
-    _cachedGetProductByHandle(handle, country),
+  async (handle: string, regionId?: string) =>
+    _cachedGetProductByHandle(handle, regionId),
 )
 
 // ─── Public ProductService ───────────────────────────────────────────────────
@@ -432,7 +481,7 @@ export const ProductService = {
   getProducts: async (
     params: GetProductsParams,
   ): Promise<GetProductsResponse> => {
-    const country = await getCountryCode()
+    const regionId = await getRegionId()
     const page = params.after ? Number(params.after) : 1
     const limit = params.first ?? 20
 
@@ -454,7 +503,7 @@ export const ProductService = {
     })
 
     const ids = (data.products ?? []).map((p: any) => p.id)
-    let products = await _fetchProductsByIds(ids, country)
+    let products = await _fetchProductsByIds(ids, regionId)
 
     // Preserve the filtered route's order (relevance/recency) rather than
     // whatever order the enrichment call happens to return in.
@@ -490,8 +539,8 @@ export const ProductService = {
 
   /** Fetches product by handle. Deduplicated per-request + cached 60s across requests. */
   getProductByHandle: async (handle: string): Promise<Product> => {
-    const country = await getCountryCode()
-    return _dedupedGetProductByHandle(handle, country)
+    const regionId = await getRegionId()
+    return _dedupedGetProductByHandle(handle, regionId)
   },
 
   /**
@@ -503,8 +552,8 @@ export const ProductService = {
    * Phase 3, swallowed by an empty catch block). Skips that wrapper.
    */
   getProductByHandleUncached: async (handle: string): Promise<Product> => {
-    const country = await getCountryCode()
-    return _fetchProductByHandle(handle, country)
+    const regionId = await getClientRegionId()
+    return _fetchProductByHandle(handle, regionId)
   },
 
   /** Fetches product recommendations. Cached 60s across requests. Takes a handle for API-shape continuity but resolves to the product id internally. */
@@ -512,9 +561,9 @@ export const ProductService = {
     handle: string,
     params: GetProductRecommendationsParams = {},
   ): Promise<ProductListItem[]> => {
-    const country = await getCountryCode()
-    const product = await _dedupedGetProductByHandle(handle, country)
-    return _cachedGetProductRecommendations(product.id, params)
+    const regionId = await getRegionId()
+    const product = await _dedupedGetProductByHandle(handle, regionId)
+    return _cachedGetProductRecommendations(product.id, params, regionId)
   },
 
   /**
@@ -528,7 +577,8 @@ export const ProductService = {
     productId: string,
     params: GetProductRecommendationsParams = {},
   ): Promise<ProductListItem[]> => {
-    return _fetchProductRecommendations(productId, params)
+    const regionId = await getClientRegionId()
+    return _fetchProductRecommendations(productId, params, regionId)
   },
 
   /**
@@ -539,8 +589,8 @@ export const ProductService = {
    * does for the store grid. Runs client-side, no cache wrapper involved.
    */
   getProductsByIds: async (ids: string[]): Promise<ProductListItem[]> => {
-    const country = await getCountryCode()
-    return _fetchProductsByIds(ids, country)
+    const regionId = await getClientRegionId()
+    return _fetchProductsByIds(ids, regionId)
   },
 
   /**
@@ -558,15 +608,15 @@ export const ProductService = {
     async (
       handle: string,
       params: GetCollectionProductsParams = {},
-      country?: string,
+      regionId?: string,
     ): Promise<ProductListItem[]> => {
-      const finalCountry = country || (await getCountryCode())
+      const finalRegionId = regionId || (await getRegionId())
       const cachedFn = unstable_cache(
-        async (h: string, p: GetCollectionProductsParams, c?: string) => {
+        async (h: string, p: GetCollectionProductsParams, r?: string) => {
           const { data } = await medusaClient.get('/store/products', {
             params: {
               collection_handle: h,
-              country_code: c,
+              region_id: r,
               fields: PRODUCT_FIELDS,
               limit: p.first ?? 20,
             },
@@ -576,7 +626,7 @@ export const ProductService = {
         ['collection-products-by-handle'],
         { revalidate: 60, tags: ['collection', 'product'] },
       )
-      return cachedFn(handle, params, finalCountry)
+      return cachedFn(handle, params, finalRegionId)
     },
   ),
 }
