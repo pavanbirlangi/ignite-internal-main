@@ -12,6 +12,7 @@ import { useAuthModalStore } from './useAuthModalStore'
 import {
   extractApiErrorMessage,
   isCartNotFoundError,
+  isCartCompletedError,
 } from '@/lib/utils/api-error'
 
 const CART_ID_COOKIE_NAME = 'increddy_cart_id'
@@ -157,7 +158,7 @@ export const useCartStore = create<CartState>()((set, get) => ({
     } catch (error: any) {
       const errorMessage = extractApiErrorMessage(error, 'Failed to load cart')
       console.error('Error loading cart', error)
-      if (isCartNotFoundError(error)) {
+      if (isCartNotFoundError(error) || isCartCompletedError(error)) {
         clearCartIdCookie()
         set({
           cartId: null,
@@ -238,7 +239,7 @@ export const useCartStore = create<CartState>()((set, get) => ({
       )
       console.error('Error adding to cart', error)
 
-      if (isCartNotFoundError(error)) {
+      if (isCartNotFoundError(error) || isCartCompletedError(error)) {
         clearCartIdCookie()
         set({ cartId: null, cart: null, isLoading: false, error: null })
 
@@ -306,7 +307,7 @@ export const useCartStore = create<CartState>()((set, get) => ({
       )
       console.error('Error removing from cart', error)
 
-      if (isCartNotFoundError(error)) {
+      if (isCartNotFoundError(error) || isCartCompletedError(error)) {
         clearCartIdCookie()
         set({ cartId: null, cart: null, error: null })
         toast.error(
@@ -369,7 +370,7 @@ export const useCartStore = create<CartState>()((set, get) => ({
       )
       console.error('Error updating cart', error)
 
-      if (isCartNotFoundError(error)) {
+      if (isCartNotFoundError(error) || isCartCompletedError(error)) {
         clearCartIdCookie()
         set({ cartId: null, cart: null, error: null })
         toast.error(

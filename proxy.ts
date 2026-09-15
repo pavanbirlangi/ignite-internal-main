@@ -7,7 +7,12 @@ import {
   getCountryForCurrency,
 } from '@/lib/region-data'
 
-const PROTECTED_ROUTES = ['/dashboard']
+// /checkout is gated here (not just client-side) because guest checkout is a
+// real, confirmed backend rule -- the license-key fulfillment workflow
+// rejects any order with no customer_id outright, so a guest reaching
+// checkout would only discover the rejection after filling out the whole
+// form. Blocking at the route level avoids that dead end entirely.
+const PROTECTED_ROUTES = ['/dashboard', '/checkout']
 const UNAUTH_REDIRECT_PATH = '/'
 
 async function isProtectedRouteSessionValid(

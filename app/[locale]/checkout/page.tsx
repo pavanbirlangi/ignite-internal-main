@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { CheckoutPlaceholder } from '@/components/cart/CheckoutPlaceholder'
+import { CheckoutPageContent } from '@/components/checkout/CheckoutPageContent'
 
 export const metadata: Metadata = {
   title: 'Checkout | Increddy',
@@ -7,5 +7,5 @@ export const metadata: Metadata = {
 }
 
 export default function CheckoutPage() {
-  return <CheckoutPlaceholder />
+  return <CheckoutPageContent />
 }

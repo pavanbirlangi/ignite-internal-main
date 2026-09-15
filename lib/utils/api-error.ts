@@ -78,3 +78,18 @@ export function isCartNotFoundError(error: unknown): boolean {
   const message = extractApiErrorMessage(error, '').toLowerCase()
   return message.includes('cart') && message.includes('not found')
 }
+
+// Medusa's real shape (confirmed live): 400 "Cart <id> is already completed"
+// -- surfaces whenever a mutation is attempted against a cart that already
+// converted to an order. Same recovery as isCartNotFoundError: the cart
+// identity is dead either way, so clear it and start a fresh one.
+export function isCartCompletedError(error: unknown): boolean {
+  if (!axios.isAxiosError(error)) {
+    return false
+  }
+  if (error.response?.status !== 400) {
+    return false
+  }
+  const message = extractApiErrorMessage(error, '').toLowerCase()
+  return message.includes('cart') && message.includes('already completed')
+}

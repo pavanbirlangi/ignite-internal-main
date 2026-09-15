@@ -41,6 +41,7 @@ export interface CartResponse {
   subtotal: number
   total: number
   taxTotal: number
+  shippingTotal: number
   items: CartLineItem[]
 }
 
@@ -80,7 +81,11 @@ function mapCartLineItem(raw: any): CartLineItem {
       typeof raw.compare_at_unit_price === 'number'
         ? raw.compare_at_unit_price
         : null,
-    thumbnail: raw.thumbnail,
+    // Falls back to the product's own gallery images when no thumbnail was
+    // set on the product (the line item snapshot just inherits whatever
+    // product.thumbnail was at add-to-cart time, including null) -- same
+    // fallback product.service.ts's mapProductListItem already applies.
+    thumbnail: raw.thumbnail || raw.product?.images?.[0]?.url,
   }
 }
 
@@ -93,9 +98,18 @@ function mapCart(raw: any): CartResponse {
     subtotal: raw.subtotal ?? 0,
     total: raw.total ?? 0,
     taxTotal: raw.tax_total ?? 0,
+    shippingTotal: raw.shipping_total ?? 0,
     items: (raw.items ?? []).map(mapCartLineItem),
   }
 }
+
+// Appended (not replacing) Medusa's own default field set for every cart
+// route below -- default line items already include `thumbnail`, but not
+// the product's own gallery `images`, which is the only fallback available
+// when a product has no thumbnail set (confirmed live: Fallout 76's cart
+// line item has `thumbnail: null` even though the product has 3 real
+// gallery images, same root cause as the store-grid thumbnail bug).
+const CART_FIELDS = '+items.thumbnail,+items.product.images.url'
 
 export const cartService = {
   createCart: async (): Promise<CartResponse> => {
@@ -108,7 +122,9 @@ export const cartService = {
 
   getCart: async (cartId: string): Promise<CartResponse> => {
     const encodedId = encodeURIComponent(cartId)
-    const { data } = await medusaClient.get(`/store/carts/${encodedId}`)
+    const { data } = await medusaClient.get(`/store/carts/${encodedId}`, {
+      params: { fields: CART_FIELDS },
+    })
     return mapCart(data.cart)
   },
 
@@ -139,6 +155,7 @@ export const cartService = {
     const { data } = await medusaClient.post(
       `/store/carts/${encodedId}/line-items`,
       { variant_id: line.merchandiseId, quantity: line.quantity },
+      { params: { fields: CART_FIELDS } },
     )
     return mapCart(data.cart)
   },
@@ -154,6 +171,7 @@ export const cartService = {
     for (const lineId of lineIds) {
       const { data } = await medusaClient.delete(
         `/store/carts/${encodedId}/line-items/${encodeURIComponent(lineId)}`,
+        { params: { fields: CART_FIELDS } },
       )
       cart = mapCart(data.parent)
     }
@@ -171,6 +189,7 @@ export const cartService = {
       const { data } = await medusaClient.post(
         `/store/carts/${encodedId}/line-items/${encodeURIComponent(line.id)}`,
         { quantity: line.quantity },
+        { params: { fields: CART_FIELDS } },
       )
       cart = mapCart(data.cart)
     }
@@ -182,6 +201,7 @@ export const cartService = {
     const { data } = await medusaClient.post(
       `/store/carts/${encodedId}/customer`,
       {},
+      { params: { fields: CART_FIELDS } },
     )
     return mapCart(data.cart)
   },
