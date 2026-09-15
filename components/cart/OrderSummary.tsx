@@ -1,4 +1,4 @@
-import { ChevronRight, Star } from 'lucide-react'
+import { ChevronRight } from 'lucide-react'
 import { formatCurrency } from '@/lib/currency'
 import { Button } from '@/components/ui/button'
 import {
@@ -8,7 +8,6 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
-import StarIcon from '../icons/StarIcon'
 import { useCartStore } from '@/store/useCartStore'
 
 interface OrderSummaryProps {
@@ -85,30 +84,6 @@ export function OrderSummary({
           <span className="text-primary underline"> Refund Policy.</span>
         </p>
       )}
-      <div className="flex flex-col items-center justify-center gap-3 py-4 sm:flex-row">
-        <span className="text-[14px] font-medium text-white">
-          See our{' '}
-          {cartCmsData?.review_redirect_link ? (
-            <a
-              href={cartCmsData.review_redirect_link}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="font-semibold underline transition-opacity hover:opacity-80"
-            >
-              {cartCmsData?.review_count?.trim() || '5,516'} reviews
-            </a>
-          ) : (
-            <span className="font-semibold">
-              {cartCmsData?.review_count?.trim() || '5,516'} reviews
-            </span>
-          )}{' '}
-          on
-        </span>
-        <div className="flex items-center gap-1">
-          <StarIcon />
-          <span className="text-[14px] font-bold text-white">Trustpilot</span>
-        </div>
-      </div>
     </div>
   )
 }

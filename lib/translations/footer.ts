@@ -8,14 +8,12 @@ import { type FooterData } from '@/lib/services/footer.service'
 export interface FooterTranslations {
   locationTitle: string
   getInTheGame: string
-  checkoutReview: string
 }
 
 /** Default English strings */
 const defaultStrings: FooterTranslations = {
   locationTitle: 'Location',
   getInTheGame: 'Get in the game:',
-  checkoutReview: 'Checkout Our Review:',
 }
 
 export function getDefaultFooterTranslations(): FooterTranslations {

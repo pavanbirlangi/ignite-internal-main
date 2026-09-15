@@ -89,46 +89,46 @@ export default function FooterV2({
             </div>
           ))}
 
-          <div className="flex flex-col gap-4 py-1.5 lg:items-start">
-            <span className="text-foreground text-[14px] leading-[150%] font-medium">
-              {footerData.review_text || translations.checkoutReview}
-            </span>
-            {footerData.review_redirect_link ? (
-              <a
-                href={footerData.review_redirect_link}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <Image
-                  src={
-                    footerData.review_image
-                      ? `${process.env.NEXT_PUBLIC_CMS_API_URL}/assets/${footerData.review_image}`
-                      : '/images/common/trustpilot.svg'
-                  }
-                  alt="Review"
-                  width={175}
-                  height={88}
-                  className="h-18 w-auto object-contain"
-                  quality={100}
-                  unoptimized={!!footerData.review_image}
-                />
-              </a>
-            ) : (
-              <Image
-                src={
-                  footerData.review_image
-                    ? `${process.env.NEXT_PUBLIC_CMS_API_URL}/assets/${footerData.review_image}`
-                    : '/images/common/trustpilot.svg'
-                }
-                alt="Review"
-                width={175}
-                height={88}
-                className="h-18 w-auto object-contain"
-                quality={100}
-                unoptimized={!!footerData.review_image}
-              />
-            )}
-          </div>
+          {/* Only shown once a real review is configured in the CMS --
+              previously fell back to hardcoded placeholder text and a
+              generic Trustpilot image whenever that field was empty, so
+              clearing it in the CMS had no visible effect. */}
+          {footerData.review_text && (
+            <div className="flex flex-col gap-4 py-1.5 lg:items-start">
+              <span className="text-foreground text-[14px] leading-[150%] font-medium">
+                {footerData.review_text}
+              </span>
+              {footerData.review_redirect_link ? (
+                <a
+                  href={footerData.review_redirect_link}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <Image
+                    src={`${process.env.NEXT_PUBLIC_CMS_API_URL}/assets/${footerData.review_image}`}
+                    alt="Review"
+                    width={175}
+                    height={88}
+                    className="h-18 w-auto object-contain"
+                    quality={100}
+                    unoptimized
+                  />
+                </a>
+              ) : (
+                footerData.review_image && (
+                  <Image
+                    src={`${process.env.NEXT_PUBLIC_CMS_API_URL}/assets/${footerData.review_image}`}
+                    alt="Review"
+                    width={175}
+                    height={88}
+                    className="h-18 w-auto object-contain"
+                    quality={100}
+                    unoptimized
+                  />
+                )
+              )}
+            </div>
+          )}
         </div>
       </div>
 

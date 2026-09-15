@@ -2,8 +2,6 @@ import { ChevronRight } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { SheetClose } from '@/components/ui/sheet'
 import { useRouter } from 'next/navigation'
-import StarIcon from '../icons/StarIcon'
-import { useCartStore } from '@/store/useCartStore'
 import { useUserStore } from '@/store/useUserStore'
 import { useAuthModalStore } from '@/store/useAuthModalStore'
 import { toast } from 'sonner'
@@ -17,7 +15,6 @@ interface CartFooterProps {
 
 export const CartFooter = ({ total, count, currencyCode }: CartFooterProps) => {
   const router = useRouter()
-  const cartCmsData = useCartStore((state) => state.cartCmsData)
   const isCartEmpty = count < 1
 
   const handlePayNow = () => {
@@ -38,8 +35,6 @@ export const CartFooter = ({ total, count, currencyCode }: CartFooterProps) => {
       return
     }
 
-    // In-app checkout doesn't exist yet (Phase 11) -- Medusa carts have no
-    // hosted checkout URL like Shopify's, so this routes to a placeholder.
     router.push('/checkout')
   }
 
@@ -78,29 +73,6 @@ export const CartFooter = ({ total, count, currencyCode }: CartFooterProps) => {
         >
           Pay Now <ChevronRight className="ml-0.5 h-4 w-4" />
         </Button>
-      </div>
-
-      <div className="flex w-full items-center justify-center gap-1.5 pt-1 text-[13px]">
-        <span className="font-medium">
-          See our{' '}
-          {cartCmsData?.review_redirect_link ? (
-            <a
-              href={cartCmsData.review_redirect_link}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="font-semibold text-white underline transition-opacity hover:opacity-80"
-            >
-              {cartCmsData?.review_count?.trim() || '5,516'} reviews
-            </a>
-          ) : (
-            <span className="font-semibold text-white">
-              {cartCmsData?.review_count?.trim() || '5,516'} reviews
-            </span>
-          )}{' '}
-          on
-        </span>
-        <StarIcon />
-        <span className="font-medium text-white">Trustpilot</span>
       </div>
     </div>
   )

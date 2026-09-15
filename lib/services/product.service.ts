@@ -517,7 +517,13 @@ export const ProductService = {
   getProducts: async (
     params: GetProductsParams,
   ): Promise<GetProductsResponse> => {
-    const regionId = await getRegionId()
+    // Client-safe resolver, not getRegionId() -- confirmed live that this is
+    // called exclusively from the browser (hooks/useProducts.ts, a React
+    // Query hook backing the store grid), so getRegionId() always returned
+    // undefined here, silently dropping region context and making every
+    // store-grid card show the store's default-region price regardless of
+    // the customer's actual selected currency.
+    const regionId = await getClientRegionId()
     const page = params.after ? Number(params.after) : 1
     const limit = params.first ?? 20
 
@@ -649,9 +655,24 @@ export const ProductService = {
       const finalRegionId = regionId || (await getRegionId())
       const cachedFn = unstable_cache(
         async (h: string, p: GetCollectionProductsParams, r?: string) => {
+          // core /store/products doesn't accept a `collection_handle` filter
+          // at all on this backend -- confirmed live, it 400s with
+          // "Unrecognized fields: 'collection_handle'". Every homepage
+          // "product_recommendations" carousel (Featured Deals, Top Rated
+          // Games, Recommended for You) was silently rendering empty because
+          // of this, caught by the homepage page's own catch-and-fall-back-
+          // to-[] handling. Resolving the handle to a real collection id
+          // first and filtering by that instead is what actually works.
+          const { data: collectionData } = await medusaClient.get(
+            '/store/collections',
+            { params: { handle: h } },
+          )
+          const collectionId = collectionData.collections?.[0]?.id
+          if (!collectionId) return []
+
           const { data } = await medusaClient.get('/store/products', {
             params: {
-              collection_handle: h,
+              collection_id: [collectionId],
               region_id: r,
               fields: PRODUCT_FIELDS,
               limit: p.first ?? 20,
