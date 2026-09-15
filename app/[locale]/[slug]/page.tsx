@@ -28,7 +28,7 @@ import { translateTextsWithLangbly } from '@/lib/services/langbly-translation.se
 import { generateSeoMetadata } from '@/lib/seo'
 import { getCountryForCurrency } from '@/lib/region-data'
 import { formatPrice } from '@/lib/currency'
-import { getProxyImageUrl } from '@/lib/utils'
+import { getProxyImageUrl, stripHtml } from '@/lib/utils'
 
 interface PageProps {
   params: Promise<{
@@ -83,7 +83,7 @@ export async function generateMetadata({
   const baseMeta = await generateSeoMetadata(
     {
       meta_title: `${product.title} | Increddy`,
-      meta_description: product.description,
+      meta_description: stripHtml(product.description),
       keywords: [
         product.title,
         ...product.platform,
@@ -150,7 +150,7 @@ function getProductJsonLd(
     '@context': 'https://schema.org',
     '@type': 'Product',
     name: product.title,
-    description: product.description,
+    description: stripHtml(product.description),
     image,
     url: `${siteUrl}/${locale.toLowerCase()}/${product.handle}`,
     brand: {

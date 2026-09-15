@@ -30,8 +30,8 @@ function mapLibraryItem(raw: any): LibraryItem {
     keyStatus: raw.key_status,
     categories,
     platform: Array.isArray(raw.platform) ? raw.platform : [],
-    tags: [],
-    displayTags: [],
+    tags: Array.isArray(raw.tags) ? raw.tags : [],
+    displayTags: Array.isArray(raw.tags) ? raw.tags : [],
     selectedOptions: [],
   }
 }

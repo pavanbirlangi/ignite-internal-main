@@ -74,6 +74,20 @@ function toVariantPrice(amount: number, currencyCode: string): ProductVariantPri
   return { amount: String(amount), currencyCode: currencyCode.toUpperCase() }
 }
 
+// Medusa returns tags as `{id, value, ...}` objects, not plain strings.
+function mapTags(raw: any): string[] {
+  return Array.isArray(raw)
+    ? raw.map((t: any) => (typeof t === 'string' ? t : t?.value)).filter(Boolean)
+    : []
+}
+
+// The activation-guide icon field is free text in Medusa Admin ("URL or icon
+// name") -- only pass it through as an <Image> src if it actually looks like
+// one, otherwise a bare word like "Steam" crashes next/image's src parser.
+function isImageSrc(value: string | undefined): value is string {
+  return !!value && (value.startsWith('/') || value.startsWith('http://') || value.startsWith('https://'))
+}
+
 interface DigitalAvailability {
   variant_id: string
   is_license_key_product: boolean
@@ -190,6 +204,16 @@ function mapProductDetail(
     ? { url: raw.thumbnail, altText: raw.title ?? null }
     : (images[0] ?? null)
 
+  const galleryVideoUrls = metaStringArray(metadata, 'gallery_video_urls')
+  const galleryVideos = galleryVideoUrls.map((url) => ({
+    type: 'EXTERNAL_VIDEO' as const,
+    url,
+    host: url.includes('youtu') ? ('YOUTUBE' as const) : undefined,
+    altText: null,
+  }))
+
+  const backgroundImageUrl = metaString(metadata, 'background_image_url')
+
   const totalStock = Array.from(digitalAvailability.values()).reduce(
     (sum, v) => sum + v.unused_key_count,
     0,
@@ -209,11 +233,14 @@ function mapProductDetail(
     description: raw.description ?? '',
     descriptionHtml: raw.description ?? '',
     images: { edges: images.map((node: any) => ({ node })) },
-    gallery: images.map((img: any) => ({
-      type: 'IMAGE' as const,
-      url: img.url,
-      altText: img.altText,
-    })),
+    gallery: [
+      ...images.map((img: any) => ({
+        type: 'IMAGE' as const,
+        url: img.url,
+        altText: img.altText,
+      })),
+      ...galleryVideos,
+    ],
     variants,
     options: (raw.options ?? []).map((o: any) => ({
       name: o.title,
@@ -224,7 +251,9 @@ function mapProductDetail(
     featured: metaBool(metadata, 'featured'),
     platform: metaStringArray(metadata, 'platform'),
     region: metaStringArray(metadata, 'region'),
-    backgroundImage: images[0] ?? featuredImage,
+    backgroundImage: backgroundImageUrl
+      ? { url: backgroundImageUrl, altText: raw.title ?? null }
+      : (images[0] ?? featuredImage),
     featuredImage,
     rating: ratingSummary
       ? { scale_min: '0', scale_max: '5', value: String(ratingSummary.average_rating) }
@@ -238,13 +267,16 @@ function mapProductDetail(
       ? {
           guide: activationGuideHtml,
           name: metaString(metadata, 'activation_guide_name') ?? '',
-          icon: metaString(metadata, 'activation_guide_icon') ?? null,
+          icon: (() => {
+            const icon = metaString(metadata, 'activation_guide_icon')
+            return isImageSrc(icon) ? icon : null
+          })(),
           _type: '',
           _handle: '',
         }
       : undefined,
-    tags: raw.tags ?? [],
-    importantNotice: undefined,
+    tags: mapTags(raw.tags),
+    importantNotice: metaString(metadata, 'important_notice'),
   }
 }
 
@@ -284,7 +316,11 @@ function mapProductListItem(raw: any): ProductListItem {
     collections: raw.collection
       ? { edges: [{ node: { title: raw.collection.title, handle: raw.collection.handle } }] }
       : undefined,
-    featuredImage: raw.thumbnail ? { url: raw.thumbnail, altText: raw.title ?? null } : null,
+    featuredImage: raw.thumbnail
+      ? { url: raw.thumbnail, altText: raw.title ?? null }
+      : raw.images?.[0]
+        ? { url: raw.images[0].url, altText: raw.title ?? null }
+        : null,
     priceRange: price ? { minVariantPrice: price } : undefined,
     compareAtPriceRange: compareAtPrice ? { minVariantPrice: compareAtPrice } : undefined,
     price,
@@ -300,7 +336,7 @@ function mapProductListItem(raw: any): ProductListItem {
     instantDelivery: metaBool(metadata, 'instant_delivery'),
     onSale: metaBool(metadata, 'on_sale'),
     featured: metaBool(metadata, 'featured'),
-    tags: raw.tags ?? [],
+    tags: mapTags(raw.tags),
     platform: metaStringArray(metadata, 'platform'),
     region: metaStringArray(metadata, 'region'),
     edition: metaStringArray(metadata, 'edition'),
