@@ -1,11 +1,11 @@
 import React from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import Xbox from '@/components/icons/XboxIcon'
 import HeartIcon from '../icons/HeartIcon'
 import CartPlusIcon from '../icons/CartPlusIcon'
 import Thunder from '../icons/Thunder'
 import { getProxyImageUrl } from '@/lib/utils'
+import { PlatformBadge } from './PlatformBadge'
 
 import { useCartStore } from '@/store/useCartStore'
 import { useAddToWishlist, useRemoveFromWishlist } from '@/hooks/useWishlist'
@@ -33,8 +33,7 @@ const StoreCard: React.FC<ProductCardProps> = ({ product, wishlisted }) => {
   const firstVariant = Array.isArray(product.variants)
     ? product.variants[0]
     : product.variants?.edges?.[0]?.node
-  const gameLogoIcon = product.gameLogo?.icon
-  const gameLogoName = product.gameLogo?.name || product.title
+  const gameLogoName = product.gameLogo?.name || product.platform?.[0] || product.title
   const variantId = firstVariant?.id
   const isInStock = firstVariant?.availableForSale ?? true
   const router = useRouter()
@@ -169,17 +168,7 @@ const StoreCard: React.FC<ProductCardProps> = ({ product, wishlisted }) => {
           <div className="absolute bottom-3 z-10 flex h-8 w-full items-end justify-between px-3">
             {/* Icons & Discount Badge */}
             <div className="flex items-end justify-between">
-              {gameLogoIcon ? (
-                <div className="flex h-8 w-8 items-center justify-center">
-                  <Image
-                    src={gameLogoIcon}
-                    alt={gameLogoName}
-                    width={18}
-                    height={18}
-                    className="object-contain"
-                  />
-                </div>
-              ) : null}
+              <PlatformBadge platform={product.platform?.[0]} title={gameLogoName} />
             </div>
 
             {/* Bottom-Right Badges (Discount) */}

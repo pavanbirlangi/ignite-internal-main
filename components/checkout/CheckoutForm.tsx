@@ -3,7 +3,11 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Mail, Pencil } from 'lucide-react'
-import { loadStripe, type Appearance } from '@stripe/stripe-js'
+import {
+  loadStripe,
+  type Appearance,
+  type CustomFontSource,
+} from '@stripe/stripe-js'
 import {
   Elements,
   PaymentElement,
@@ -35,7 +39,7 @@ const stripeAppearance: Appearance = {
     colorTextSecondary: '#9A9A9A',
     colorDanger: '#CD000E',
     borderRadius: '6px',
-    fontFamily: 'inherit',
+    fontFamily: 'Cooper Hewitt, system-ui, sans-serif',
   },
   rules: {
     '.Input': {
@@ -54,6 +58,29 @@ const stripeAppearance: Appearance = {
       border: '1px solid #2468DF',
     },
   },
+}
+
+// `fontFamily: 'Cooper Hewitt'` above only names the font -- it doesn't make
+// the Payment Element's iframe able to render it. The iframe is a separate,
+// cross-origin document with no access to this app's own @font-face rules
+// (app/globals.css), so without this it silently falls back to the
+// browser's generic sans-serif, which is what actually caused the mismatch
+// (not a Stripe limitation -- Stripe Elements supports custom fonts exactly
+// for this reason, it just also needs to be told to load ours). Same
+// Cooper Hewitt files/weights app/globals.css already declares.
+function getStripeFonts(): CustomFontSource[] {
+  if (typeof window === 'undefined') return []
+  const origin = window.location.origin
+  return [
+    { weight: '300', file: 'CooperHewitt-Light.woff2' },
+    { weight: '707', file: 'CooperHewitt-Medium.woff2' },
+    { weight: '709', file: 'CooperHewitt-Semibold.woff2' },
+    { weight: '711', file: 'CooperHewitt-Bold.woff2' },
+  ].map(({ weight, file }) => ({
+    family: 'Cooper Hewitt',
+    src: `url(${origin}/fonts/cooper-hewitt/${file}) format("woff2")`,
+    weight,
+  }))
 }
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
@@ -285,7 +312,11 @@ export function CheckoutForm({
   return (
     <Elements
       stripe={stripePromise}
-      options={{ clientSecret, appearance: stripeAppearance }}
+      options={{
+        clientSecret,
+        appearance: stripeAppearance,
+        fonts: getStripeFonts(),
+      }}
     >
       <CheckoutFormInner
         cartId={cartId}
