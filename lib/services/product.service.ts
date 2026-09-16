@@ -282,6 +282,7 @@ function mapProductDetail(
 
 function mapProductListItem(raw: any): ProductListItem {
   const metadata = raw.metadata ?? {}
+  const gameLogoUrl = metaString(metadata, 'game_logo_url')
   const variants = (raw.variants ?? []).map((v: any) => {
     const calc = v.calculated_price
     return {
@@ -337,6 +338,13 @@ function mapProductListItem(raw: any): ProductListItem {
     onSale: metaBool(metadata, 'on_sale'),
     featured: metaBool(metadata, 'featured'),
     tags: mapTags(raw.tags),
+    // Admin-uploaded per-product card icon (matched the original Shopify
+    // behavior, confirmed directly by the user) -- not a platform lookup.
+    // `game_logo_url` doesn't exist on the backend yet (see
+    // MEDUSA_MIGRATION_BACKEND_REQUIREMENTS.md), so this reads as `undefined`
+    // for every product today; ready to pick it up the moment that field and
+    // its admin upload control exist, same pattern as `background_image_url`.
+    gameLogo: gameLogoUrl ? { icon: gameLogoUrl, name: raw.title ?? '' } : undefined,
     platform: metaStringArray(metadata, 'platform'),
     region: metaStringArray(metadata, 'region'),
     edition: metaStringArray(metadata, 'edition'),
