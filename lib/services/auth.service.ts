@@ -5,6 +5,12 @@ export interface RegisterPayload {
   password: string
   firstName: string
   lastName: string
+  // Cloudflare Turnstile token, sent through so the backend can verify it
+  // once it does -- Medusa's core `/store/customers` validator silently
+  // strips unrecognized fields today (confirmed: no `.strict()` on its zod
+  // schema), so sending this doesn't break registration, it just isn't
+  // enforced yet. See MEDUSA_MIGRATION_BACKEND_REQUIREMENTS.md.
+  turnstileToken?: string
 }
 
 export interface RegisterResponse {
@@ -155,6 +161,9 @@ export const authService = {
         email: payload.email,
         first_name: payload.firstName,
         last_name: payload.lastName,
+        ...(payload.turnstileToken
+          ? { turnstile_token: payload.turnstileToken }
+          : {}),
       },
       { headers: { Authorization: `Bearer ${authData.token}` } },
     )

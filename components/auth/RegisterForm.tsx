@@ -10,17 +10,32 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
 import { toast } from 'sonner'
+import { isPlausibleName } from '@/lib/utils/name-validation'
+import { TurnstileWidget } from './TurnstileWidget'
+
+const nameSchema = z
+  .string()
+  .min(1, 'Name is required')
+  .refine(isPlausibleName, 'Please enter a real name')
 
 const registerSchema = z
   .object({
-    firstName: z.string().min(1, 'First name is required'),
-    lastName: z.string().min(1, 'Last name is required'),
+    firstName: nameSchema,
+    lastName: nameSchema,
     email: z
       .string()
       .min(1, 'Email is required')
       .email('Invalid email address'),
-    password: z.string().min(6, 'Password must be at least 6 characters'),
+    password: z
+      .string()
+      .min(8, 'Password must be at least 8 characters')
+      .regex(/[A-Za-z]/, 'Password must contain a letter')
+      .regex(/[0-9]/, 'Password must contain a number'),
     confirmPassword: z.string().min(1, 'Confirm password is required'),
+    // Honeypot -- invisible to real users (see the input below), bots that
+    // blindly fill every field in a scraped form trip it. Real users should
+    // never populate this, so any value at all is treated as a bot signal.
+    website: z.string().max(0, 'Registration failed').optional(),
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: "Password doesn't match",
@@ -39,6 +54,8 @@ export function RegisterForm({
   const [isLoading, setIsLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null)
+  const turnstileRequired = Boolean(process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY)
 
   const {
     register,
@@ -52,10 +69,21 @@ export function RegisterForm({
       email: '',
       password: '',
       confirmPassword: '',
+      website: '',
     },
   })
 
   const onSubmit = async (data: RegisterFormValues) => {
+    if (data.website) {
+      // Honeypot tripped -- fail quietly, no hint to the bot about why.
+      toast.error('Registration failed')
+      return
+    }
+    if (turnstileRequired && !turnstileToken) {
+      toast.error('Please complete the verification challenge')
+      return
+    }
+
     setIsLoading(true)
 
     try {
@@ -64,6 +92,7 @@ export function RegisterForm({
         lastName: data.lastName,
         email: data.email,
         password: data.password,
+        turnstileToken: turnstileToken ?? undefined,
       })
       toast.success('Registration successful')
       onSuccess()
@@ -79,6 +108,18 @@ export function RegisterForm({
   return (
     <>
       <form onSubmit={handleSubmit(onSubmit)}>
+        {/* Honeypot -- hidden from real users via CSS + off the tab order,
+            not just `type="hidden"` (some bots skip fields they can detect
+            as hidden by type alone). */}
+        <input
+          type="text"
+          tabIndex={-1}
+          autoComplete="off"
+          aria-hidden="true"
+          className="absolute -left-[9999px] h-0 w-0 opacity-0"
+          {...register('website')}
+        />
+
         {/* Inputs */}
         <div className="mb-6 flex flex-col gap-3">
           <div className="flex gap-3">
@@ -188,11 +229,15 @@ export function RegisterForm({
           </div>
         </div>
 
+        <div className="mb-4">
+          <TurnstileWidget onVerify={setTurnstileToken} />
+        </div>
+
         {/* CTA */}
         <div className="pb-6">
           <button
             type="submit"
-            disabled={isLoading}
+            disabled={isLoading || (turnstileRequired && !turnstileToken)}
             className="bg-primary hover:bg-primary/90 mb-3 h-[48px] w-full cursor-pointer rounded-[6px] text-base font-semibold text-white transition-colors disabled:cursor-not-allowed disabled:opacity-50"
           >
             {isLoading ? 'Registering...' : 'Register'}
