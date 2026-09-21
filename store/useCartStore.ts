@@ -10,6 +10,7 @@ import { toast } from 'sonner'
 import { useUserStore } from './useUserStore'
 import { useAuthModalStore } from './useAuthModalStore'
 import { useCurrencyStore } from './useCurrencyStore'
+import { showAddedToCartToast } from '@/components/cart/AddedToCartToast'
 import {
   extractApiErrorMessage,
   isCartNotFoundError,
@@ -93,6 +94,26 @@ const syncCartRegion = async (
   } finally {
     set({ isMigratingRegion: false })
   }
+}
+
+// Mini-cart confirmation popup for a successful add-to-cart. Every cart
+// mutation returns the full updated cart, so the line item just added is
+// already in hand here -- no extra fetch needed to show its image/title/price.
+// `quantity` is that variant's total in the cart (not the delta), which is
+// what a mini-cart should reflect when the same item is added twice.
+const notifyItemAdded = (cart: CartResponse, variantId: string) => {
+  const line = cart.items.find((item) => item.variantId === variantId)
+  if (!line) {
+    toast.success('Added to cart')
+    return
+  }
+  showAddedToCartToast({
+    title: line.title,
+    thumbnail: line.thumbnail,
+    unitPrice: line.unitPrice,
+    quantity: line.quantity,
+    currencyCode: cart.currencyCode,
+  })
 }
 
 // Every cart mutation route already returns the full updated cart in its
@@ -258,7 +279,7 @@ export const useCartStore = create<CartState>()((set, get) => ({
       ])
       set({ cart: updatedCart, isLoading: false })
       maybeRefreshRecommendations(get, previousCart)
-      toast.success('Added to cart')
+      notifyItemAdded(updatedCart, merchandiseId)
     } catch (error: any) {
       const errorMessage = extractApiErrorMessage(
         error,
@@ -287,7 +308,7 @@ export const useCartStore = create<CartState>()((set, get) => ({
           ])
           set({ cart: retryCart, isLoading: false })
           maybeRefreshRecommendations(get, previousCart)
-          toast.success('Added to cart')
+          notifyItemAdded(retryCart, merchandiseId)
           return
         } catch (retryError) {
           const retryErrorMessage = extractApiErrorMessage(
