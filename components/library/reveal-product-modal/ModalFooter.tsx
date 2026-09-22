@@ -8,7 +8,7 @@ interface ModalFooterProps {
   revealDate: string | null
   guideLoading?: boolean
   activationGuide?: {
-    guide: string
+    guide?: string
     name: string
     icon?: string | null
   }

@@ -6,6 +6,7 @@ import { Check, X } from 'lucide-react'
 import { toast } from 'sonner'
 import { getProxyImageUrl } from '@/lib/utils'
 import { formatMedusaAmount } from '@/lib/currency'
+import { ensureCheckoutAllowed } from '@/lib/utils/checkout-guard'
 
 interface AddedToCartToastProps {
   title: string
@@ -29,9 +30,17 @@ function AddedToCartToast({
   // Same locale-less paths the cart drawer/footer already push to -- proxy.ts
   // adds the locale prefix on the redirect, so hardcoding one here would
   // produce a double prefix.
-  const go = (path: string) => {
+  const goToCart = () => {
     onDismiss()
-    router.push(path)
+    router.push('/cart')
+  }
+
+  // Same auth gate the cart drawer's "Pay Now" uses -- an unauthenticated
+  // customer gets the login modal here instead of bouncing off proxy.ts.
+  const goToCheckout = () => {
+    if (!ensureCheckoutAllowed()) return
+    onDismiss()
+    router.push('/checkout')
   }
 
   return (
@@ -84,14 +93,14 @@ function AddedToCartToast({
       <div className="flex gap-2">
         <button
           type="button"
-          onClick={() => go('/cart')}
+          onClick={goToCart}
           className="border-border flex-1 cursor-pointer rounded-[6px] border bg-transparent py-2.5 text-sm font-semibold text-white transition-colors hover:bg-white/5"
         >
           View cart
         </button>
         <button
           type="button"
-          onClick={() => go('/checkout')}
+          onClick={goToCheckout}
           className="bg-primary hover:bg-primary/90 flex-1 cursor-pointer rounded-[6px] py-2.5 text-sm font-semibold text-white transition-colors"
         >
           Checkout

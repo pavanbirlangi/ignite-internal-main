@@ -2,9 +2,8 @@ import { ChevronRight } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { SheetClose } from '@/components/ui/sheet'
 import { useRouter } from 'next/navigation'
-import { useUserStore } from '@/store/useUserStore'
-import { useAuthModalStore } from '@/store/useAuthModalStore'
 import { toast } from 'sonner'
+import { ensureCheckoutAllowed } from '@/lib/utils/checkout-guard'
 import { formatApiCurrency } from './currency'
 
 interface CartFooterProps {
@@ -23,17 +22,7 @@ export const CartFooter = ({ total, count, currencyCode }: CartFooterProps) => {
       return
     }
 
-    const { isAuthenticated } = useUserStore.getState()
-    const { openModal } = useAuthModalStore.getState()
-
-    if (!isAuthenticated) {
-      toast.info('Please log in to proceed with checkout', {
-        duration: 2000,
-       position: 'top-right',
-      })
-      openModal('login')
-      return
-    }
+    if (!ensureCheckoutAllowed()) return
 
     router.push('/checkout')
   }

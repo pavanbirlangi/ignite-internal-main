@@ -138,7 +138,9 @@ export interface Product {
   compareAtPrice?: ProductVariantPrice | null
   discount?: ProductVariantDiscount | null
   activationGuide?: {
-    guide: string
+    // Optional: the three admin fields behind this are independent, so a
+    // product can have a name/icon with no guide body written yet.
+    guide?: string
     name: string
     icon?: string | null
     _type: string

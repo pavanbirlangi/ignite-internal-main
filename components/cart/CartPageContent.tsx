@@ -7,8 +7,7 @@ import { CartItemRow } from '@/components/cart/CartItemRow'
 import { OrderSummary } from '@/components/cart/OrderSummary'
 import { CartPageRecommendationRow } from '@/components/cart/CartPageRecommendationRow'
 import { useCartStore } from '@/store/useCartStore'
-import { useUserStore } from '@/store/useUserStore'
-import { useAuthModalStore } from '@/store/useAuthModalStore'
+import { ensureCheckoutAllowed } from '@/lib/utils/checkout-guard'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 
@@ -173,20 +172,8 @@ export function CartPageContent() {
   }
 
   const handleCheckout = () => {
-    const { isAuthenticated } = useUserStore.getState()
-    const { openModal } = useAuthModalStore.getState()
+    if (!ensureCheckoutAllowed()) return
 
-    if (!isAuthenticated) {
-      toast.info('Please log in to proceed with checkout', {
-        duration: 2000,
-        position: 'top-right',
-      })
-      openModal('login')
-      return
-    }
-
-    // In-app checkout doesn't exist yet (Phase 11) -- Medusa carts have no
-    // hosted checkout URL like Shopify's, so this routes to a placeholder.
     router.push('/checkout')
   }
 

@@ -350,29 +350,38 @@ export default function ProductDetails({
 
       {/* Info Container (Activation Guide & Stock) */}
       <div className="mb-8 flex w-full flex-col items-center justify-between gap-4 rounded-2xl border border-white/10 bg-transparent p-4 md:flex-row">
-        {/* Activation Guide Section */}
-        <div className="flex w-full items-center gap-3 md:w-auto">
-          <Image
-            src={product.activationGuide?.icon ?? '/icon.png'}
-            alt={product.activationGuide?.name ?? product.title}
-            width={32}
-            height={32}
-            className="object-cover"
-          />
-          <div className="flex flex-col">
-            <span className="mb-1 text-sm leading-none font-medium text-white">
-              {product.activationGuide?.name}
-            </span>
-            <ActivationGuideModal
-              title={product.activationGuide?.name}
-              guideHtml={product.activationGuide?.guide}
-            >
-              <span className="text-primary cursor-pointer text-[10px] font-medium hover:underline">
-                {labels?.activationGuide ?? 'Activation Guide'}
-              </span>
-            </ActivationGuideModal>
+        {/* Activation Guide Section -- each part renders only when it has
+            real content. The three metadata fields behind this are filled
+            independently in Admin, so a product can legitimately have a
+            platform name with no icon, or neither. */}
+        {product.activationGuide && (
+          <div className="flex w-full items-center gap-3 md:w-auto">
+            {product.activationGuide.icon && (
+              <Image
+                src={product.activationGuide.icon}
+                alt={product.activationGuide.name || product.title}
+                width={32}
+                height={32}
+                className="object-cover"
+              />
+            )}
+            <div className="flex flex-col">
+              {product.activationGuide.name && (
+                <span className="mb-1 text-sm leading-none font-medium text-white">
+                  {product.activationGuide.name}
+                </span>
+              )}
+              <ActivationGuideModal
+                title={product.activationGuide.name}
+                guideHtml={product.activationGuide.guide}
+              >
+                <span className="text-primary cursor-pointer text-[10px] font-medium hover:underline">
+                  {labels?.activationGuide ?? 'Activation Guide'}
+                </span>
+              </ActivationGuideModal>
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Divider 1 */}
         <div className="hidden h-8 w-px bg-white/10 md:block"></div>

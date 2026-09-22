@@ -223,6 +223,14 @@ function mapProductDetail(
     : true
 
   const activationGuideHtml = metaString(metadata, 'activation_guide_html')
+  const activationGuideName = metaString(metadata, 'activation_guide_name')
+  // Guarded because this field was free text before it became a real file
+  // upload -- a leftover non-URL value like "Steam" crashes next/image's src
+  // parser outright (this is what R-24 was raised for).
+  const activationGuideIconRaw = metaString(metadata, 'activation_guide_icon')
+  const activationGuideIcon = isImageSrc(activationGuideIconRaw)
+    ? activationGuideIconRaw
+    : null
 
   return {
     id: raw.id,
@@ -263,14 +271,17 @@ function mapProductDetail(
     price: firstVariant?.price,
     compareAtPrice: firstVariant?.compareAtPrice ?? null,
     discount: firstVariant?.discount ?? null,
-    activationGuide: activationGuideHtml
+    // Built when *any* of the three fields is filled, not only when the HTML
+    // is -- these are three independent admin inputs and a product can
+    // legitimately have a name/icon before anyone writes the guide body
+    // (confirmed live: a real product had `activation_guide_name` and an icon
+    // set with no HTML, and the old all-or-nothing guard threw both away).
+    // Each part is rendered conditionally downstream instead.
+    activationGuide: activationGuideName || activationGuideIcon || activationGuideHtml
       ? {
           guide: activationGuideHtml,
-          name: metaString(metadata, 'activation_guide_name') ?? '',
-          icon: (() => {
-            const icon = metaString(metadata, 'activation_guide_icon')
-            return isImageSrc(icon) ? icon : null
-          })(),
+          name: activationGuideName ?? '',
+          icon: activationGuideIcon,
           _type: '',
           _handle: '',
         }

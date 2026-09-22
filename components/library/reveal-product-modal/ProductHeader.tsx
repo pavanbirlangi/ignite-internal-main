@@ -61,13 +61,18 @@ export const ProductHeader = ({
                 </div>
               ) : activationGuide ? (
                 <div className="text-muted-foreground mt-1 flex items-center gap-1.5">
-                  <Image
-                    src={getProxyImageUrl(activationGuide.icon)}
-                    alt={activationGuide.name}
-                    width={16}
-                    height={16}
-                    className="object-cover"
-                  />
+                  {/* Guarded: the icon is an independently-filled admin field,
+                      and getProxyImageUrl returns '' for a missing one, which
+                      next/image rejects at runtime with an empty-src error. */}
+                  {activationGuide.icon && (
+                    <Image
+                      src={getProxyImageUrl(activationGuide.icon)}
+                      alt={activationGuide.name}
+                      width={16}
+                      height={16}
+                      className="object-cover"
+                    />
+                  )}
                   <span className="text-xs font-medium">
                     {activationGuide.name}
                   </span>

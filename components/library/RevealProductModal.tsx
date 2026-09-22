@@ -37,7 +37,7 @@ export function RevealProductModal({
   const [loading, setLoading] = React.useState(false)
   const [error, setError] = React.useState<string | null>(null)
   const [activationGuide, setActivationGuide] = React.useState<
-    { guide: string; name: string; icon?: string | null } | undefined
+    { guide?: string; name: string; icon?: string | null } | undefined
   >(undefined)
   const [guideLoading, setGuideLoading] = React.useState(false)
 

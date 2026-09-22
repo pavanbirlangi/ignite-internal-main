@@ -5,6 +5,7 @@ import HeartIcon from '../icons/HeartIcon'
 import CartPlusIcon from '../icons/CartPlusIcon'
 import Thunder from '../icons/Thunder'
 import { getProxyImageUrl } from '@/lib/utils'
+import { ensureCheckoutAllowed } from '@/lib/utils/checkout-guard'
 
 import { useCartStore } from '@/store/useCartStore'
 import { useAddToWishlist, useRemoveFromWishlist } from '@/hooks/useWishlist'
@@ -62,21 +63,9 @@ const StoreCard: React.FC<ProductCardProps> = ({ product, wishlisted }) => {
       return
     }
 
- 
+    if (!ensureCheckoutAllowed()) return
 
-    const { isAuthenticated: authed } = useUserStore.getState()
-    if (!authed) {
-      toast.info('Please log in to proceed with checkout', {
-        duration: 2000,
-        position: 'top-right',
-      })
-      openModal('login')
-      return
-    }
     await addItem(variantId, 1)
-
-    // In-app checkout doesn't exist yet (Phase 11) -- Medusa carts have no
-    // hosted checkout URL like Shopify's, so this routes to a placeholder.
     router.push('/checkout')
   }
 

@@ -55,28 +55,23 @@ export function ActivationGuideModal({
               {title ?? 'How to Activate a Steam Game Key'}
             </h3> */}
 
+            {/* No placeholder/sample steps in the empty case on purpose: this
+                previously rendered hardcoded dummy instructions ("Instruction
+                line with some bold text here"), which a real customer would
+                see on any product whose activation_guide_html hasn't been
+                filled in yet -- same trap as the fake review badge removed
+                earlier. An honest empty state is better than invented steps
+                for a key the customer actually paid for. */}
             {guideHtml ? (
               <div
                 className="dynamicText prose-invert prose-lg max-w-none text-white [&_img]:h-auto [&_img]:max-w-full [&_img]:rounded-xl"
                 dangerouslySetInnerHTML={{ __html: guideHtml }}
               />
             ) : (
-              <>
-                {/* Step 1 */}
-                <div className="flex flex-col gap-4 sm:gap-6">
-                  <div className="flex items-start gap-3 sm:items-center sm:gap-4">
-                    <div className="bg-secondary flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-base font-semibold text-white sm:h-[54px] sm:w-[54px] sm:text-[24px]">
-                      1
-                    </div>
-                    <p className="text-sm leading-5 sm:text-[24px] sm:leading-[31px]">
-                      Instruction line with{' '}
-                      <span className="font-semibold">some bold text here</span>{' '}
-                      and rest of the instruction
-                    </p>
-                  </div>
-                </div>
-                {/* ... other steps ... */}
-              </>
+              <p className="text-muted-foreground text-sm leading-relaxed">
+                Activation steps for this product aren&apos;t available yet. If
+                you need help redeeming your key, please contact support.
+              </p>
             )}
           </div>
         </div>
