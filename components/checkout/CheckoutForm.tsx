@@ -40,11 +40,27 @@ const stripeAppearance: Appearance = {
     colorDanger: '#CD000E',
     borderRadius: '6px',
     fontFamily: 'Cooper Hewitt, system-ui, sans-serif',
+    // Stripe styles its own fields with standard CSS weights, so these have
+    // to be standard values that resolve to a real face registered below --
+    // this app's own scale (705/707/709/711) means nothing inside the iframe.
+    fontWeightLight: '300',
+    fontWeightNormal: '400',
+    fontWeightMedium: '500',
+    fontWeightBold: '700',
   },
   rules: {
     '.Input': {
       border: '1px solid #3A3A3A',
       backgroundColor: '#171717',
+      // Matches the email field directly above it (INPUT_CLASS: text-sm,
+      // font-semibold), rather than Stripe's 16px/400 default. Set on the
+      // input specifically instead of via fontSizeBase, which would shrink
+      // the labels too.
+      fontSize: '14px',
+      fontWeight: '600',
+    },
+    '.Label': {
+      fontWeight: '500',
     },
     '.Input:focus': {
       border: '1px solid #2468DF',
@@ -63,20 +79,29 @@ const stripeAppearance: Appearance = {
 // `fontFamily: 'Cooper Hewitt'` above only names the font -- it doesn't make
 // the Payment Element's iframe able to render it. The iframe is a separate,
 // cross-origin document with no access to this app's own @font-face rules
-// (app/globals.css), so without this it silently falls back to the
-// browser's generic sans-serif, which is what actually caused the mismatch
-// (not a Stripe limitation -- Stripe Elements supports custom fonts exactly
-// for this reason, it just also needs to be told to load ours). Same
-// Cooper Hewitt files/weights app/globals.css already declares.
+// (app/globals.css), so the faces have to be handed to Stripe explicitly.
+//
+// Registered against **standard** CSS weights, deliberately not the ones
+// globals.css uses. This app runs on Cooper Hewitt's real numeric weights
+// (body is 705, medium 707, semibold 709, bold 711), but Stripe styles its
+// own fields with ordinary 400/500/600 -- so registering only 300/707/709/711
+// left every weight Stripe asks for with no matching face, and the browser
+// fell back to the nearest one available: 300 (Light). That's what made the
+// card fields look wrong -- thin Light digits sitting next to the app's own
+// semibold email input. Mapping the same files onto the weights Stripe
+// actually requests is what fixes it.
+const FONT_WEIGHT_TO_FILE: Array<{ weight: string; file: string }> = [
+  { weight: '300', file: 'CooperHewitt-Light.woff2' },
+  { weight: '400', file: 'CooperHewitt-Medium.woff2' },
+  { weight: '500', file: 'CooperHewitt-Medium.woff2' },
+  { weight: '600', file: 'CooperHewitt-Semibold.woff2' },
+  { weight: '700', file: 'CooperHewitt-Bold.woff2' },
+]
+
 function getStripeFonts(): CustomFontSource[] {
   if (typeof window === 'undefined') return []
   const origin = window.location.origin
-  return [
-    { weight: '300', file: 'CooperHewitt-Light.woff2' },
-    { weight: '707', file: 'CooperHewitt-Medium.woff2' },
-    { weight: '709', file: 'CooperHewitt-Semibold.woff2' },
-    { weight: '711', file: 'CooperHewitt-Bold.woff2' },
-  ].map(({ weight, file }) => ({
+  return FONT_WEIGHT_TO_FILE.map(({ weight, file }) => ({
     family: 'Cooper Hewitt',
     src: `url(${origin}/fonts/cooper-hewitt/${file}) format("woff2")`,
     weight,
