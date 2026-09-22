@@ -3,6 +3,8 @@ import { Button } from '@/components/ui/button'
 import { SheetClose } from '@/components/ui/sheet'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
+import StarIcon from '../icons/StarIcon'
+import { useCartStore } from '@/store/useCartStore'
 import { ensureCheckoutAllowed } from '@/lib/utils/checkout-guard'
 import { formatApiCurrency } from './currency'
 
@@ -14,6 +16,11 @@ interface CartFooterProps {
 
 export const CartFooter = ({ total, count, currencyCode }: CartFooterProps) => {
   const router = useRouter()
+  const cartCmsData = useCartStore((state) => state.cartCmsData)
+  const reviewCount = cartCmsData?.review_count?.trim()
+  // "1 reviews" reads as broken -- the CMS holds a plain string, so the
+  // plural is decided here.
+  const reviewLabel = reviewCount === '1' ? 'review' : 'reviews'
   const isCartEmpty = count < 1
 
   const handlePayNow = () => {
@@ -63,6 +70,35 @@ export const CartFooter = ({ total, count, currencyCode }: CartFooterProps) => {
           Pay Now <ChevronRight className="ml-0.5 h-4 w-4" />
         </Button>
       </div>
+
+      {/* Trustpilot badge -- renders only when the CMS actually has a review
+          count, rather than falling back to a hardcoded figure the way this
+          block originally did. The count and the profile link are both
+          Directus-managed (`/items/cart`). */}
+      {reviewCount && (
+        <div className="flex w-full items-center justify-center gap-1.5 pt-1 text-[13px]">
+          <span className="font-medium">
+            See our{' '}
+            {cartCmsData?.review_redirect_link ? (
+              <a
+                href={cartCmsData.review_redirect_link}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-semibold text-white underline transition-opacity hover:opacity-80"
+              >
+                {reviewCount} {reviewLabel}
+              </a>
+            ) : (
+              <span className="font-semibold text-white">
+                {reviewCount} {reviewLabel}
+              </span>
+            )}{' '}
+            on
+          </span>
+          <StarIcon />
+          <span className="font-medium text-white">Trustpilot</span>
+        </div>
+      )}
     </div>
   )
 }

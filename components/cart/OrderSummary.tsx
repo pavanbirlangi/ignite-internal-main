@@ -8,6 +8,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
+import StarIcon from '../icons/StarIcon'
 import { useCartStore } from '@/store/useCartStore'
 
 interface OrderSummaryProps {
@@ -24,6 +25,10 @@ export function OrderSummary({
   onCheckout,
 }: OrderSummaryProps) {
   const cartCmsData = useCartStore((state) => state.cartCmsData)
+  const reviewCount = cartCmsData?.review_count?.trim()
+  // "1 reviews" reads as broken -- the CMS holds a plain string, so the
+  // plural is decided here.
+  const reviewLabel = reviewCount === '1' ? 'review' : 'reviews'
 
   return (
     <div className="static w-full lg:sticky lg:top-40">
@@ -83,6 +88,37 @@ export function OrderSummary({
           <span className="text-primary underline">Privacy Policy</span> and
           <span className="text-primary underline"> Refund Policy.</span>
         </p>
+      )}
+
+      {/* Trustpilot badge -- renders only when the CMS actually has a review
+          count, rather than falling back to a hardcoded figure the way this
+          block originally did. The count and the profile link are both
+          Directus-managed (`/items/cart`). */}
+      {reviewCount && (
+        <div className="flex flex-col items-center justify-center gap-3 py-4 sm:flex-row">
+          <span className="text-[14px] font-medium text-white">
+            See our{' '}
+            {cartCmsData?.review_redirect_link ? (
+              <a
+                href={cartCmsData.review_redirect_link}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-semibold underline transition-opacity hover:opacity-80"
+              >
+                {reviewCount} {reviewLabel}
+              </a>
+            ) : (
+              <span className="font-semibold">
+                {reviewCount} {reviewLabel}
+              </span>
+            )}{' '}
+            on
+          </span>
+          <div className="flex items-center gap-1">
+            <StarIcon />
+            <span className="text-[14px] font-bold text-white">Trustpilot</span>
+          </div>
+        </div>
       )}
     </div>
   )
