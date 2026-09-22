@@ -1,4 +1,5 @@
 import medusaClient from '../medusa-axios'
+import { getCountryForCurrency } from '../region-data'
 
 export interface MedusaRegion {
   id: string
@@ -60,4 +61,29 @@ export async function resolveRegionForCountry(
     : undefined
 
   return matched ?? regions[0]
+}
+
+/**
+ * The country that best *represents* a region, for display (the nav flag) and
+ * as the stored `user_country` when nothing better is known.
+ *
+ * Deliberately not `region.countries[0]`: Medusa returns a region's countries
+ * sorted by ISO code, so the first entry is arbitrary. Live, that meant the
+ * USD region led with `ec` (Ecuador), EUR with `ad` (Andorra) and GBP with
+ * `gg` (Guernsey) -- so the nav showed the wrong flag for three of six
+ * regions. Mapping from the region's currency instead gives the country
+ * people actually associate with it.
+ *
+ * Still returns a real member country (EUR -> AT), not a synthetic "EU", so
+ * the result stays valid input for `resolveRegionForCountry` above and for
+ * the `user_country` cookie.
+ */
+export function getRegionDisplayCountry(region: MedusaRegion): string {
+  const fromCurrency = getCountryForCurrency(region.currencyCode)
+  if (fromCurrency && region.countries.includes(fromCurrency.toLowerCase())) {
+    return fromCurrency.toUpperCase()
+  }
+  // Currency isn't in the map, or its country isn't actually served by this
+  // region -- fall back to whatever the region does cover.
+  return (fromCurrency || region.countries[0] || 'US').toUpperCase()
 }

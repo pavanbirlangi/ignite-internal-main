@@ -21,6 +21,10 @@ import {
   CheckoutRiskBlockedError,
 } from '@/lib/services/checkout.service'
 import { extractApiErrorMessage } from '@/lib/utils/api-error'
+import {
+  PaymentFailed,
+  type PaymentFailureVariant,
+} from '@/components/checkout/PaymentFailed'
 import { useCartStore } from '@/store/useCartStore'
 
 const stripePromise = loadStripe(
@@ -210,6 +214,15 @@ function CheckoutFormInner({
   const [email, setEmail] = useState(initialEmail)
   const [submitting, setSubmitting] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
+  // Only set for failures that warrant the full explanation panel. Simple
+  // "fix this field and resubmit" validation stays as inline red text --
+  // a whole alert block for a mistyped email would be noise.
+  const [failure, setFailure] = useState<PaymentFailureVariant | null>(null)
+
+  const clearErrors = () => {
+    setErrorMessage(null)
+    setFailure(null)
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -221,7 +234,7 @@ function CheckoutFormInner({
     }
 
     setSubmitting(true)
-    setErrorMessage(null)
+    clearErrors()
 
     try {
       // No address form is shown here; Medusa's own checkout doesn't require
@@ -248,7 +261,15 @@ function CheckoutFormInner({
       })
 
       if (error) {
-        setErrorMessage(error.message ?? 'Payment failed. Please try again.')
+        setErrorMessage(error.message ?? null)
+        // Stripe's own taxonomy: card_error/validation_error are the
+        // customer-fixable ones (declined, wrong CVC, expired). Anything
+        // else at this point is our problem, not theirs.
+        setFailure(
+          error.type === 'card_error' || error.type === 'validation_error'
+            ? 'declined'
+            : 'generic',
+        )
         setSubmitting(false)
         return
       }
@@ -279,17 +300,13 @@ function CheckoutFormInner({
       setSubmitting(false)
     } catch (err: any) {
       if (err instanceof CheckoutRiskBlockedError) {
-        setErrorMessage(
-          err.message ||
-            "We couldn't process this order. Please contact support or try a different payment method.",
-        )
+        // The backend deliberately returns a vague message here; don't
+        // surface it as a "reason" the customer can act on.
+        setErrorMessage(null)
+        setFailure('blocked')
       } else {
-        setErrorMessage(
-          extractApiErrorMessage(
-            err,
-            'Something went wrong completing your order.',
-          ),
-        )
+        setErrorMessage(extractApiErrorMessage(err, ''))
+        setFailure('generic')
       }
       setSubmitting(false)
     }
@@ -310,8 +327,22 @@ function CheckoutFormInner({
         </p>
       </div>
 
-      {errorMessage && (
-        <p className="text-red text-sm font-semibold">{errorMessage}</p>
+      {/* A real failure gets the full explanation panel; plain field
+          validation stays as one line of red text. */}
+      {failure ? (
+        <PaymentFailed
+          variant={failure}
+          message={errorMessage}
+          // The form and its payment details are still mounted underneath,
+          // so "try again" just clears the panel rather than reloading
+          // anything -- the customer can swap the card and resubmit.
+          onRetry={failure === 'blocked' ? undefined : clearErrors}
+          onBackToCart={() => router.push('/cart')}
+        />
+      ) : (
+        errorMessage && (
+          <p className="text-red text-sm font-semibold">{errorMessage}</p>
+        )
       )}
 
       <Button

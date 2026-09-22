@@ -18,7 +18,11 @@ import {
 } from '@/components/ui/select'
 import { X } from 'lucide-react'
 import { languages } from '@/lib/region-data'
-import { getRegions, type MedusaRegion } from '@/lib/utils/region-resolver'
+import {
+  getRegions,
+  getRegionDisplayCountry,
+  type MedusaRegion,
+} from '@/lib/utils/region-resolver'
 import { useCurrencyStore } from '@/store/useCurrencyStore'
 
 export default function LanguageModal({
@@ -72,7 +76,7 @@ export default function LanguageModal({
 
     try {
       setIsSaving(true)
-      const country = (selectedRegion.countries[0] || 'us').toUpperCase()
+      const country = getRegionDisplayCountry(selectedRegion)
       await setRegion(
         selectedRegion.id,
         country,

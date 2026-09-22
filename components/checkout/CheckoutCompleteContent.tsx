@@ -7,6 +7,10 @@ import { CartNavbar } from '@/components/cart/CartNavbar'
 import { checkoutService } from '@/lib/services/checkout.service'
 import { useCartStore } from '@/store/useCartStore'
 import { extractApiErrorMessage } from '@/lib/utils/api-error'
+import {
+  PaymentFailed,
+  type PaymentFailureVariant,
+} from '@/components/checkout/PaymentFailed'
 
 const stripePromise = loadStripe(
   process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY as string,
@@ -21,6 +25,8 @@ export function CheckoutCompleteContent() {
   const clearCart = useCartStore((state) => state.clearCart)
   const [status, setStatus] = React.useState<'checking' | 'error'>('checking')
   const [errorMessage, setErrorMessage] = React.useState<string | null>(null)
+  const [failure, setFailure] =
+    React.useState<PaymentFailureVariant>('generic')
 
   React.useEffect(() => {
     const cartId = searchParams.get('cart_id')
@@ -30,7 +36,8 @@ export function CheckoutCompleteContent() {
 
     if (!cartId || !paymentIntentClientSecret) {
       setStatus('error')
-      setErrorMessage('Missing checkout details. Please try again from your cart.')
+      setFailure('incomplete')
+      setErrorMessage(null)
       return
     }
 
@@ -52,9 +59,8 @@ export function CheckoutCompleteContent() {
         ) {
           if (!cancelled) {
             setStatus('error')
-            setErrorMessage(
-              'Payment was not completed. Please try again from your cart.',
-            )
+            setFailure('incomplete')
+            setErrorMessage(null)
           }
           return
         }
@@ -70,12 +76,10 @@ export function CheckoutCompleteContent() {
       } catch (error) {
         if (!cancelled) {
           setStatus('error')
-          setErrorMessage(
-            extractApiErrorMessage(
-              error,
-              "We couldn't finish processing this order.",
-            ),
-          )
+          // The payment itself already cleared by this point -- only order
+          // completion failed -- so this must not claim they weren't charged.
+          setFailure('generic')
+          setErrorMessage(extractApiErrorMessage(error, ''))
         }
       }
     })()
@@ -88,21 +92,22 @@ export function CheckoutCompleteContent() {
   return (
     <div className="bg-background min-h-screen font-sans">
       <CartNavbar currentStep={2} />
-      <div className="flex min-h-100 flex-col items-center justify-center gap-3 px-6 py-16 text-center">
+      <div className="mx-auto flex min-h-100 w-full max-w-160 flex-col items-center justify-center gap-3 px-4 py-16">
         {status === 'checking' ? (
           <p className="text-muted-foreground text-base">
             Finishing up your order...
           </p>
         ) : (
-          <>
-            <p className="text-red text-base font-semibold">{errorMessage}</p>
-            <button
-              onClick={() => router.push('/cart')}
-              className="text-primary text-sm font-semibold underline"
-            >
-              Back to cart
-            </button>
-          </>
+          <PaymentFailed
+            variant={failure}
+            message={errorMessage}
+            onRetry={
+              failure === 'incomplete'
+                ? () => router.push('/checkout')
+                : undefined
+            }
+            onBackToCart={() => router.push('/cart')}
+          />
         )}
       </div>
     </div>

@@ -21,6 +21,13 @@ export default function RegionToggle() {
   const currentLanguage = languages.find((l) => l.value === language)
   const fullLanguageName = currentLanguage ? currentLanguage.label : language
 
+  // Display-only: the eurozone has no single country flag, and the stored
+  // country is a real member state (AT) so region lookups keep working --
+  // but showing Austria's flag for a region labelled "Europe" reads as a
+  // mistake, so the EU flag is substituted here and here only.
+  const flagCode =
+    currency.toUpperCase() === 'EUR' ? 'eu' : countryCode.toLowerCase()
+
   return (
     <LanguageModal>
       <button
@@ -30,10 +37,15 @@ export default function RegionToggle() {
         <div className="flex h-6 w-6 shrink-0 items-center justify-center overflow-hidden rounded-full border border-white/10">
           {mounted ? (
             <Image
-              src={`https://flagcdn.com/w40/${countryCode.toLowerCase()}.png`}
+              src={`https://flagcdn.com/w80/${flagCode}.png`}
               alt={countryCode}
-              width={40}
-              height={30}
+              width={80}
+              height={60}
+              // w80 rather than w40: this renders into a 24px circle, so a
+              // 40px-wide source had under 2x density and looked soft on any
+              // retina screen. flagcdn also serves SVG, but next/image needs
+              // `dangerouslyAllowSVG` for that, which isn't worth enabling
+              // site-wide just for this.
               className="h-full w-full object-cover"
             />
           ) : (

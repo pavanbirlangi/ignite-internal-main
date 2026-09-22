@@ -2,6 +2,7 @@ import { create } from 'zustand'
 import Cookies from 'js-cookie'
 import {
   getRegions,
+  getRegionDisplayCountry,
   resolveRegionForCountry,
   type MedusaRegion,
 } from '@/lib/utils/region-resolver'
@@ -127,10 +128,13 @@ export const useCurrencyStore = create<CurrencyState>()((set, get) => ({
       // resolved -- if the guess didn't match any real region (fell back to
       // the first one), show one of that region's own countries rather than
       // a mismatched flag/label.
+      // A geo-IP hit that the region actually covers is the most accurate
+      // thing to show; otherwise fall back to the region's representative
+      // country rather than its arbitrary alphabetically-first one.
       const country =
         countryGuess && region.countries.includes(countryGuess.toLowerCase())
           ? countryGuess.toUpperCase()
-          : (region.countries[0] || 'US').toUpperCase()
+          : getRegionDisplayCountry(region)
 
       applyRegion(region, country, language)
     } catch (error) {
@@ -141,7 +145,7 @@ export const useCurrencyStore = create<CurrencyState>()((set, get) => ({
       try {
         const regions = await getRegions()
         const region = regions[0]
-        applyRegion(region, (region.countries[0] || 'US').toUpperCase(), language)
+        applyRegion(region, getRegionDisplayCountry(region), language)
       } catch (fallbackError) {
         console.error('Failed to load any region at all:', fallbackError)
         set({ isLoading: false, isInitialized: true })
