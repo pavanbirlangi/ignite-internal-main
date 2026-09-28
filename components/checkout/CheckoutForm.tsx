@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Mail, Pencil } from 'lucide-react'
 import {
@@ -220,21 +220,6 @@ function CheckoutFormInner({
   const [email, setEmail] = useState(initialEmail)
   const [submitting, setSubmitting] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
-  const [usdReference, setUsdReference] = useState<number | null>(null)
-
-  useEffect(() => {
-    if (!cart || cart.currencyCode.toUpperCase() === 'USD') {
-      setUsdReference(null)
-      return
-    }
-    let cancelled = false
-    checkoutService.getUsdReferenceTotal(cart).then((value) => {
-      if (!cancelled) setUsdReference(value)
-    })
-    return () => {
-      cancelled = true
-    }
-  }, [cart])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -341,17 +326,16 @@ function CheckoutFormInner({
         <h2 className="mb-4 text-lg font-semibold text-white md:text-xl">
           Payment method
         </h2>
-        {/* Item 20: a reference USD figure for customers used to thinking in USD. NOT the amount
-            actually charged -- confirmed live that Stripe charges in the cart's own currency
-            (e.g. a real INR cart's PaymentIntent is created with currency "inr", no conversion
-            happens). Skipped for USD carts, where it would just repeat the total shown above. */}
-        {usdReference != null && (
+        {/* Item 20: the currency symbol alone (e.g. a plain "$") reads as USD to most customers
+            even when it isn't -- calling out the real ISO code removes that ambiguity. Skipped
+            for USD itself, where there's nothing to disambiguate. */}
+        {cart && cart.currencyCode.toUpperCase() !== 'USD' && (
           <p className="text-muted-foreground mb-3 text-xs">
-            Approx.{' '}
+            You will be charged{' '}
             <span className="text-white font-semibold">
-              {formatCurrency(usdReference, 'USD')} USD
-            </span>{' '}
-            for reference.
+              {formatCurrency(cart.total, cart.currencyCode)} {cart.currencyCode.toUpperCase()}
+            </span>
+            .
           </p>
         )}
         <PaymentElement />

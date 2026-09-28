@@ -1,6 +1,4 @@
 import medusaClient from '../medusa-axios'
-import { getRegions } from '../utils/region-resolver'
-import type { CartResponse } from './cart.service'
 
 export interface StripePaymentSession {
   id: string
@@ -41,59 +39,6 @@ const STRIPE_PROVIDER_ID = 'pp_stripe_stripe'
 const DIGITAL_SHIPPING_OPTION_NAME = 'Digital Delivery'
 
 export const checkoutService = {
-  /**
-   * A reference USD figure for the cart's product items, for customers whose cart isn't already
-   * in USD -- NOT the amount actually charged (confirmed live: Stripe charges in the cart's own
-   * currency, e.g. a real INR cart creates its PaymentIntent with currency "inr", no USD
-   * conversion happens anywhere in the flow). This looks up the same variants' real USD prices
-   * from the store's own USD region rather than guessing via a live FX rate, so it reflects what
-   * the store actually charges US customers for the same items. Excludes the service fee and tax
-   * (neither is known in USD terms without querying the USD region's own cart), so it's a
-   * products-only estimate -- fine for a "for reference" line, not for anything transactional.
-   * Returns null if the USD region can't be resolved or any item's USD price is missing, rather
-   * than showing a partial/misleading figure.
-   */
-  getUsdReferenceTotal: async (cart: CartResponse): Promise<number | null> => {
-    if (cart.items.length === 0) return null
-
-    try {
-      const regions = await getRegions()
-      const usdRegion = regions.find((r) => r.currencyCode === 'USD')
-      if (!usdRegion) return null
-
-      const productIds = Array.from(
-        new Set(cart.items.map((item) => item.productId).filter(Boolean)),
-      )
-      const { data } = await medusaClient.get('/store/products', {
-        params: {
-          id: productIds,
-          region_id: usdRegion.id,
-          fields: 'id,variants.id,variants.calculated_price.calculated_amount',
-          limit: productIds.length,
-        },
-      })
-
-      const usdPriceByVariant = new Map<string, number>()
-      for (const product of data.products ?? []) {
-        for (const variant of product.variants ?? []) {
-          const amount = variant?.calculated_price?.calculated_amount
-          if (typeof amount === 'number') usdPriceByVariant.set(variant.id, amount)
-        }
-      }
-
-      let total = 0
-      for (const item of cart.items) {
-        const usdPrice = usdPriceByVariant.get(item.variantId)
-        if (usdPrice == null) return null
-        total += usdPrice * item.quantity
-      }
-      return total
-    } catch (error) {
-      console.error('Failed to compute USD reference total', error)
-      return null
-    }
-  },
-
   /**
    * Sets only the cart's email -- confirmed live that Medusa's `complete`
    * does NOT require a billing/shipping address at all (a cart with no
