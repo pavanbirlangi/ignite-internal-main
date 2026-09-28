@@ -4,6 +4,7 @@ import { translateTextsWithLangbly } from '@/lib/services/langbly-translation.se
 import { translateGuideDetailData } from '@/lib/translations/activation-guides'
 import type { Metadata } from 'next'
 import { generateSeoMetadata } from '@/lib/seo'
+import { localizedHref } from '@/lib/utils'
 import type { GuideDetail } from '@/lib/services/help.service'
 
 interface PageProps {
@@ -64,7 +65,7 @@ function getGuideJsonLd(guide: GuideDetail, locale: string) {
     headline: guide.title,
     description: guide.description,
     ...(image && { image }),
-    url: `${siteUrl}/${locale.toLowerCase()}/activation-guides/${guide.slug}`,
+    url: `${siteUrl}${localizedHref(locale, `/activation-guides/${guide.slug}`)}`,
     datePublished: guide.published_date,
     ...(guide.date_updated && { dateModified: guide.date_updated }),
     author: {
@@ -78,7 +79,7 @@ function getGuideJsonLd(guide: GuideDetail, locale: string) {
     },
     mainEntityOfPage: {
       '@type': 'WebPage',
-      '@id': `${siteUrl}/${locale.toLowerCase()}/activation-guides/${guide.slug}`,
+      '@id': `${siteUrl}${localizedHref(locale, `/activation-guides/${guide.slug}`)}`,
     },
   }
 }

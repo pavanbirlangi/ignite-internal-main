@@ -31,7 +31,7 @@ import { translateTextsWithLangbly } from '@/lib/services/langbly-translation.se
 import { generateSeoMetadata } from '@/lib/seo'
 import { getCountryForCurrency } from '@/lib/region-data'
 import { formatPrice } from '@/lib/currency'
-import { getProxyImageUrl, stripHtml } from '@/lib/utils'
+import { getProxyImageUrl, stripHtml, localizedHref } from '@/lib/utils'
 
 interface PageProps {
   params: Promise<{
@@ -155,7 +155,7 @@ function getProductJsonLd(
     name: product.title,
     description: stripHtml(product.description),
     image,
-    url: `${siteUrl}/${locale.toLowerCase()}/${product.handle}`,
+    url: `${siteUrl}${localizedHref(locale, `/${product.handle}`)}`,
     brand: {
       '@type': 'Brand',
       name: 'Increddy',
@@ -171,7 +171,7 @@ function getProductJsonLd(
     }),
     offers: {
       '@type': 'Offer',
-      url: `${siteUrl}/${locale.toLowerCase()}/${product.handle}`,
+      url: `${siteUrl}${localizedHref(locale, `/${product.handle}`)}`,
       priceCurrency: price?.currencyCode || 'USD',
       price: price?.amount || '0',
       availability: product.inStock
