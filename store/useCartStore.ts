@@ -16,6 +16,7 @@ import {
   isCartNotFoundError,
   isCartCompletedError,
 } from '@/lib/utils/api-error'
+import { getStoredAttribution } from '@/lib/utils/attribution'
 
 const CART_ID_COOKIE_NAME = 'increddy_cart_id'
 const CART_ID_COOKIE_OPTIONS: Cookies.CookieAttributes = {
@@ -167,6 +168,20 @@ export const useCartStore = create<CartState>()((set, get) => ({
         recommendations: [],
         isLoading: false,
       })
+
+      // Fire-and-forget: attribution is a nice-to-have for the admin "Order source" widget,
+      // never worth blocking or failing cart creation over.
+      const attribution = getStoredAttribution()
+      if (attribution) {
+        const metadata = Object.fromEntries(
+          Object.entries(attribution).filter(([, value]) => value),
+        ) as Record<string, string>
+        if (Object.keys(metadata).length > 0) {
+          cartService.updateCartMetadata(newCart.id, metadata).catch((error) => {
+            console.error('Failed to attach attribution metadata to cart', error)
+          })
+        }
+      }
     } catch (error: any) {
       const errorMessage = extractApiErrorMessage(
         error,

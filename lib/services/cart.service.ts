@@ -217,6 +217,19 @@ export const cartService = {
     return mapCart(data.cart)
   },
 
+  // Medusa copies cart metadata onto the order at completion -- this is how the admin
+  // "Order source" widget learns where a customer came from (see attribution.ts).
+  updateCartMetadata: async (
+    cartId: string,
+    metadata: Record<string, string>,
+  ): Promise<CartResponse> => {
+    const encodedId = encodeURIComponent(cartId)
+    const { data } = await medusaClient.post(`/store/carts/${encodedId}`, {
+      metadata,
+    })
+    return mapCart(data.cart)
+  },
+
   transferCart: async (cartId: string): Promise<CartResponse> => {
     const encodedId = encodeURIComponent(cartId)
     const { data } = await medusaClient.post(

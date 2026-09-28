@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from 'next/font/google'
 import '../globals.css'
 import Navbar from '@/components/layout/Navbar'
 import GoogleAnalytics from '@/components/GoogleAnalytics'
+import AttributionTracker from '@/components/AttributionTracker'
 import { cn } from '@/lib/utils'
 import MobileNav from '@/components/layout/MobileNav'
 import { Toaster } from 'sonner'
@@ -143,6 +144,7 @@ export default async function RootLayout({
           process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID && (
             <GoogleAnalytics gaId={process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID} />
           )}
+        <AttributionTracker />
       </body>
     </html>
   )
