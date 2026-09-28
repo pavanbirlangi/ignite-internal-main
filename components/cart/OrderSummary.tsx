@@ -1,4 +1,4 @@
-import { ChevronRight } from 'lucide-react'
+import { ChevronRight, Info } from 'lucide-react'
 import { formatCurrency } from '@/lib/currency'
 import { Button } from '@/components/ui/button'
 import {
@@ -71,6 +71,16 @@ export function OrderSummary({
               <div className="flex flex-col items-end gap-1">
                 <span className="text-[18px] font-semibold text-white">
                   {formatCurrency(total, currency)}
+                </span>
+                {/* Tax isn't computed until a shipping method is attached at checkout, so the
+                    final total can differ slightly from this one -- flagged rather than left
+                    to surprise the customer at the next step. */}
+                <span
+                  className="text-muted-foreground flex items-center gap-1 text-[11px] font-medium tracking-wide uppercase"
+                  title="Tax is calculated at checkout and may change this total slightly."
+                >
+                  Price not final
+                  <Info className="size-3" />
                 </span>
               </div>
             </div>
