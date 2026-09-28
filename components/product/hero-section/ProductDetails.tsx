@@ -17,6 +17,7 @@ import {
   useRemoveFromWishlist,
 } from '@/hooks/useWishlist'
 import { formatPrice } from '@/lib/currency'
+import { localizedHref } from '@/lib/utils'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import type { CmsMappedDropdownGroup } from '@/lib/services/cms-product.service'
@@ -218,7 +219,7 @@ export default function ProductDetails({
     }
 
     if (locale) {
-      router.push(`/${locale}/${slug}`)
+      router.push(localizedHref(locale, `/${slug}`))
       return
     }
 

@@ -6,6 +6,7 @@ import {
   languages as regionLanguages,
   getCountryForCurrency,
 } from '@/lib/region-data'
+import { DEFAULT_LOCALE, localizedHref } from '@/lib/utils'
 
 // /checkout is gated here (not just client-side) because guest checkout is a
 // real, confirmed backend rule -- the license-key fulfillment workflow
@@ -56,14 +57,6 @@ function isProtectedRoute(pathname: string) {
   )
 }
 
-function getLocalizedPath(locale: string, path: string) {
-  if (path === '/') {
-    return `/${locale}`
-  }
-
-  return `/${locale}${path.startsWith('/') ? path : `/${path}`}`
-}
-
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
 
@@ -84,6 +77,15 @@ export async function proxy(request: NextRequest) {
       return NextResponse.rewrite(url)
     }
     return NextResponse.next()
+  }
+
+  // English carries no URL prefix (see DEFAULT_LOCALE) -- an explicit /en/* link (old bookmark,
+  // stale external link, someone typing it) is canonicalized away by redirecting to the bare
+  // path, which then falls through this same middleware again and gets rewritten internally.
+  if (isLocalePrefix && firstSegment.toLowerCase() === DEFAULT_LOCALE) {
+    const url = request.nextUrl.clone()
+    url.pathname = `/${pathParts.slice(2).join('/')}`.replace(/\/$/, '') || '/'
+    return NextResponse.redirect(url)
   }
 
   // --- Handle ?currency= query parameter ---
@@ -145,7 +147,7 @@ export async function proxy(request: NextRequest) {
 
   if (protectedPath && !accessToken) {
     const redirectUrl = new URL(
-      getLocalizedPath(locale, UNAUTH_REDIRECT_PATH),
+      localizedHref(locale, UNAUTH_REDIRECT_PATH),
       request.url,
     )
     const response = NextResponse.redirect(redirectUrl)
@@ -158,7 +160,7 @@ export async function proxy(request: NextRequest) {
 
     if (!isSessionValid) {
       const redirectUrl = new URL(
-        getLocalizedPath(locale, UNAUTH_REDIRECT_PATH),
+        localizedHref(locale, UNAUTH_REDIRECT_PATH),
         request.url,
       )
       const response = NextResponse.redirect(redirectUrl)
@@ -169,6 +171,16 @@ export async function proxy(request: NextRequest) {
   }
 
   if (!isLocalePrefix) {
+    // English has no visible prefix -- rewrite internally to the [locale] route Next.js needs
+    // (app/[locale]/...) without changing what the browser shows or triggering a redirect.
+    if (language === DEFAULT_LOCALE) {
+      const url = request.nextUrl.clone()
+      url.pathname = `/${DEFAULT_LOCALE}${pathname === '/' ? '' : pathname}`
+      const response = NextResponse.rewrite(url)
+      applyRegionCookies(response, language)
+      return response
+    }
+
     const localePath = `/${language}${pathname === '/' ? '' : pathname}`
     const url = new URL(localePath, request.url)
     url.search = request.nextUrl.search

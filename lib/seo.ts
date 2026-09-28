@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { languages } from './region-data'
 import { translateTextsWithLangbly } from './services/langbly-translation.service'
+import { DEFAULT_LOCALE, localizedHref } from './utils'
 
 export interface SeoData {
   id?: string
@@ -27,7 +28,6 @@ type SeoTranslateFn = (
 
 /** All supported locale codes derived from region-data languages */
 const SUPPORTED_LOCALES = Array.from(new Set(languages.map((l) => l.value.toLowerCase())))
-const DEFAULT_LOCALE = 'en'
 
 function getSiteUrl(): string {
   return (
@@ -44,7 +44,7 @@ function getSiteUrl(): string {
 function buildCanonicalUrl(locale: string, pathname: string): string {
   const base = getSiteUrl()
   const cleanPath = pathname.replace(/^\/+|\/+$/g, '')
-  return cleanPath ? `${base}/${locale}/${cleanPath}` : `${base}/${locale}`
+  return `${base}${localizedHref(locale, cleanPath ? `/${cleanPath}` : '/')}`
 }
 
 /**
@@ -53,18 +53,18 @@ function buildCanonicalUrl(locale: string, pathname: string): string {
 function buildAlternates(locale: string, pathname: string) {
   const base = getSiteUrl()
   const cleanPath = pathname.replace(/^\/+|\/+$/g, '')
-  const suffix = cleanPath ? `/${cleanPath}` : ''
+  const suffix = cleanPath ? `/${cleanPath}` : '/'
 
   const languageAlternates: Record<string, string> = {}
   for (const code of SUPPORTED_LOCALES) {
-    languageAlternates[code] = `${base}/${code}${suffix}`
+    languageAlternates[code] = `${base}${localizedHref(code, suffix)}`
   }
 
   return {
     canonical: buildCanonicalUrl(locale, pathname),
     languages: {
       ...languageAlternates,
-      'x-default': `${base}/${DEFAULT_LOCALE}${suffix}`,
+      'x-default': `${base}${localizedHref(DEFAULT_LOCALE, suffix)}`,
     },
   }
 }
@@ -168,9 +168,7 @@ export function getWebPageJsonLd({
   const base = getSiteUrl()
   const normalizedLocale = locale.toLowerCase()
   const cleanPath = pathname.replace(/^\/+|\/+$/g, '')
-  const pageUrl = cleanPath
-    ? `${base}/${normalizedLocale}/${cleanPath}`
-    : `${base}/${normalizedLocale}`
+  const pageUrl = `${base}${localizedHref(normalizedLocale, cleanPath ? `/${cleanPath}` : '/')}`
 
   return {
     '@context': 'https://schema.org',

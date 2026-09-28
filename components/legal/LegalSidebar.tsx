@@ -1,8 +1,9 @@
 'use client'
 
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useParams } from 'next/navigation'
 import { useLegalPages } from '@/hooks/useLegalPage'
+import { localizedHref } from '@/lib/utils'
 
 /** Convert a slug like "privacy-policy" to "Privacy Policy" */
 function slugToLabel(slug: string): string {
@@ -18,15 +19,13 @@ export default function LegalSidebar({
   translatedLabels?: Record<string, string>
 }) {
   const pathname = usePathname()
+  const { locale } = useParams<{ locale: string }>()
   const { data: response } = useLegalPages()
   const pages = response?.data ?? []
 
-    // Extract current slug from the pathname (/en/privacy-policy → privacy-policy)
+    // Extract current slug from the pathname (last path segment, regardless of locale prefix)
     const segments = pathname.split('/')
     const activeSlug = segments[segments.length - 1]
-
-    // Get the locale from the pathname (/en/something -> en)
-    const locale = segments[1]
 
     if (pages.length === 0) {
         return (
@@ -51,7 +50,7 @@ export default function LegalSidebar({
                 return (
                     <Link
                         key={page.slug}
-                        href={`/${locale}/legal/${page.slug}`}
+                        href={localizedHref(locale, `/legal/${page.slug}`)}
                         className={`flex w-full items-center h-16 px-4 text-[16px] leading-[21px] no-underline transition-colors
               ${isActive
                                 ? 'font-semibold text-foreground border-b-2 border-primary'

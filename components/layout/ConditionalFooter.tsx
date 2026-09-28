@@ -3,6 +3,7 @@
 import { usePathname } from 'next/navigation'
 import Footer from './Footer'
 import FooterV2 from './FooterV2'
+import { stripLocalePrefix } from '@/lib/utils'
 
 import type { FooterData } from '@/lib/services/footer.service'
 import type { FooterTranslations } from '@/lib/translations/footer'
@@ -23,13 +24,12 @@ export default function ConditionalFooter({ footerData, translations }: Conditio
   // already in flight, so all currency decisions need to be made before
   // checkout is reached.
   const hideFooterRoutes = ['cart', 'dashboard', 'checkout']
-  
-  const segments = pathname.split('/')
-  // segments[0] is ""
-  // segments[1] is the locale (e.g. "en", "en-US")
-  // segments[2] is the first actual route segment
-  const firstRealSegment = segments[2]
-  
+
+  // English carries no locale prefix, every other locale does -- strip it if present so the
+  // first real route segment lands in the same place regardless of locale.
+  const segments = stripLocalePrefix(pathname).split('/')
+  const firstRealSegment = segments[1]
+
   const shouldHide = hideFooterRoutes.includes(firstRealSegment)
 
   if (shouldHide) return null

@@ -3,12 +3,12 @@ import { languages } from '@/lib/region-data'
 import { ProductService } from '@/lib/services/product.service'
 import { LegalService } from '@/lib/services/legal.service'
 import { HelpService } from '@/lib/services/help.service'
+import { DEFAULT_LOCALE, localizedHref } from '@/lib/utils'
 
 const SITE_URL =
   process.env.NEXT_PUBLIC_APP_URL?.replace(/\/+$/, '') ||
   'https://increddy.com'
 
-const DEFAULT_LOCALE = 'en'
 const LOCALES = Array.from(
   new Set(languages.map((l) => l.value.toLowerCase())),
 ).sort((a, b) => {
@@ -45,7 +45,7 @@ function localizedEntry(
   const localePriorityOffset = options.localePriorityOffset ?? 0.1
 
   return LOCALES.map((locale) => ({
-    url: `${SITE_URL}/${locale}${suffix}`,
+    url: `${SITE_URL}${localizedHref(locale, suffix || '/')}`,
     lastModified: new Date(),
     changeFrequency: options.changeFrequency ?? 'weekly',
     priority:
@@ -54,8 +54,8 @@ function localizedEntry(
         : Math.max(priority - localePriorityOffset, 0.1),
     alternates: {
       languages: Object.fromEntries([
-        ...LOCALES.map((l) => [l, `${SITE_URL}/${l}${suffix}`]),
-        ['x-default', `${SITE_URL}/${DEFAULT_LOCALE}${suffix}`],
+        ...LOCALES.map((l) => [l, `${SITE_URL}${localizedHref(l, suffix || '/')}`]),
+        ['x-default', `${SITE_URL}${localizedHref(DEFAULT_LOCALE, suffix || '/')}`],
       ]),
     },
   }))

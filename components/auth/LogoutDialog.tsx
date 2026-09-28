@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { usePathname, useRouter } from 'next/navigation'
+import { useParams, useRouter } from 'next/navigation'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -15,7 +15,7 @@ import {
 import { buttonVariants } from '@/components/ui/button'
 import { useUserStore } from '@/store/useUserStore'
 import { Loader2 } from 'lucide-react' // Optional: for loading spinner
-import { cn } from '@/lib/utils'
+import { cn, localizedHref } from '@/lib/utils'
 
 interface LogoutDialogProps {
   open: boolean
@@ -25,20 +25,14 @@ interface LogoutDialogProps {
 export function LogoutDialog({ open, onOpenChange }: LogoutDialogProps) {
   const logout = useUserStore((state) => state.logout)
   const router = useRouter()
-  const pathname = usePathname()
+  const { locale } = useParams<{ locale: string }>()
   const [isLoading, setIsLoading] = useState(false)
-
-  const getLocaleHomePath = () => {
-    const segments = pathname.split('/').filter(Boolean)
-    const locale = segments[0]
-    return locale ? `/${locale}` : '/'
-  }
 
   const handleLogout = async () => {
     setIsLoading(true)
     try {
       await logout()
-      router.replace(getLocaleHomePath())
+      router.replace(localizedHref(locale, '/'))
       router.refresh()
     } catch (error) {
       console.error('Logout failed:', error)

@@ -21,6 +21,7 @@ import {
   CheckoutRiskBlockedError,
 } from '@/lib/services/checkout.service'
 import { extractApiErrorMessage } from '@/lib/utils/api-error'
+import { localizedHref } from '@/lib/utils'
 import { useCartStore } from '@/store/useCartStore'
 
 const stripePromise = loadStripe(
@@ -242,7 +243,7 @@ function CheckoutFormInner({
       const { error, paymentIntent } = await stripe.confirmPayment({
         elements,
         confirmParams: {
-          return_url: `${window.location.origin}/${locale}/checkout/complete?cart_id=${cartId}`,
+          return_url: `${window.location.origin}${localizedHref(locale, '/checkout/complete')}?cart_id=${cartId}`,
         },
         redirect: 'if_required',
       })
