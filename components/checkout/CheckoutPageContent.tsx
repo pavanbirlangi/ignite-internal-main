@@ -78,13 +78,17 @@ export function CheckoutPageContent() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cartId, isLoading])
 
-  const handleServiceFeeStale = React.useCallback(() => {
+  // Forces a fresh Stripe session (a real re-POST, not the cached one) whenever the cart's total
+  // changes after a session already exists: a stale service fee (item 14's 409) and applying or
+  // removing a coupon code both land here, for the same reason -- Elements is keyed on
+  // clientSecret (see CheckoutForm.tsx) so this also remounts the payment form with the new total.
+  const refreshPaymentSession = React.useCallback(() => {
     if (!cartId) return
     checkoutService
       .getOrCreateStripeSession(cartId, { forceRefresh: true })
       .then((session) => setClientSecret(session.clientSecret))
       .catch((error) => {
-        console.error('Failed to refresh payment session after stale fee', error)
+        console.error('Failed to refresh payment session', error)
       })
   }, [cartId])
 
@@ -133,9 +137,9 @@ export function CheckoutPageContent() {
           onOrderCompleted={() => {
             hasCompletedOrderRef.current = true
           }}
-          onServiceFeeStale={handleServiceFeeStale}
+          onServiceFeeStale={refreshPaymentSession}
         />
-        <CheckoutSummary cart={cart} />
+        <CheckoutSummary cart={cart} onCartChanged={refreshPaymentSession} />
       </section>
     </div>
   )

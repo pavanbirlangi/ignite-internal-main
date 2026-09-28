@@ -43,6 +43,8 @@ export interface CartResponse {
   taxTotal: number
   shippingTotal: number
   serviceFee: number
+  discountTotal: number
+  promoCodes: string[]
   items: CartLineItem[]
 }
 
@@ -112,6 +114,8 @@ function mapCart(raw: any): CartResponse {
     taxTotal: raw.tax_total ?? 0,
     shippingTotal: raw.shipping_total ?? 0,
     serviceFee: feeItem ? Number(feeItem.unit_price) : 0,
+    discountTotal: raw.discount_total ?? 0,
+    promoCodes: (raw.promotions ?? []).map((p: any) => p.code).filter(Boolean),
     items: mappedItems,
   }
 }
@@ -258,6 +262,30 @@ export const cartService = {
     const encodedId = encodeURIComponent(cartId)
     await medusaClient.post(`/store/carts/${encodedId}/service-fee`)
     return cartService.getCart(cartId)
+  },
+
+  // Coupon codes -- plain core Medusa (no custom backend route; promotions are a default Medusa
+  // module, just never configured with any real codes or a storefront UI before now, confirmed
+  // live: zero promotions existed in the admin). POST is additive (an invalid second code 400s
+  // without disturbing an already-applied valid one, confirmed live), so one call per code is
+  // fine. Both routes return the full standard cart shape already, unlike the slim service-fee
+  // response -- no extra GET needed here.
+  applyPromoCode: async (cartId: string, code: string): Promise<CartResponse> => {
+    const encodedId = encodeURIComponent(cartId)
+    const { data } = await medusaClient.post(
+      `/store/carts/${encodedId}/promotions`,
+      { promo_codes: [code] },
+    )
+    return mapCart(data.cart)
+  },
+
+  removePromoCode: async (cartId: string, code: string): Promise<CartResponse> => {
+    const encodedId = encodeURIComponent(cartId)
+    const { data } = await medusaClient.delete(
+      `/store/carts/${encodedId}/promotions`,
+      { data: { promo_codes: [code] } },
+    )
+    return mapCart(data.cart)
   },
 
   transferCart: async (cartId: string): Promise<CartResponse> => {

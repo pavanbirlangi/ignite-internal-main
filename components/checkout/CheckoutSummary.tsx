@@ -3,12 +3,14 @@ import { formatCurrency } from '@/lib/currency'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { getProxyImageUrl } from '@/lib/utils'
 import type { CartResponse } from '@/lib/services/cart.service'
+import { CouponInput } from './CouponInput'
 
 interface CheckoutSummaryProps {
   cart: CartResponse
+  onCartChanged: () => void
 }
 
-export function CheckoutSummary({ cart }: CheckoutSummaryProps) {
+export function CheckoutSummary({ cart, onCartChanged }: CheckoutSummaryProps) {
   const currency = cart.currencyCode
 
   return (
@@ -86,6 +88,17 @@ export function CheckoutSummary({ cart }: CheckoutSummaryProps) {
               </div>
             )}
 
+            {cart.discountTotal > 0 && (
+              <div className="flex items-center justify-between">
+                <span className="text-muted-foreground text-[14px] font-medium">
+                  Discount{cart.promoCodes[0] ? ` (${cart.promoCodes[0]})` : ''}
+                </span>
+                <span className="text-destructive text-[14px] font-semibold">
+                  -{formatCurrency(cart.discountTotal, currency)}
+                </span>
+              </div>
+            )}
+
             <div className="mt-1 flex items-start justify-between border-t border-white/10 pt-3">
               <span className="text-[18px] font-semibold text-white">
                 Total
@@ -97,7 +110,8 @@ export function CheckoutSummary({ cart }: CheckoutSummaryProps) {
           </div>
         </CardHeader>
 
-        <CardContent className="px-6 pb-6">
+        <CardContent className="flex flex-col gap-4 px-6 pb-6">
+          <CouponInput onCartChanged={onCartChanged} />
           <p className="text-muted-foreground text-[12px] leading-4.5 font-medium">
             Digital delivery only, nothing is shipped. Your key lands in your
             account the moment payment is confirmed.

@@ -76,6 +76,8 @@ interface CartState {
   // Awaited explicitly by the checkout flow right before payment starts, on top of the
   // fire-and-forget calls every cart mutation already makes -- see syncServiceFee below.
   applyServiceFee: () => Promise<void>
+  applyPromoCode: (code: string) => Promise<void>
+  removePromoCode: (code: string) => Promise<void>
 }
 
 // A cart is only ever assigned a region once, at creation time
@@ -502,6 +504,23 @@ export const useCartStore = create<CartState>()((set, get) => ({
     if (get().cartId === cartId || !get().cartId) {
       set({ cart, cartId })
     }
+  },
+
+  // Coupon codes. Errors are left to the caller (CouponInput shows them inline) rather than a
+  // toast, since "this code is invalid" belongs right next to the input that was typed into, not
+  // a global notification.
+  applyPromoCode: async (code: string) => {
+    const cartId = get().cartId || getCartIdFromCookie()
+    if (!cartId) return
+    const cart = await cartService.applyPromoCode(cartId, code)
+    set({ cart })
+  },
+
+  removePromoCode: async (code: string) => {
+    const cartId = get().cartId || getCartIdFromCookie()
+    if (!cartId) return
+    const cart = await cartService.removePromoCode(cartId, code)
+    set({ cart })
   },
 
 
