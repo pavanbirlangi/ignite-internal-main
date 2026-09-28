@@ -19,9 +19,11 @@ import { Input } from '@/components/ui/input'
 import {
   checkoutService,
   CheckoutRiskBlockedError,
+  ServiceFeeOutOfDateError,
 } from '@/lib/services/checkout.service'
 import { extractApiErrorMessage } from '@/lib/utils/api-error'
 import { localizedHref } from '@/lib/utils'
+import { formatCurrency } from '@/lib/currency'
 import { useCartStore } from '@/store/useCartStore'
 
 const stripePromise = loadStripe(
@@ -117,6 +119,10 @@ interface CheckoutFormProps {
   email: string
   locale: string
   onOrderCompleted: () => void
+  // Called when /complete refuses the order because the cart's service fee went stale between
+  // session creation and now (item/region changed, or the fee setting flipped mid-checkout). The
+  // parent re-fetches a fresh payment session with the corrected amount and remounts this form.
+  onServiceFeeStale: () => void
 }
 
 function EmailStep({
@@ -203,11 +209,14 @@ function CheckoutFormInner({
   email: initialEmail,
   locale,
   onOrderCompleted,
+  onServiceFeeStale,
 }: Omit<CheckoutFormProps, 'clientSecret'>) {
   const stripe = useStripe()
   const elements = useElements()
   const router = useRouter()
   const clearCart = useCartStore((state) => state.clearCart)
+  const applyServiceFee = useCartStore((state) => state.applyServiceFee)
+  const cart = useCartStore((state) => state.cart)
   const [email, setEmail] = useState(initialEmail)
   const [submitting, setSubmitting] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
@@ -279,7 +288,20 @@ function CheckoutFormInner({
 
       setSubmitting(false)
     } catch (err: any) {
-      if (err instanceof CheckoutRiskBlockedError) {
+      if (err instanceof ServiceFeeOutOfDateError) {
+        // The charge that just went through was for the OLD total -- it must not be silently
+        // retried. Re-sync the fee, get a fresh payment session for the corrected amount, and
+        // make the customer explicitly review and submit again.
+        setErrorMessage(
+          'Your order total changed. Please review it below and submit payment again.',
+        )
+        try {
+          await applyServiceFee()
+        } catch (syncError) {
+          console.error('Failed to re-sync service fee after 409', syncError)
+        }
+        onServiceFeeStale()
+      } else if (err instanceof CheckoutRiskBlockedError) {
         setErrorMessage(
           err.message ||
             "We couldn't process this order. Please contact support or try a different payment method.",
@@ -304,6 +326,18 @@ function CheckoutFormInner({
         <h2 className="mb-4 text-lg font-semibold text-white md:text-xl">
           Payment method
         </h2>
+        {/* Item 20: the currency symbol alone (e.g. a plain "$") reads as USD to most customers
+            even when it isn't -- calling out the real ISO code removes that ambiguity. Skipped
+            for USD itself, where there's nothing to disambiguate. */}
+        {cart && cart.currencyCode.toUpperCase() !== 'USD' && (
+          <p className="text-muted-foreground mb-3 text-xs">
+            You will be charged{' '}
+            <span className="text-white font-semibold">
+              {formatCurrency(cart.total, cart.currencyCode)} {cart.currencyCode.toUpperCase()}
+            </span>
+            .
+          </p>
+        )}
         <PaymentElement />
         <p className="text-muted-foreground mt-2 text-xs">
           Some cards ask for a billing postal code here. That's Stripe
@@ -334,9 +368,14 @@ export function CheckoutForm({
   email,
   locale,
   onOrderCompleted,
+  onServiceFeeStale,
 }: CheckoutFormProps) {
   return (
+    // Keyed on clientSecret: @stripe/react-stripe-js does not reinitialize Elements when the
+    // clientSecret option changes on an already-mounted provider, so a corrected payment session
+    // (see onServiceFeeStale) needs a real remount to take effect.
     <Elements
+      key={clientSecret}
       stripe={stripePromise}
       options={{
         clientSecret,
@@ -349,6 +388,7 @@ export function CheckoutForm({
         email={email}
         locale={locale}
         onOrderCompleted={onOrderCompleted}
+        onServiceFeeStale={onServiceFeeStale}
       />
     </Elements>
   )

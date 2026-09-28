@@ -13,6 +13,7 @@ import { useCartStore } from '@/store/useCartStore'
 
 interface OrderSummaryProps {
   basePrice: number
+  serviceFee?: number
   total: number
   currency: string
   onCheckout: () => void
@@ -20,6 +21,7 @@ interface OrderSummaryProps {
 
 export function OrderSummary({
   basePrice,
+  serviceFee = 0,
   total,
   currency,
   onCheckout,
@@ -48,8 +50,19 @@ export function OrderSummary({
               </span>
             </div>
 
-            {/* No promotion module or fee-line decision exists yet, so
-                discount/fee rows never render -- see cart.service.ts. */}
+            {/* No promotion module exists yet, so a discount row never renders -- see
+                cart.service.ts. The service fee (item 14) is off by default; this row only
+                appears once the store owner turns it on and it actually applies to this cart. */}
+            {serviceFee > 0 && (
+              <div className="flex items-center justify-between">
+                <span className="text-muted-foreground text-[14px] font-medium">
+                  Service Fee
+                </span>
+                <span className="text-[14px] font-semibold text-white">
+                  {formatCurrency(serviceFee, currency)}
+                </span>
+              </div>
+            )}
 
             <div className="mt-1 flex items-start justify-between border-t border-white/10 pt-3">
               <CardTitle className="text-[18px] font-semibold text-white">

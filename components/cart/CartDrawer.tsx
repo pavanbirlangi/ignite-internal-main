@@ -305,7 +305,7 @@ export function CartDrawer() {
         {/* Fixed Footer */}
         {cartCount > 0 && (
           <CartFooter
-            total={itemsSubtotal}
+            total={itemsSubtotal + (cart?.serviceFee ?? 0)}
             count={cartCount}
             currencyCode={subtotalCurrencyCode}
           />

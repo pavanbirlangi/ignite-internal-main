@@ -73,6 +73,9 @@ interface CartState {
   clearCart: () => void
   loadCartCmsData: () => Promise<void>
   transferGuestCartToUser: () => Promise<void>
+  // Awaited explicitly by the checkout flow right before payment starts, on top of the
+  // fire-and-forget calls every cart mutation already makes -- see syncServiceFee below.
+  applyServiceFee: () => Promise<void>
 }
 
 // A cart is only ever assigned a region once, at creation time
@@ -84,6 +87,7 @@ interface CartState {
 // user) has since switched to -- this is what migrates it to match.
 const syncCartRegion = async (
   set: (partial: Partial<CartState>) => void,
+  get: () => CartState,
   cart: CartResponse,
 ): Promise<CartResponse> => {
   const desiredRegionId = useCurrencyStore.getState().regionId
@@ -91,10 +95,32 @@ const syncCartRegion = async (
 
   set({ isMigratingRegion: true })
   try {
-    return await cartService.updateCartRegion(cart.id, desiredRegionId)
+    const migratedCart = await cartService.updateCartRegion(cart.id, desiredRegionId)
+    syncServiceFee(set, get, migratedCart.id)
+    return migratedCart
   } finally {
     set({ isMigratingRegion: false })
   }
+}
+
+// Re-applies the service fee whenever the cart's items or region changed (item 14) --
+// fire-and-forget, since a moment-stale fee is harmless: the checkout flow re-applies it
+// synchronously right before payment (see CheckoutPageContent.tsx), and every other mutation
+// point below calls this too, so it self-corrects almost immediately either way. Guarded against
+// the cart having moved on (a different cart, or none) by the time this resolves.
+const syncServiceFee = (
+  set: (partial: Partial<CartState>) => void,
+  get: () => CartState,
+  cartId: string,
+) => {
+  cartService
+    .applyServiceFee(cartId)
+    .then((cart) => {
+      if (get().cartId === cartId) set({ cart })
+    })
+    .catch((error) => {
+      console.error('Failed to sync service fee', error)
+    })
 }
 
 // Mini-cart confirmation popup for a successful add-to-cart. Every cart
@@ -211,7 +237,7 @@ export const useCartStore = create<CartState>()((set, get) => ({
       set({ isLoading: true, error: null })
       const previousCart = get().cart
       let cart = await cartService.getCart(cartId)
-      cart = await syncCartRegion(set, cart)
+      cart = await syncCartRegion(set, get, cart)
 
       set({ cart, isLoading: false })
       maybeRefreshRecommendations(get, previousCart)
@@ -287,12 +313,13 @@ export const useCartStore = create<CartState>()((set, get) => ({
       set({ isLoading: true, error: null })
       const previousCart = get().cart
       if (previousCart) {
-        await syncCartRegion(set, previousCart)
+        await syncCartRegion(set, get, previousCart)
       }
       const updatedCart = await cartService.addToCart(targetCartId, [
         { merchandiseId, quantity },
       ])
       set({ cart: updatedCart, isLoading: false })
+      syncServiceFee(set, get, updatedCart.id)
       maybeRefreshRecommendations(get, previousCart)
       notifyItemAdded(updatedCart, merchandiseId)
     } catch (error: any) {
@@ -322,6 +349,7 @@ export const useCartStore = create<CartState>()((set, get) => ({
             { merchandiseId, quantity },
           ])
           set({ cart: retryCart, isLoading: false })
+          syncServiceFee(set, get, retryCart.id)
           maybeRefreshRecommendations(get, previousCart)
           notifyItemAdded(retryCart, merchandiseId)
           return
@@ -360,6 +388,7 @@ export const useCartStore = create<CartState>()((set, get) => ({
       const updatedCart = await cartService.removeFromCart(cartId, lineIds)
       if (updatedCart) {
         set({ cart: updatedCart })
+        syncServiceFee(set, get, updatedCart.id)
         maybeRefreshRecommendations(get, previousCart)
       }
       toast.success('Removed from cart')
@@ -411,6 +440,7 @@ export const useCartStore = create<CartState>()((set, get) => ({
       ])
       if (updatedCart) {
         set({ cart: updatedCart })
+        syncServiceFee(set, get, updatedCart.id)
         maybeRefreshRecommendations(get, previousCart)
       }
 
@@ -461,6 +491,17 @@ export const useCartStore = create<CartState>()((set, get) => ({
       recommendationsError: null,
       loadingItems: [],
     })
+  },
+
+  // Awaited (unlike syncServiceFee's fire-and-forget) so the checkout flow can guarantee the
+  // fee is current before creating a payment session -- see CheckoutPageContent.tsx.
+  applyServiceFee: async () => {
+    const cartId = get().cartId || getCartIdFromCookie()
+    if (!cartId) return
+    const cart = await cartService.applyServiceFee(cartId)
+    if (get().cartId === cartId || !get().cartId) {
+      set({ cart, cartId })
+    }
   },
 
 

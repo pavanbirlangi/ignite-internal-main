@@ -13,7 +13,7 @@ import { extractApiErrorMessage } from '@/lib/utils/api-error'
 export function CheckoutPageContent() {
   const { locale } = useParams<{ locale: string }>()
   const router = useRouter()
-  const { cart, cartId, isLoading, initCart } = useCartStore()
+  const { cart, cartId, isLoading, initCart, applyServiceFee } = useCartStore()
   const user = useUserStore((state) => state.user)
 
   const [clientSecret, setClientSecret] = React.useState<string | null>(null)
@@ -46,8 +46,13 @@ export function CheckoutPageContent() {
     setSessionLoading(true)
     setSessionError(null)
 
-    checkoutService
-      .getOrCreateStripeSession(cartId)
+    // The fee must be current before a payment session is created, not just before /complete --
+    // otherwise the first session Stripe ever sees already carries a stale amount (item 14).
+    applyServiceFee()
+      .catch((error) => {
+        console.error('Failed to apply service fee before checkout', error)
+      })
+      .then(() => checkoutService.getOrCreateStripeSession(cartId))
       .then((session) => {
         if (!cancelled) setClientSecret(session.clientSecret)
       })
@@ -72,6 +77,16 @@ export function CheckoutPageContent() {
     // cart mutation (quantity changes etc. shouldn't re-create the session).
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cartId, isLoading])
+
+  const handleServiceFeeStale = React.useCallback(() => {
+    if (!cartId) return
+    checkoutService
+      .getOrCreateStripeSession(cartId, { forceRefresh: true })
+      .then((session) => setClientSecret(session.clientSecret))
+      .catch((error) => {
+        console.error('Failed to refresh payment session after stale fee', error)
+      })
+  }, [cartId])
 
   if (isLoading || sessionLoading || !cart) {
     return (
@@ -118,6 +133,7 @@ export function CheckoutPageContent() {
           onOrderCompleted={() => {
             hasCompletedOrderRef.current = true
           }}
+          onServiceFeeStale={handleServiceFeeStale}
         />
         <CheckoutSummary cart={cart} />
       </section>

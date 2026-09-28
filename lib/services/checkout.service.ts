@@ -23,6 +23,18 @@ export class CheckoutRiskBlockedError extends Error {
   }
 }
 
+// Distinct from the risk-block 409 above -- the service-fee guard on `complete` returns this
+// specific `code` (see apps/backend/src/api/middlewares.ts's serviceFeeGuardMiddleware) whenever
+// the cart's fee line is stale (item/region changed after the payment session was created, or the
+// fee was switched on/off mid-checkout). The fix is to re-apply the fee and start a fresh payment
+// session, not just retry the same one.
+export class ServiceFeeOutOfDateError extends Error {
+  constructor(message = 'The service fee on this cart is out of date. Refresh the cart and try again.') {
+    super(message)
+    this.name = 'ServiceFeeOutOfDateError'
+  }
+}
+
 const STRIPE_PROVIDER_ID = 'pp_stripe_stripe'
 const DIGITAL_SHIPPING_OPTION_NAME = 'Digital Delivery'
 
@@ -77,6 +89,7 @@ export const checkoutService = {
    */
   getOrCreateStripeSession: async (
     cartId: string,
+    options: { forceRefresh?: boolean } = {},
   ): Promise<StripePaymentSession> => {
     const encodedId = encodeURIComponent(cartId)
     const { data: cartData } = await medusaClient.get(
@@ -95,7 +108,10 @@ export const checkoutService = {
       cartData.cart?.payment_collection?.payment_sessions ?? []
     ).find((s: any) => s.provider_id === STRIPE_PROVIDER_ID)
 
-    if (existingSession?.data?.client_secret) {
+    // `forceRefresh` skips reusing a cached session -- used after the service fee changes
+    // post-session-creation (see ServiceFeeOutOfDateError), so the payment provider recalculates
+    // the charge amount against the cart's current total instead of confirming the stale one.
+    if (existingSession?.data?.client_secret && !options.forceRefresh) {
       return {
         id: existingSession.id,
         providerId: STRIPE_PROVIDER_ID,
@@ -149,6 +165,9 @@ export const checkoutService = {
       )
     } catch (error: any) {
       if (error?.response?.status === 409) {
+        if (error.response.data?.code === 'service_fee_out_of_date') {
+          throw new ServiceFeeOutOfDateError(error.response.data?.message)
+        }
         throw new CheckoutRiskBlockedError(
           error.response.data?.message,
         )

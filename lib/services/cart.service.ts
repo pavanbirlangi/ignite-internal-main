@@ -42,8 +42,13 @@ export interface CartResponse {
   total: number
   taxTotal: number
   shippingTotal: number
+  serviceFee: number
   items: CartLineItem[]
 }
+
+// Matches the backend's apply-service-fee workflow (service-fee.ts): the fee is a real cart line
+// item flagged this way, not a separate cart field -- see SERVICE_FEE_ITEM_FLAG.
+const SERVICE_FEE_ITEM_FLAG = 'is_service_fee'
 
 // Re-exported so `useCartStore.ts` can keep importing the recommendation
 // type from `cart.service.ts` without knowing it's really a product list item.
@@ -90,16 +95,24 @@ function mapCartLineItem(raw: any): CartLineItem {
 }
 
 function mapCart(raw: any): CartResponse {
+  const rawItems: any[] = raw.items ?? []
+  const feeItem = rawItems.find((item) => item?.metadata?.[SERVICE_FEE_ITEM_FLAG] === true)
+  const productItems = rawItems.filter((item) => item !== feeItem)
+  const mappedItems = productItems.map(mapCartLineItem)
+
   return {
     id: raw.id,
     customerId: raw.customer_id ?? null,
     currencyCode: raw.currency_code,
     regionId: raw.region_id ?? null,
-    subtotal: raw.subtotal ?? 0,
+    // Medusa's own `subtotal` includes the service-fee line (it's a real line item) -- recomputed
+    // here as products-only so a broken-out "Service fee" row in the UI doesn't double-count it.
+    subtotal: mappedItems.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0),
     total: raw.total ?? 0,
     taxTotal: raw.tax_total ?? 0,
     shippingTotal: raw.shipping_total ?? 0,
-    items: (raw.items ?? []).map(mapCartLineItem),
+    serviceFee: feeItem ? Number(feeItem.unit_price) : 0,
+    items: mappedItems,
   }
 }
 
@@ -109,7 +122,8 @@ function mapCart(raw: any): CartResponse {
 // when a product has no thumbnail set (confirmed live: Fallout 76's cart
 // line item has `thumbnail: null` even though the product has 3 real
 // gallery images, same root cause as the store-grid thumbnail bug).
-const CART_FIELDS = '+items.thumbnail,+items.product.images.url'
+// `+items.metadata` is needed to detect the service-fee line (see mapCart above).
+const CART_FIELDS = '+items.thumbnail,+items.product.images.url,+items.metadata'
 
 export const cartService = {
   createCart: async (): Promise<CartResponse> => {
@@ -228,6 +242,22 @@ export const cartService = {
       metadata,
     })
     return mapCart(data.cart)
+  },
+
+  // Makes the cart carry exactly the service fee the store's settings call for right now (adds,
+  // updates, or removes the fee line) -- idempotent, safe to call as often as needed. Call this
+  // whenever the cart's items or region change, and again right before starting payment, so the
+  // amount Stripe charges always matches. A no-op (amount 0) whenever the fee is off, which is the
+  // default -- see MEDUSA_MIGRATION_BACKEND_REQUIREMENTS.md / CLIENT_FEEDBACK_STATUS.md item 14.
+  //
+  // The route's own response only carries a slim field set (no thumbnails, region id, tax --
+  // confirmed against its source, apps/backend/src/api/store/carts/[id]/service-fee/route.ts), not
+  // CART_FIELDS' full shape -- mapping it directly would blank out fields already in state. A
+  // plain GET with the real field set right after is the only way to get a complete, correct cart.
+  applyServiceFee: async (cartId: string): Promise<CartResponse> => {
+    const encodedId = encodeURIComponent(cartId)
+    await medusaClient.post(`/store/carts/${encodedId}/service-fee`)
+    return cartService.getCart(cartId)
   },
 
   transferCart: async (cartId: string): Promise<CartResponse> => {
