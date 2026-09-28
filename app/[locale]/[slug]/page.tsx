@@ -11,7 +11,10 @@ import WarningBox from '@/components/product/hero-section/WarningBox'
 import RatingReviews from '@/components/product/rating-reviews/rating-reviews'
 import SimilarGames from '@/components/product/SimilarGames'
 import SystemRequirements from '@/components/product/SystemRequirements'
+import FaqSection from '@/components/faq/FaqSection'
 import { ProductService } from '@/lib/services/product.service'
+import { FaqService, type FaqItem } from '@/lib/services/faq.service'
+import { translateFaqItems } from '@/lib/translations/faq'
 import {
   CmsProductService,
   type CmsProductResult,
@@ -227,16 +230,22 @@ export default async function ProductPage({ params }: PageProps) {
   }
 
   // Run all independent fetches in parallel — none depends on the others
-  const [recommendationsResult, cmsResult, reviewsResult, featuresResult] =
-    await Promise.allSettled([
-      ProductService.getProductRecommendations(slug, {
-        intent: 'RELATED',
-        limit: 8,
-      }),
-      CmsProductService.getProductCmsData(slug),
-      reviewService.getReviews({ productId: product.id, perPage: 1 }),
-      ProductService.getProductFeatures(slug),
-    ])
+  const [
+    recommendationsResult,
+    cmsResult,
+    reviewsResult,
+    featuresResult,
+    faqResult,
+  ] = await Promise.allSettled([
+    ProductService.getProductRecommendations(slug, {
+      intent: 'RELATED',
+      limit: 8,
+    }),
+    CmsProductService.getProductCmsData(slug),
+    reviewService.getReviews({ productId: product.id, perPage: 1 }),
+    ProductService.getProductFeatures(slug),
+    FaqService.getForProduct(slug),
+  ])
 
   const recommendedProducts: ProductListItem[] =
     recommendationsResult.status === 'fulfilled'
@@ -248,6 +257,9 @@ export default async function ProductPage({ params }: PageProps) {
 
   const featuresData =
     featuresResult.status === 'fulfilled' ? featuresResult.value : null
+
+  let faqItems: FaqItem[] =
+    faqResult.status === 'fulfilled' ? faqResult.value : []
 
   let totalReviews = 0
   if (reviewsResult.status === 'fulfilled') {
@@ -281,6 +293,10 @@ export default async function ProductPage({ params }: PageProps) {
           if (featuresData.instantText) featuresData.instantText = translatedFeatures[i++]
           if (featuresData.secureText) featuresData.secureText = translatedFeatures[i++]
         }
+      }
+
+      if (faqItems.length > 0) {
+        faqItems = await translateFaqItems(faqItems, locale)
       }
     } catch (error) {
       console.error('[ProductPage] Translation failed, using defaults:', error)
@@ -419,6 +435,11 @@ export default async function ProductPage({ params }: PageProps) {
         products={recommendedProducts.filter((item) => item.handle !== slug)}
         title={labels.similarToThis}
       />
+      {faqItems.length > 0 && (
+        <div className="max-w-container mx-auto mt-8 mb-16 w-full px-4 md:mt-12 md:mb-20 md:px-0">
+          <FaqSection title="Frequently Asked Questions" items={faqItems} />
+        </div>
+      )}
     </main>
   )
 }

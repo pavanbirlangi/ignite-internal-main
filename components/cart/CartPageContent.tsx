@@ -10,6 +10,8 @@ import { useCartStore } from '@/store/useCartStore'
 import { ensureCheckoutAllowed } from '@/lib/utils/checkout-guard'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
+import FaqSection from '@/components/faq/FaqSection'
+import type { FaqItem } from '@/lib/services/faq.service'
 
 const RECOMMENDATION_PLACEHOLDER_IMAGE =
   'https://placehold.co/205x262/png?text=No+Image'
@@ -63,7 +65,11 @@ const getDiscountPercentage = (
   return undefined
 }
 
-export function CartPageContent() {
+interface CartPageContentProps {
+  faqItems?: FaqItem[]
+}
+
+export function CartPageContent({ faqItems = [] }: CartPageContentProps) {
   const {
     cart,
     isLoading,
@@ -315,6 +321,12 @@ export function CartPageContent() {
             </div>
           )}
         </div>
+
+        {faqItems.length > 0 && (
+          <div className="mt-10 md:mt-16">
+            <FaqSection title="Frequently Asked Questions" items={faqItems} />
+          </div>
+        )}
       </main>
     </div>
   )

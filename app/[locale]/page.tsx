@@ -11,10 +11,18 @@ import { ProductService } from '@/lib/services/product.service'
 import type { ProductListItem } from '@/types/product'
 import { translateTextsWithLangbly } from '@/lib/services/langbly-translation.service'
 import { translateHomepageData } from '@/lib/translations/homepage'
+import { FaqService, type FaqItem } from '@/lib/services/faq.service'
+import { translateFaqItems } from '@/lib/translations/faq'
 import type { Metadata } from 'next'
 import { generateSeoMetadata, getWebPageJsonLd } from '@/lib/seo'
 
 export const revalidate = 900 // Revalidate homepage cache every 15 minutes
+
+const FaqSection = dynamic(() => import('@/components/faq/FaqSection'), {
+  loading: () => (
+    <div className="container h-48 animate-pulse rounded-2xl bg-white/5" />
+  ),
+})
 
 const GameCarouselSection = dynamic(
   () => import('@/components/shared/GameCarouselSection'),
@@ -111,33 +119,46 @@ export default async function HomePage({
       section.collection === 'product_recommendations' && section.item,
   )
 
-  const [translatedData, ...collectionResults] = await Promise.all([
-    // Translation (no-op for EN, async otherwise)
-    locale.toUpperCase() !== 'EN'
-      ? translateHomepageData(data, locale).catch((error) => {
-          console.error(
-            '[HomePage] Translation failed, using original data:',
-            error,
-          )
-          return data
-        })
-      : Promise.resolve(data),
+  const [[translatedData, ...collectionResults], faqItems] = await Promise.all([
+    Promise.all([
+      // Translation (no-op for EN, async otherwise)
+      locale.toUpperCase() !== 'EN'
+        ? translateHomepageData(data, locale).catch((error) => {
+            console.error(
+              '[HomePage] Translation failed, using original data:',
+              error,
+            )
+            return data
+          })
+        : Promise.resolve(data),
 
-    // All collection product fetches — run in parallel with translation
-    ...recommendationSections.map((section) => {
-      const item = section.item as ProductRecommendationItem
-      const handle = item.handle?.trim()
-      if (!handle)
-        return Promise.resolve({
-          id: section.id,
-          games: [] as ProductListItem[],
-        })
+      // All collection product fetches — run in parallel with translation
+      ...recommendationSections.map((section) => {
+        const item = section.item as ProductRecommendationItem
+        const handle = item.handle?.trim()
+        if (!handle)
+          return Promise.resolve({
+            id: section.id,
+            games: [] as ProductListItem[],
+          })
 
-      return ProductService.getCollectionProductsByHandle(handle)
-        .then((games) => ({ id: section.id, games }))
-        .catch(() => ({ id: section.id, games: [] as ProductListItem[] }))
-    }),
-  ] as const)
+        return ProductService.getCollectionProductsByHandle(handle)
+          .then((games) => ({ id: section.id, games }))
+          .catch(() => ({ id: section.id, games: [] as ProductListItem[] }))
+      }),
+    ] as const),
+
+    FaqService.getByCategory('homepage')
+      .then((items) =>
+        locale.toUpperCase() !== 'EN'
+          ? translateFaqItems(items, locale)
+          : items,
+      )
+      .catch((error) => {
+        console.error('[HomePage] Failed to fetch FAQ data:', error)
+        return [] as FaqItem[]
+      }),
+  ])
 
   data = translatedData as HomepageData
 
@@ -224,6 +245,12 @@ export default async function HomePage({
               return null
           }
         })}
+
+        {faqItems.length > 0 && (
+          <div className="container">
+            <FaqSection title="Frequently Asked Questions" items={faqItems} />
+          </div>
+        )}
 
         <NewsletterSection
           title={data.newsletter_title}
