@@ -2,8 +2,6 @@
 
 import { useState } from 'react'
 import { Tag, X, Loader2, ChevronDown } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import { useCartStore } from '@/store/useCartStore'
 import { extractApiErrorMessage } from '@/lib/utils/api-error'
 
@@ -37,6 +35,12 @@ export function CouponInput({ onCartChanged }: CouponInputProps) {
     } finally {
       setSubmitting(false)
     }
+  }
+
+  const handleCollapse = () => {
+    setExpanded(false)
+    setCode('')
+    setError(null)
   }
 
   const handleRemove = async () => {
@@ -92,9 +96,10 @@ export function CouponInput({ onCartChanged }: CouponInputProps) {
 
   return (
     <div className="flex flex-col gap-2">
-      <div className="flex gap-2">
-        <Input
-          size="sm"
+      <div className="bg-background/40 focus-within:border-primary/60 flex items-center gap-2 rounded-md border border-white/10 px-3 py-2.5 transition-colors">
+        <Tag className="text-muted-foreground size-3.5 shrink-0" />
+        <input
+          type="text"
           value={code}
           onChange={(e) => setCode(e.target.value.toUpperCase())}
           onKeyDown={(e) => {
@@ -103,20 +108,28 @@ export function CouponInput({ onCartChanged }: CouponInputProps) {
               handleApply()
             }
           }}
-          placeholder="Enter code"
-          className="flex-1 text-sm"
+          placeholder="Enter coupon code"
+          className="placeholder:text-muted-foreground w-full min-w-0 bg-transparent text-sm font-medium text-white outline-none"
           disabled={submitting}
           autoFocus
         />
-        <Button
+        <button
           type="button"
-          variant="outline"
-          size="sm"
           onClick={handleApply}
           disabled={submitting || !code.trim()}
+          className="text-primary shrink-0 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-50"
         >
           {submitting ? <Loader2 className="size-4 animate-spin" /> : 'Apply'}
-        </Button>
+        </button>
+        <button
+          type="button"
+          onClick={handleCollapse}
+          disabled={submitting}
+          aria-label="Cancel"
+          className="text-muted-foreground hover:text-white shrink-0 disabled:opacity-50"
+        >
+          <X className="size-3.5" />
+        </button>
       </div>
       {error && <p className="text-red text-xs font-medium">{error}</p>}
     </div>
