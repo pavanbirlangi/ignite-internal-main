@@ -13,6 +13,7 @@ export interface OrderConfirmationViewModel {
   productImage: string
   orderAmount: string
   serviceFee: string
+  serviceFeeLabel: string
   paymentMode: string
   transactionNumber: string
 }
@@ -109,6 +110,7 @@ export function buildOrderConfirmationViewModel(
       order?.platformFee !== undefined && order?.currency
         ? formatOrderPrice(order.platformFee.toFixed(2), order.currency)
         : '-',
+    serviceFeeLabel: order?.platformFeeLabel || 'Service Fee',
     paymentMode: getPaymentMode(order),
     transactionNumber: orderNumber ? `${orderNumber}` : '-',
   }

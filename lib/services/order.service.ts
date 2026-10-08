@@ -71,6 +71,12 @@ export interface Order {
   lineItems: {
     edges: OrderLineItemEdge[]
   }
+  // The service fee (when applied) rides along as a real order line item, same as on the cart --
+  // see apply-service-fee's SERVICE_FEE_ITEM_FLAG. Pulled out here rather than left in `lineItems`
+  // so it doesn't render as a fake purchased product. `platformFeeLabel` mirrors whatever name the
+  // store owner gave it via `POST /admin/service-fee`'s `label`, not a hardcoded string.
+  platformFee?: number
+  platformFeeLabel: string
 }
 
 export interface OrderDetails extends Order {
@@ -82,7 +88,6 @@ export interface OrderDetails extends Order {
   successfulFulfillments?: unknown[]
   currency?: string
   paymentMethod?: OrderPaymentMethod | null
-  platformFee?: number
 }
 
 export interface OrderPageInfo {
@@ -183,8 +188,15 @@ function mapLineItem(item: any, currencyCode: string): OrderLineItemEdge {
   }
 }
 
+// Matches the backend's apply-service-fee workflow (service-fee.ts) -- same flag cart.service.ts
+// keys off of, since the fee line item on a cart becomes a real order line item at completion.
+const SERVICE_FEE_ITEM_FLAG = 'is_service_fee'
+
 function mapOrder(raw: any): Order {
   const currencyCode = raw.currency_code ?? 'usd'
+  const rawItems: any[] = raw.items ?? []
+  const feeItem = rawItems.find((item) => item?.metadata?.[SERVICE_FEE_ITEM_FLAG] === true)
+  const productItems = rawItems.filter((item) => item !== feeItem)
 
   return {
     id: raw.id,
@@ -194,8 +206,10 @@ function mapOrder(raw: any): Order {
     fulfillmentStatus: mapFulfillmentStatus(raw.fulfillment_status),
     totalPrice: { amount: raw.total ?? 0, currencyCode },
     lineItems: {
-      edges: (raw.items ?? []).map((item: any) => mapLineItem(item, currencyCode)),
+      edges: productItems.map((item: any) => mapLineItem(item, currencyCode)),
     },
+    platformFee: feeItem ? Number(feeItem.unit_price) : undefined,
+    platformFeeLabel: feeItem?.title || 'Service Fee',
   }
 }
 
@@ -306,9 +320,7 @@ export const orderService = {
         brand: paymentMethod.brand ?? null,
         lastDigits: paymentMethod.last4 ?? null,
       },
-      // No Medusa equivalent of Shopify's platform/service fee -- left
-      // undefined (honest no-op) rather than fabricated, same precedent as
-      // R-09's tax-line decision.
+      // platformFee/platformFeeLabel already come from `base` (mapOrder) above.
     }
   },
 }

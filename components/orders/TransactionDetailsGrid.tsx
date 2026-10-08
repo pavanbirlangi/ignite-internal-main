@@ -3,6 +3,7 @@ interface TransactionDetailsGridProps {
   orderAmount?: string
   transactionNumber?: string
   serviceFee?: string
+  serviceFeeLabel?: string
   paymentMode?: string
   savingDiscount?: string
 }
@@ -35,6 +36,7 @@ export function TransactionDetailsGrid({
   orderAmount = '-',
   transactionNumber = '-',
   serviceFee = '-',
+  serviceFeeLabel = 'Service Fee',
   paymentMode = '-',
   savingDiscount = '-',
 }: TransactionDetailsGridProps) {
@@ -53,7 +55,7 @@ export function TransactionDetailsGrid({
       value: transactionNumber,
     },
     {
-      label: 'Service Fee',
+      label: serviceFeeLabel,
       value: serviceFee,
     },
     {

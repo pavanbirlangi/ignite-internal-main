@@ -43,6 +43,10 @@ export interface CartResponse {
   taxTotal: number
   shippingTotal: number
   serviceFee: number
+  // Admin-configurable (`POST /admin/service-fee`'s `label`) -- the backend writes it as the fee
+  // line item's own title, so the UI should show whatever the store owner actually named it rather
+  // than a hardcoded "Service Fee" string. Falls back to that default when no custom label is set.
+  serviceFeeLabel: string
   discountTotal: number
   promoCodes: string[]
   items: CartLineItem[]
@@ -114,6 +118,7 @@ function mapCart(raw: any): CartResponse {
     taxTotal: raw.tax_total ?? 0,
     shippingTotal: raw.shipping_total ?? 0,
     serviceFee: feeItem ? Number(feeItem.unit_price) : 0,
+    serviceFeeLabel: feeItem?.title || 'Service Fee',
     discountTotal: raw.discount_total ?? 0,
     promoCodes: (raw.promotions ?? []).map((p: any) => p.code).filter(Boolean),
     items: mappedItems,

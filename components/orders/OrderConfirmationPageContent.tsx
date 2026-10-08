@@ -87,6 +87,7 @@ export default function OrderConfirmationPageContent() {
             orderAmount={confirmation.orderAmount}
             transactionNumber={confirmation.transactionNumber}
             serviceFee={confirmation.serviceFee}
+            serviceFeeLabel={confirmation.serviceFeeLabel}
             paymentMode={confirmation.paymentMode}
             savingDiscount="-"
           />

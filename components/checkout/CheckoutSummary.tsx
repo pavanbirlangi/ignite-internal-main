@@ -60,7 +60,7 @@ export function CheckoutSummary({ cart, onCartChanged }: CheckoutSummaryProps) {
             {cart.serviceFee > 0 && (
               <div className="flex items-center justify-between">
                 <span className="text-muted-foreground text-[14px] font-medium">
-                  Service Fee
+                  {cart.serviceFeeLabel}
                 </span>
                 <span className="text-[14px] font-semibold text-white">
                   {formatCurrency(cart.serviceFee, currency)}
