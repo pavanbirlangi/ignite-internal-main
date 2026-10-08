@@ -27,14 +27,32 @@ export function CheckoutPageContent() {
   // confirmation page with a redirect back to /cart instead.
   const hasCompletedOrderRef = React.useRef(false)
 
+  // Tracks whether THIS mount's own cart fetch has resolved at least once -- `cart`/`cartId`/
+  // `isLoading` are global store state that can still hold a stale, truthy value left over from
+  // whatever page the customer was just on (e.g. right after logging in, which transfers the guest
+  // cart to the new customer). Without this, the effect below could fire off a premature session
+  // request against that stale cart, then fire again once `initCart` lands with the real one --
+  // racing two payment-session creations for the same brand-new cart/customer. For a customer's
+  // very first session ever, that races the backend's one-time Stripe account-holder creation too,
+  // which is what actually 500s. A reload fixes it only because the store resets to a genuinely
+  // empty initial state, so the stale/duplicate fire can't happen.
+  const [cartReady, setCartReady] = React.useState(false)
+
   React.useEffect(() => {
-    initCart()
+    let cancelled = false
+    initCart().finally(() => {
+      if (!cancelled) setCartReady(true)
+    })
+    return () => {
+      cancelled = true
+    }
   }, [initCart])
 
   React.useEffect(() => {
     // Cart is still resolving (or genuinely has no items) -- an empty cart
     // reaching checkout only happens via direct navigation/back-button, so
     // send it back to the cart page rather than showing a $0 payment form.
+    if (!cartReady) return
     if (isLoading) return
     if (hasCompletedOrderRef.current) return
     if (!cartId || !cart || cart.items.length === 0) {
@@ -76,7 +94,7 @@ export function CheckoutPageContent() {
     // Only re-run when the cart identity actually changes, not on every
     // cart mutation (quantity changes etc. shouldn't re-create the session).
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [cartId, isLoading])
+  }, [cartReady, cartId, isLoading])
 
   // Forces a fresh Stripe session (a real re-POST, not the cached one) whenever the cart's total
   // changes after a session already exists: a stale service fee (item 14's 409) and applying or
