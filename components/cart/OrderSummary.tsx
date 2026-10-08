@@ -1,4 +1,4 @@
-import { ChevronRight } from 'lucide-react'
+import { ChevronRight, Info } from 'lucide-react'
 import { formatCurrency } from '@/lib/currency'
 import { Button } from '@/components/ui/button'
 import {
@@ -49,16 +49,28 @@ export function OrderSummary({
             </div>
 
             {/* No promotion module exists yet, so a discount row never renders -- see
-                cart.service.ts. The service fee and tax are both deliberately left out of the
-                cart page -- they're only real/final once attached to a cart at checkout, so
-                this total is intentionally just the products subtotal, matching Base Price. */}
-            <div className="mt-1 flex items-center justify-between border-t border-white/10 pt-3">
+                cart.service.ts. The service fee is deliberately left out of the cart page --
+                it's only real/final once attached to a cart at checkout -- so this total is
+                intentionally just the products subtotal, matching Base Price. */}
+            <div className="mt-1 flex items-start justify-between border-t border-white/10 pt-3">
               <CardTitle className="text-[18px] font-semibold text-white">
                 Your cart total
               </CardTitle>
-              <span className="text-[18px] font-semibold text-white">
-                {formatCurrency(total, currency)}
-              </span>
+              <div className="flex flex-col items-end gap-1">
+                <span className="text-[18px] font-semibold text-white">
+                  {formatCurrency(total, currency)}
+                </span>
+                {/* Tax (and, if the store owner turns it on, the service fee) isn't computed
+                    until checkout, so the final total can still differ from this one -- flagged
+                    rather than left to surprise the customer at the next step. */}
+                <span
+                  className="text-muted-foreground flex items-center gap-1 text-[11px] font-medium tracking-wide uppercase"
+                  title="Tax and any service fee are calculated at checkout and may change this total slightly."
+                >
+                  Price not final
+                  <Info className="size-3" />
+                </span>
+              </div>
             </div>
           </div>
         </CardHeader>
