@@ -197,8 +197,9 @@ const StoreListing = ({ translations }: StoreListingProps) => {
 
     const idLower = id.toLowerCase()
 
+    // Filter chips store the category's real id (see FilterSidebar.tsx), not its handle.
     const dynamicCat = dynamicCategories.find(
-      (c: any) => c.handle.toLowerCase() === idLower,
+      (c: any) => c.id.toLowerCase() === idLower,
     )
     if (dynamicCat) return { id, label: dynamicCat.title }
 

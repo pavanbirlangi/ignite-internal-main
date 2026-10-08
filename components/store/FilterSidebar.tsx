@@ -156,7 +156,10 @@ const FilterSidebar: React.FC<FilterSidebarProps> = ({ className = '' }) => {
   const { data: categoriesData } = useCategories()
   const dynamicCategories =
     categoriesData?.categories?.map((cat) => ({
-      id: cat.handle,
+      // The backend's `/store/products/filtered` route matches categories by their
+      // real Medusa id, not the handle -- sending the handle here meant selecting any
+      // category always matched zero products (see MEDUSA_MIGRATION_BACKEND_REQUIREMENTS.md).
+      id: cat.id,
       label: cat.title,
       count: cat.count,
     })) || []
