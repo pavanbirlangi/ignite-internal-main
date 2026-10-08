@@ -9,32 +9,10 @@ import {
   PaginationItem,
 } from '@/components/ui/pagination'
 import CopyIcon from '@/components/icons/CopyIcon'
+import { parseCredentialKey } from '@/lib/orders/parse-credential-key'
 
 interface KeyListProps {
   keys: string[]
-}
-
-/**
- * Parses a key string that may contain credential tags.
- * Format: "<email>name@mail.com<password>xyz"
- * Returns parsed credential fields or null if not in credential format.
- */
-function parseCredentialKey(
-  key: string,
-): { email: string; password: string } | null {
-  const emailTagStart = key.indexOf('<email>')
-  const passwordTagStart = key.indexOf('<password>')
-
-  if (emailTagStart === -1 || passwordTagStart === -1) return null
-
-  const email = key
-    .substring(emailTagStart + '<email>'.length, passwordTagStart)
-    .trim()
-  const password = key.substring(passwordTagStart + '<password>'.length).trim()
-
-  if (!email && !password) return null
-
-  return { email, password }
 }
 
 export const KeyList = ({ keys }: KeyListProps) => {

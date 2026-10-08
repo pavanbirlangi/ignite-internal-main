@@ -2,6 +2,7 @@ import { jsPDF } from 'jspdf'
 import type { OrderDetails } from '@/lib/services/order.service'
 import type { KeyAssignment } from '@/lib/services/keys.service'
 import { formatOrderDate } from './order-formatters'
+import { parseCredentialKey } from './parse-credential-key'
 
 const BRAND_BLUE = [59, 130, 246] as const
 const DARK_BG = [17, 24, 39] as const
@@ -131,18 +132,25 @@ export function generateKeysPdf(
 
     // Keys
     for (const key of keys) {
-      y = ensurePage(doc, y, 14)
+      const credential = parseCredentialKey(key)
+      const lines = credential
+        ? [`Email: ${credential.email}`, `Password: ${credential.password}`]
+        : [key]
 
-      // Key background pill
-      const pillHeight = 10
-      doc.setFillColor(...KEY_BG)
-      doc.roundedRect(20, y, pageWidth - 40, pillHeight, 2, 2, 'F')
+      for (const line of lines) {
+        y = ensurePage(doc, y, 14)
 
-      doc.setFontSize(11)
-      doc.setTextColor(...TEXT_WHITE)
-      doc.setFont('courier', 'bold')
-      doc.text(key, 26, y + pillHeight / 2 + 1.5)
-      y += pillHeight + 4
+        // Key background pill
+        const pillHeight = 10
+        doc.setFillColor(...KEY_BG)
+        doc.roundedRect(20, y, pageWidth - 40, pillHeight, 2, 2, 'F')
+
+        doc.setFontSize(11)
+        doc.setTextColor(...TEXT_WHITE)
+        doc.setFont('courier', 'bold')
+        doc.text(line, 26, y + pillHeight / 2 + 1.5)
+        y += pillHeight + 4
+      }
     }
 
     y += 4
