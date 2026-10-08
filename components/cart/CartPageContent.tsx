@@ -116,12 +116,11 @@ export function CartPageContent({ faqItems = [] }: CartPageContentProps) {
   }, [cart])
 
   // No promotion module exists yet (confirmed live) -- "Your cart total"
-  // deliberately shows the pre-tax subtotal (+ the service fee, when active),
-  // matching Base Price, rather than the tax-inclusive total the backend
-  // also returns with no line item to explain it.
+  // deliberately shows the plain products subtotal, matching Base Price.
+  // The service fee and tax are both only real/final once attached to a
+  // cart at checkout, so neither one is baked into this page's total.
   // See MEDUSA_MIGRATION_BACKEND_REQUIREMENTS.md.
   const subtotal = cart?.subtotal ?? 0
-  const serviceFee = cart?.serviceFee ?? 0
   const basePrice = React.useMemo(() => {
     return items.reduce((sum, item) => sum + item.price * (item.quantity || 1), 0)
   }, [items])
@@ -278,8 +277,7 @@ export function CartPageContent({ faqItems = [] }: CartPageContentProps) {
             <div className="relative lg:col-span-4">
               <OrderSummary
                 basePrice={basePrice}
-                serviceFee={serviceFee}
-                total={subtotal + serviceFee}
+                total={subtotal}
                 currency={summaryCurrency}
                 onCheckout={handleCheckout}
               />
