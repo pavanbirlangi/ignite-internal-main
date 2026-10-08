@@ -11,6 +11,7 @@ interface ModalFooterProps {
     guide?: string
     name: string
     icon?: string | null
+    link?: string | null
   }
 }
 
@@ -63,6 +64,7 @@ export const ModalFooter = ({
                 onOpenChange={setGuideOpen}
                 title={activationGuide.name}
                 guideHtml={activationGuide.guide}
+                guideLink={activationGuide.link}
               />
               <Button
                 variant="ghost"

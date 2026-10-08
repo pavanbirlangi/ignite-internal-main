@@ -224,6 +224,7 @@ function mapProductDetail(
 
   const activationGuideHtml = metaString(metadata, 'activation_guide_html')
   const activationGuideName = metaString(metadata, 'activation_guide_name')
+  const activationGuideLink = metaString(metadata, 'activation_guide_link')
   // Guarded because this field was free text before it became a real file
   // upload -- a leftover non-URL value like "Steam" crashes next/image's src
   // parser outright (this is what R-24 was raised for).
@@ -277,11 +278,12 @@ function mapProductDetail(
     // (confirmed live: a real product had `activation_guide_name` and an icon
     // set with no HTML, and the old all-or-nothing guard threw both away).
     // Each part is rendered conditionally downstream instead.
-    activationGuide: activationGuideName || activationGuideIcon || activationGuideHtml
+    activationGuide: activationGuideName || activationGuideIcon || activationGuideHtml || activationGuideLink
       ? {
           guide: activationGuideHtml,
           name: activationGuideName ?? '',
           icon: activationGuideIcon,
+          link: activationGuideLink,
           _type: '',
           _handle: '',
         }

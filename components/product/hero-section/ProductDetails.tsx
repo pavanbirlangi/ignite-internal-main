@@ -375,6 +375,7 @@ export default function ProductDetails({
               <ActivationGuideModal
                 title={product.activationGuide.name}
                 guideHtml={product.activationGuide.guide}
+                guideLink={product.activationGuide.link}
               >
                 <span className="text-primary cursor-pointer text-[10px] font-medium hover:underline">
                   {labels?.activationGuide ?? 'Activation Guide'}

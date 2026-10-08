@@ -9,7 +9,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { VisuallyHidden } from 'radix-ui'
-import { XIcon } from 'lucide-react'
+import { ExternalLink, XIcon } from 'lucide-react'
 
 export function ActivationGuideModal({
   children,
@@ -17,12 +17,14 @@ export function ActivationGuideModal({
   onOpenChange,
   title,
   guideHtml,
+  guideLink,
 }: {
   children?: React.ReactNode
   open?: boolean
   onOpenChange?: (open: boolean) => void
   title?: string
   guideHtml?: string
+  guideLink?: string | null
 }) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -62,17 +64,29 @@ export function ActivationGuideModal({
                 filled in yet -- same trap as the fake review badge removed
                 earlier. An honest empty state is better than invented steps
                 for a key the customer actually paid for. */}
+            {guideLink && (
+              <a
+                href={guideLink}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-primary inline-flex w-fit items-center gap-1.5 text-sm font-semibold underline hover:opacity-80"
+              >
+                View the publisher&apos;s own guide
+                <ExternalLink className="size-3.5" />
+              </a>
+            )}
+
             {guideHtml ? (
               <div
                 className="dynamicText prose-invert prose-lg max-w-none text-white [&_img]:h-auto [&_img]:max-w-full [&_img]:rounded-xl"
                 dangerouslySetInnerHTML={{ __html: guideHtml }}
               />
-            ) : (
+            ) : !guideLink ? (
               <p className="text-muted-foreground text-sm leading-relaxed">
                 Activation steps for this product aren&apos;t available yet. If
                 you need help redeeming your key, please contact support.
               </p>
-            )}
+            ) : null}
           </div>
         </div>
       </DialogContent>
