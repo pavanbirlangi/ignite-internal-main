@@ -57,15 +57,6 @@ export function CheckoutSummary({ cart, onCartChanged }: CheckoutSummaryProps) {
               </span>
             </div>
 
-            <div className="flex items-center justify-between">
-              <span className="text-muted-foreground text-[14px] font-medium">
-                Shipping
-              </span>
-              <span className="text-[14px] font-semibold text-white">
-                Free
-              </span>
-            </div>
-
             {cart.serviceFee > 0 && (
               <div className="flex items-center justify-between">
                 <span className="text-muted-foreground text-[14px] font-medium">
