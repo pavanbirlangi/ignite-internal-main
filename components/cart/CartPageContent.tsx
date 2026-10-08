@@ -5,71 +5,16 @@ import { ShoppingCart } from 'lucide-react'
 import { CartNavbar } from '@/components/cart/CartNavbar'
 import { CartItemRow } from '@/components/cart/CartItemRow'
 import { OrderSummary } from '@/components/cart/OrderSummary'
-import { CartPageRecommendationRow } from '@/components/cart/CartPageRecommendationRow'
+import StoreCard from '@/components/store/StoreCard'
 import { useCartStore } from '@/store/useCartStore'
 import { ensureCheckoutAllowed } from '@/lib/utils/checkout-guard'
 import { useRouter } from 'next/navigation'
-import { toast } from 'sonner'
-import FaqSection from '@/components/faq/FaqSection'
-import type { FaqItem } from '@/lib/services/faq.service'
 
-const RECOMMENDATION_PLACEHOLDER_IMAGE =
-  'https://placehold.co/205x262/png?text=No+Image'
+// Keeps the cart page's recommendations a small, glanceable strip rather than a long list --
+// the store grid/carousel is where browsing the full catalog belongs.
+const MAX_RECOMMENDATIONS = 5
 
-const parseAmount = (amount?: string | number): number => {
-  if (typeof amount === 'number') return amount
-  if (typeof amount !== 'string') return 0
-  const parsed = Number.parseFloat(amount)
-  return Number.isFinite(parsed) ? parsed : 0
-}
-
-const getRecommendationMerchandiseId = (
-  variants: unknown,
-): string | undefined => {
-  if (!variants) return undefined
-  if (Array.isArray(variants)) {
-    const firstAvailable = variants.find(
-      (variant) =>
-        variant &&
-        typeof variant === 'object' &&
-        (variant as any).availableForSale !== false,
-    )
-    const candidate = (firstAvailable || variants[0]) as any
-    return typeof candidate?.id === 'string' ? candidate.id : undefined
-  }
-  if (typeof variants === 'object' && Array.isArray((variants as any).edges)) {
-    const edges = (variants as any).edges
-    const firstAvailableEdge = edges.find(
-      (edge: any) => edge?.node?.availableForSale !== false,
-    )
-    const node = firstAvailableEdge?.node || edges[0]?.node
-    return typeof node?.id === 'string' ? node.id : undefined
-  }
-  return undefined
-}
-
-const getDiscountPercentage = (
-  discount: unknown,
-  compareAtPrice: number,
-  price: number,
-): number | undefined => {
-  if (discount && typeof discount === 'object') {
-    const percentage = (discount as any).percentage
-    if (typeof percentage === 'number' && Number.isFinite(percentage)) {
-      return Math.round(percentage)
-    }
-  }
-  if (compareAtPrice > price && price > 0) {
-    return Math.round(((compareAtPrice - price) / compareAtPrice) * 100)
-  }
-  return undefined
-}
-
-interface CartPageContentProps {
-  faqItems?: FaqItem[]
-}
-
-export function CartPageContent({ faqItems = [] }: CartPageContentProps) {
+export function CartPageContent() {
   const {
     cart,
     isLoading,
@@ -78,7 +23,6 @@ export function CartPageContent({ faqItems = [] }: CartPageContentProps) {
     updateItem,
     recommendations,
     isRecommendationsLoading,
-    addItem,
   } = useCartStore()
   const router = useRouter()
 
@@ -129,32 +73,10 @@ export function CartPageContent({ faqItems = [] }: CartPageContentProps) {
     subtotalCurrencyCode || items[0]?.currencyCode || 'USD'
   const itemCount = items.reduce((sum, item) => sum + (item.quantity || 1), 0)
 
-  const recommendationItems = React.useMemo(() => {
-    return recommendations.map((rec: any) => {
-      const price = parseAmount(rec?.price?.amount)
-      const compareAtPrice = parseAmount(rec?.compareAtPrice?.amount)
-      const image = rec?.featuredImage?.url || RECOMMENDATION_PLACEHOLDER_IMAGE
-      const discountPercentage = getDiscountPercentage(
-        rec?.discount,
-        compareAtPrice,
-        price,
-      )
-
-      return {
-        id: rec?.id,
-        handle: rec?.handle,
-        merchandiseId: getRecommendationMerchandiseId(rec?.variants),
-        title: rec?.title || 'Recommended Product',
-        platform: Array.isArray(rec?.platform) ? rec.platform.join(' / ') : '',
-        price,
-        currencyCode: rec?.price?.currencyCode || subtotalCurrencyCode,
-        originalPrice: compareAtPrice > price ? compareAtPrice : undefined,
-        discountPercentage,
-        image,
-        availableForSale: rec?.availableForSale ?? true,
-      }
-    })
-  }, [recommendations, subtotalCurrencyCode])
+  const recommendationItems = React.useMemo(
+    () => recommendations.slice(0, MAX_RECOMMENDATIONS),
+    [recommendations],
+  )
 
   // Handlers
   const handleUpdateQuantity = (id: string, newQty: number) => {
@@ -164,18 +86,6 @@ export function CartPageContent({ faqItems = [] }: CartPageContentProps) {
 
   const handleRemove = (id: string) => {
     removeItem([id])
-  }
-
-  const handleAddToCart = (product: any) => {
-    if (!product.merchandiseId) {
-      if (product.handle) {
-        router.push(`/${product.handle}`)
-        return
-      }
-      toast.error('This item is unavailable to add right now.')
-      return
-    }
-    return addItem(product.merchandiseId, 1)
   }
 
   const handleCheckout = () => {
@@ -239,31 +149,20 @@ export function CartPageContent({ faqItems = [] }: CartPageContentProps) {
                 <h2 className="text-lg font-semibold text-white md:text-xl">
                   Recommended for You
                 </h2>
-                <div className="flex flex-col gap-3">
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
                   {isRecommendationsLoading ? (
-                    Array.from({ length: 3 }).map((_, index) => (
+                    Array.from({ length: MAX_RECOMMENDATIONS }).map((_, index) => (
                       <div
                         key={`recommendation-skeleton-${index}`}
-                        className="bg-secondary/20 flex animate-pulse items-center gap-2 rounded-[12px] border border-transparent px-3 py-2 sm:gap-3 sm:px-4 sm:py-2.5"
-                      >
-                        <div className="h-16 w-12 shrink-0 rounded-md bg-white/10" />
-                        <div className="flex flex-1 flex-col gap-2">
-                          <div className="h-3 w-3/4 rounded bg-white/10" />
-                          <div className="h-3 w-1/2 rounded bg-white/10" />
-                        </div>
-                        <div className="h-8 w-8 rounded-lg bg-white/10 sm:h-9 sm:w-9" />
-                      </div>
+                        className="bg-secondary/20 aspect-[1/1.7] animate-pulse rounded-2xl"
+                      />
                     ))
                   ) : recommendationItems.length > 0 ? (
                     recommendationItems.map((rec) => (
-                      <CartPageRecommendationRow
-                        key={rec.id}
-                        product={rec}
-                        onAddToCart={handleAddToCart}
-                      />
+                      <StoreCard key={rec.id} product={rec} />
                     ))
                   ) : (
-                    <p className="text-muted-foreground py-4 text-sm">
+                    <p className="text-muted-foreground col-span-full py-4 text-sm">
                       No recommendations available right now.
                     </p>
                   )}
@@ -290,31 +189,20 @@ export function CartPageContent({ faqItems = [] }: CartPageContentProps) {
               <h2 className="text-lg font-semibold text-white md:text-xl">
                 Recommended for You
               </h2>
-              <div className="flex flex-col gap-3">
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
                 {isRecommendationsLoading ? (
-                  Array.from({ length: 3 }).map((_, index) => (
+                  Array.from({ length: MAX_RECOMMENDATIONS }).map((_, index) => (
                     <div
                       key={`recommendation-skeleton-${index}`}
-                      className="bg-secondary/20 flex animate-pulse items-center gap-2 rounded-[12px] border border-transparent px-3 py-2 sm:gap-3 sm:px-4 sm:py-2.5"
-                    >
-                      <div className="h-16 w-12 shrink-0 rounded-md bg-white/10" />
-                      <div className="flex flex-1 flex-col gap-2">
-                        <div className="h-3 w-3/4 rounded bg-white/10" />
-                        <div className="h-3 w-1/2 rounded bg-white/10" />
-                      </div>
-                      <div className="h-8 w-8 rounded-lg bg-white/10 sm:h-9 sm:w-9" />
-                    </div>
+                      className="bg-secondary/20 aspect-[1/1.7] animate-pulse rounded-2xl"
+                    />
                   ))
                 ) : recommendationItems.length > 0 ? (
                   recommendationItems.map((rec) => (
-                    <CartPageRecommendationRow
-                      key={rec.id}
-                      product={rec}
-                      onAddToCart={handleAddToCart}
-                    />
+                    <StoreCard key={rec.id} product={rec} />
                   ))
                 ) : (
-                  <p className="text-muted-foreground py-4 text-sm">
+                  <p className="text-muted-foreground col-span-full py-4 text-sm">
                     No recommendations available right now.
                   </p>
                 )}
@@ -322,12 +210,6 @@ export function CartPageContent({ faqItems = [] }: CartPageContentProps) {
             </div>
           )}
         </div>
-
-        {faqItems.length > 0 && (
-          <div className="mt-10 md:mt-16">
-            <FaqSection title="Frequently Asked Questions" items={faqItems} />
-          </div>
-        )}
       </main>
     </div>
   )

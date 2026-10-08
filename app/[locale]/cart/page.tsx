@@ -1,8 +1,6 @@
 import { CartPageContent } from '@/components/cart/CartPageContent'
 import type { Metadata } from 'next'
 import { generateSeoMetadata, getWebPageJsonLd } from '@/lib/seo'
-import { FaqService, type FaqItem } from '@/lib/services/faq.service'
-import { translateFaqItems } from '@/lib/translations/faq'
 
 export async function generateMetadata({
   params,
@@ -33,16 +31,6 @@ export default async function CartPage({
     description: 'Review and checkout your digital keys.',
   })
 
-  let faqItems: FaqItem[] = []
-  try {
-    faqItems = await FaqService.getByCategory('cart')
-    if (faqItems.length > 0 && locale.toUpperCase() !== 'EN') {
-      faqItems = await translateFaqItems(faqItems, locale)
-    }
-  } catch (error) {
-    console.error('[CartPage] Failed to fetch FAQ data:', error)
-  }
-
   return (
     <>
       <script
@@ -51,7 +39,7 @@ export default async function CartPage({
           __html: JSON.stringify(webPageJsonLd),
         }}
       />
-      <CartPageContent faqItems={faqItems} />
+      <CartPageContent />
     </>
   )
 }
