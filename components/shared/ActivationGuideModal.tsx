@@ -78,7 +78,7 @@ export function ActivationGuideModal({
 
             {guideHtml ? (
               <div
-                className="dynamicText prose-invert prose-lg max-w-none text-white [&_img]:h-auto [&_img]:max-w-full [&_img]:rounded-xl"
+                className="dynamicText prose-invert prose-lg max-w-none text-white [&_img]:h-auto [&_img]:max-w-full [&_img]:rounded-xl [&_video]:rounded-xl"
                 dangerouslySetInnerHTML={{ __html: guideHtml }}
               />
             ) : !guideLink ? (
