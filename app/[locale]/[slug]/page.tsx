@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
-import { notFound } from 'next/navigation'
+import { notFound, permanentRedirect } from 'next/navigation'
+import { RedirectService } from '@/lib/services/redirect.service'
 import Image from 'next/image'
 
 import Gallery from '@/components/product/Gallery'
@@ -226,6 +227,9 @@ export default async function ProductPage({ params }: PageProps) {
   try {
     product = await ProductService.getProductByHandle(slug)
   } catch {
+    // A renamed product's old URL should land on its new page, not a 404.
+    const redirectTarget = await RedirectService.findProductRedirect(slug)
+    if (redirectTarget) permanentRedirect(localizedHref(locale, redirectTarget))
     notFound()
   }
 
