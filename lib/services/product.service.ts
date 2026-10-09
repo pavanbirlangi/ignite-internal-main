@@ -184,10 +184,52 @@ async function fetchRatingSummary(
   }
 }
 
+interface SharedActivationGuide {
+  id: string
+  name: string
+  icon_url: string | null
+  html: string
+  external_link: string | null
+}
+
+const ACTIVATION_GUIDES_TTL_MS = 5 * 60 * 1000
+let activationGuidesCache: {
+  expiresAt: number
+  promise: Promise<Map<string, SharedActivationGuide>>
+} | null = null
+
+// The whole guide library is tiny (one entry per platform/storefront), so it's fetched once
+// and shared by every product rather than looked up per product.
+function getActivationGuides(): Promise<Map<string, SharedActivationGuide>> {
+  if (activationGuidesCache && activationGuidesCache.expiresAt > Date.now()) {
+    return activationGuidesCache.promise
+  }
+  const promise = medusaClient
+    .get('/store/activation-guides')
+    .then(({ data }) => {
+      const guides: SharedActivationGuide[] = data.guides ?? []
+      return new Map(guides.map((g) => [g.id, g]))
+    })
+    .catch(() => {
+      activationGuidesCache = null
+      return new Map<string, SharedActivationGuide>()
+    })
+  activationGuidesCache = { expiresAt: Date.now() + ACTIVATION_GUIDES_TTL_MS, promise }
+  return promise
+}
+
+async function fetchActivationGuide(
+  guideId: string | undefined,
+): Promise<SharedActivationGuide | null> {
+  if (!guideId) return null
+  return (await getActivationGuides()).get(guideId) ?? null
+}
+
 function mapProductDetail(
   raw: any,
   digitalAvailability: Map<string, DigitalAvailability>,
   ratingSummary: { average_rating: number; count: number } | null,
+  sharedGuide: SharedActivationGuide | null,
 ): Product {
   const metadata = raw.metadata ?? {}
   const variants = (raw.variants ?? []).map((v: any) =>
@@ -222,13 +264,19 @@ function mapProductDetail(
     ? totalStock > 0
     : true
 
-  const activationGuideHtml = metaString(metadata, 'activation_guide_html')
-  const activationGuideName = metaString(metadata, 'activation_guide_name')
-  const activationGuideLink = metaString(metadata, 'activation_guide_link')
+  // Products now point at a shared guide via `activation_guide_id`; the old per-product
+  // fields are only a fallback for products that haven't been migrated to the library.
+  const activationGuideHtml =
+    sharedGuide?.html || metaString(metadata, 'activation_guide_html')
+  const activationGuideName =
+    sharedGuide?.name || metaString(metadata, 'activation_guide_name')
+  const activationGuideLink =
+    sharedGuide?.external_link || metaString(metadata, 'activation_guide_link')
   // Guarded because this field was free text before it became a real file
   // upload -- a leftover non-URL value like "Steam" crashes next/image's src
   // parser outright (this is what R-24 was raised for).
-  const activationGuideIconRaw = metaString(metadata, 'activation_guide_icon')
+  const activationGuideIconRaw =
+    sharedGuide?.icon_url || metaString(metadata, 'activation_guide_icon')
   const activationGuideIcon = isImageSrc(activationGuideIconRaw)
     ? activationGuideIconRaw
     : null
@@ -448,12 +496,13 @@ const _fetchProductByHandle = async (
     throw new Error(`Invalid product payload for handle: ${handle}`)
   }
 
-  const [digitalAvailability, ratingSummary] = await Promise.all([
+  const [digitalAvailability, ratingSummary, sharedGuide] = await Promise.all([
     fetchDigitalAvailability(raw.id),
     fetchRatingSummary(raw.id),
+    fetchActivationGuide(metaString(raw.metadata, 'activation_guide_id')),
   ])
 
-  return mapProductDetail(raw, digitalAvailability, ratingSummary)
+  return mapProductDetail(raw, digitalAvailability, ratingSummary, sharedGuide)
 }
 
 const _fetchProductRecommendations = async (
