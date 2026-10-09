@@ -21,12 +21,8 @@ export default function RegionToggle() {
   const currentLanguage = languages.find((l) => l.value === language)
   const fullLanguageName = currentLanguage ? currentLanguage.label : language
 
-  // Display-only: the eurozone has no single country flag, and the stored
-  // country is a real member state (AT) so region lookups keep working --
-  // but showing Austria's flag for a region labelled "Europe" reads as a
-  // mistake, so the EU flag is substituted here and here only.
-  const flagCode =
-    currency.toUpperCase() === 'EUR' ? 'eu' : countryCode.toLowerCase()
+  // The flag is the visitor's chosen country, independent of the display currency.
+  const flagCode = countryCode.toLowerCase()
 
   return (
     <LanguageModal>
@@ -53,7 +49,7 @@ export default function RegionToggle() {
           )}
         </div>
         <span className="text-sm font-semibold text-white">
-          {mounted ? `${currency} / ${fullLanguageName}` : 'USD / English'}
+          {mounted ? `${currency} • ${fullLanguageName}` : 'USD • English'}
         </span>
       </button>
     </LanguageModal>

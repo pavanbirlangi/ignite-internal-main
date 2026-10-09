@@ -36,6 +36,7 @@ export interface CartLineItem {
 export interface CartResponse {
   id: string
   customerId: string | null
+  email: string | null
   currencyCode: string
   regionId: string | null
   subtotal: number
@@ -109,6 +110,7 @@ function mapCart(raw: any): CartResponse {
   return {
     id: raw.id,
     customerId: raw.customer_id ?? null,
+    email: raw.email ?? null,
     currencyCode: raw.currency_code,
     regionId: raw.region_id ?? null,
     // Medusa's own `subtotal` includes the service-fee line (it's a real line item) -- recomputed
@@ -135,10 +137,18 @@ function mapCart(raw: any): CartResponse {
 const CART_FIELDS = '+items.thumbnail,+items.product.images.url,+items.metadata'
 
 export const cartService = {
-  createCart: async (): Promise<CartResponse> => {
+  // Attribution metadata goes in at creation: Medusa's cart-update step resets a cart's currency to
+  // its region's (USD) on every POST /store/carts/:id, so a later metadata update would undo a
+  // non-USD cart.
+  createCart: async (
+    currencyCode: string,
+    metadata?: Record<string, string>,
+  ): Promise<CartResponse> => {
     const regionId = await resolveRegionId()
     const { data } = await medusaClient.post('/store/carts', {
       region_id: regionId,
+      currency_code: currencyCode.toLowerCase(),
+      ...(metadata && Object.keys(metadata).length ? { metadata } : {}),
     })
     return mapCart(data.cart)
   },
@@ -219,38 +229,18 @@ export const cartService = {
     return cart
   },
 
-  // Moves an already-existing cart onto a different Medusa region (confirmed
-  // live against the core validator: `POST /store/carts/:id` accepts
-  // `region_id`, same route `checkout.service.ts` uses for email). Medusa
-  // recomputes every line item's unit price and the cart totals against the
-  // new region's currency as part of `updateCartWorkflow` -- this is what
-  // actually keeps an existing cart's currency in sync after the user
-  // switches region via RegionToggle, since region creation
-  // (`resolveRegionId()` above) only ever runs once, at cart creation time.
-  updateCartRegion: async (
+  // A cart's currency is fixed at creation, so the backend copies the cart (products, customer,
+  // email, addresses) into a new one in the requested currency. The copy carries neither the
+  // service fee nor promo codes -- the cart store re-applies both.
+  switchCurrency: async (
     cartId: string,
-    regionId: string,
-  ): Promise<CartResponse> => {
+    currencyCode: string,
+  ): Promise<{ cartId: string; switched: boolean }> => {
     const encodedId = encodeURIComponent(cartId)
-    const { data } = await medusaClient.post(
-      `/store/carts/${encodedId}`,
-      { region_id: regionId },
-      { params: { fields: CART_FIELDS } },
-    )
-    return mapCart(data.cart)
-  },
-
-  // Medusa copies cart metadata onto the order at completion -- this is how the admin
-  // "Order source" widget learns where a customer came from (see attribution.ts).
-  updateCartMetadata: async (
-    cartId: string,
-    metadata: Record<string, string>,
-  ): Promise<CartResponse> => {
-    const encodedId = encodeURIComponent(cartId)
-    const { data } = await medusaClient.post(`/store/carts/${encodedId}`, {
-      metadata,
+    const { data } = await medusaClient.post(`/store/carts/${encodedId}/switch-currency`, {
+      currency_code: currencyCode.toLowerCase(),
     })
-    return mapCart(data.cart)
+    return { cartId: data.cart_id, switched: Boolean(data.switched) }
   },
 
   // Makes the cart carry exactly the service fee the store's settings call for right now (adds,

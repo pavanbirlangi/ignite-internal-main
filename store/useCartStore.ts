@@ -56,13 +56,13 @@ interface CartState {
   recommendations: CartRecommendation[]
   isLoading: boolean
   isRecommendationsLoading: boolean
-  isMigratingRegion: boolean
+  isSwitchingCurrency: boolean
   loadingItems: string[]
   error: string | null
   recommendationsError: string | null
 
-  initCart: () => Promise<void>
-  loadCart: () => Promise<void>
+  initCart: (options?: LoadCartOptions) => Promise<void>
+  loadCart: (options?: LoadCartOptions) => Promise<void>
   loadRecommendations: (params?: {
     intent?: 'RELATED' | 'COMPLEMENTARY'
     limit?: number
@@ -78,30 +78,80 @@ interface CartState {
   applyServiceFee: () => Promise<void>
   applyPromoCode: (code: string) => Promise<void>
   removePromoCode: (code: string) => Promise<void>
+  // Checkout picks the charge currency per payment method (card -> USD, a local method -> its own
+  // currency); outside checkout the cart follows the display currency. Returns any promo codes
+  // that couldn't be re-applied in the new currency.
+  switchCartCurrency: (
+    currency: string,
+  ) => Promise<{ droppedPromoCodes: string[]; unpriced?: boolean }>
 }
 
-// A cart is only ever assigned a region once, at creation time
-// (`cartService.createCart()`'s `resolveRegionId()`) -- switching currency
-// via RegionToggle/LanguageModal only ever updates `useCurrencyStore`'s
-// cookies/state, it never touches an already-existing cart. Without this,
-// an existing cart just keeps quoting prices in whatever currency it was
-// first created in, regardless of what region the rest of the site (and the
-// user) has since switched to -- this is what migrates it to match.
-const syncCartRegion = async (
+interface LoadCartOptions {
+  // Off on the checkout page, which manages the cart's currency itself.
+  syncCurrency?: boolean
+}
+
+const getDisplayCurrencyCode = () =>
+  (useCurrencyStore.getState().currency || 'USD').toLowerCase()
+
+// The backend refuses a cart line (or a cart switch) in a currency some product has no price in.
+const isMissingPriceError = (error: unknown) =>
+  /do not have a price/i.test(extractApiErrorMessage(error, ''))
+
+const notifyDroppedPromoCodes = (codes: string[]) => {
+  if (codes.length) {
+    toast.info(
+      `Coupon ${codes.join(', ')} couldn't be applied in this currency and was removed.`,
+    )
+  }
+}
+
+// A cart's currency is fixed at creation, so changing it means a backend copy of the cart in the
+// new currency (cartService.switchCurrency). The copy drops promo codes and the service fee line;
+// both are restored here so a currency change never silently loses a discount or the fee.
+const moveCartToCurrency = async (
   set: (partial: Partial<CartState>) => void,
   get: () => CartState,
   cart: CartResponse,
-): Promise<CartResponse> => {
-  const desiredRegionId = useCurrencyStore.getState().regionId
-  if (!desiredRegionId || cart.regionId === desiredRegionId) return cart
+  currency: string,
+): Promise<{ cart: CartResponse; droppedPromoCodes: string[]; unpriced?: boolean }> => {
+  if (cart.currencyCode.toLowerCase() === currency) {
+    return { cart, droppedPromoCodes: [] }
+  }
 
-  set({ isMigratingRegion: true })
+  set({ isSwitchingCurrency: true })
   try {
-    const migratedCart = await cartService.updateCartRegion(cart.id, desiredRegionId)
-    syncServiceFee(set, get, migratedCart.id)
-    return migratedCart
+    let cartId: string
+    try {
+      ;({ cartId } = await cartService.switchCurrency(cart.id, currency))
+    } catch (error) {
+      // Some item has no price in that currency -- the cart can't move there, so it stays put.
+      if (isMissingPriceError(error)) return { cart, droppedPromoCodes: [], unpriced: true }
+      throw error
+    }
+    setCartIdCookie(cartId)
+    set({ cartId })
+
+    const droppedPromoCodes: string[] = []
+    for (const code of cart.promoCodes) {
+      try {
+        await cartService.applyPromoCode(cartId, code)
+      } catch {
+        droppedPromoCodes.push(code)
+      }
+    }
+
+    let movedCart: CartResponse
+    try {
+      movedCart = await cartService.applyServiceFee(cartId)
+    } catch (error) {
+      console.error('Failed to apply service fee after currency switch', error)
+      movedCart = await cartService.getCart(cartId)
+    }
+    if (get().cartId === cartId) set({ cart: movedCart })
+    return { cart: movedCart, droppedPromoCodes }
   } finally {
-    set({ isMigratingRegion: false })
+    set({ isSwitchingCurrency: false })
   }
 }
 
@@ -168,12 +218,12 @@ export const useCartStore = create<CartState>()((set, get) => ({
   recommendations: [],
   isLoading: false,
   isRecommendationsLoading: false,
-  isMigratingRegion: false,
+  isSwitchingCurrency: false,
   loadingItems: [],
   error: null,
   recommendationsError: null,
 
-  initCart: async () => {
+  initCart: async (options) => {
     const { loadCart, loadCartCmsData } = get()
     loadCartCmsData()
     const existingCartId = get().cartId || getCartIdFromCookie()
@@ -182,13 +232,21 @@ export const useCartStore = create<CartState>()((set, get) => ({
       if (!get().cartId) {
         set({ cartId: existingCartId })
       }
-      await loadCart()
+      await loadCart(options)
       return
     }
 
     try {
       set({ isLoading: true, error: null })
-      const newCart = await cartService.createCart()
+      // Attribution feeds the admin "Order source" widget; it's attached at creation so it never
+      // needs a separate cart update (see cartService.createCart).
+      const attribution = getStoredAttribution()
+      const metadata = attribution
+        ? (Object.fromEntries(
+            Object.entries(attribution).filter(([, value]) => value),
+          ) as Record<string, string>)
+        : undefined
+      const newCart = await cartService.createCart(getDisplayCurrencyCode(), metadata)
       setCartIdCookie(newCart.id)
       set({
         cartId: newCart.id,
@@ -196,20 +254,6 @@ export const useCartStore = create<CartState>()((set, get) => ({
         recommendations: [],
         isLoading: false,
       })
-
-      // Fire-and-forget: attribution is a nice-to-have for the admin "Order source" widget,
-      // never worth blocking or failing cart creation over.
-      const attribution = getStoredAttribution()
-      if (attribution) {
-        const metadata = Object.fromEntries(
-          Object.entries(attribution).filter(([, value]) => value),
-        ) as Record<string, string>
-        if (Object.keys(metadata).length > 0) {
-          cartService.updateCartMetadata(newCart.id, metadata).catch((error) => {
-            console.error('Failed to attach attribution metadata to cart', error)
-          })
-        }
-      }
     } catch (error: any) {
       const errorMessage = extractApiErrorMessage(
         error,
@@ -220,7 +264,7 @@ export const useCartStore = create<CartState>()((set, get) => ({
     }
   },
 
-  loadCart: async () => {
+  loadCart: async ({ syncCurrency = true } = {}) => {
     const cartId = get().cartId || getCartIdFromCookie()
     if (!cartId) {
       set({ cartId: null, cart: null, isLoading: false })
@@ -239,7 +283,11 @@ export const useCartStore = create<CartState>()((set, get) => ({
       set({ isLoading: true, error: null })
       const previousCart = get().cart
       let cart = await cartService.getCart(cartId)
-      cart = await syncCartRegion(set, get, cart)
+      if (syncCurrency) {
+        const moved = await moveCartToCurrency(set, get, cart, getDisplayCurrencyCode())
+        cart = moved.cart
+        notifyDroppedPromoCodes(moved.droppedPromoCodes)
+      }
 
       set({ cart, isLoading: false })
       maybeRefreshRecommendations(get, previousCart)
@@ -315,11 +363,27 @@ export const useCartStore = create<CartState>()((set, get) => ({
       set({ isLoading: true, error: null })
       const previousCart = get().cart
       if (previousCart) {
-        await syncCartRegion(set, get, previousCart)
+        const moved = await moveCartToCurrency(set, get, previousCart, getDisplayCurrencyCode())
+        targetCartId = moved.cart.id
+        notifyDroppedPromoCodes(moved.droppedPromoCodes)
       }
-      const updatedCart = await cartService.addToCart(targetCartId, [
-        { merchandiseId, quantity },
-      ])
+      let updatedCart: CartResponse
+      try {
+        updatedCart = await cartService.addToCart(targetCartId, [{ merchandiseId, quantity }])
+      } catch (addError) {
+        // This product has no price in the cart's currency: move the cart to USD, which every
+        // product is priced in, and add it there instead of failing.
+        const currentCart = get().cart
+        if (!isMissingPriceError(addError) || !currentCart || currentCart.currencyCode.toLowerCase() === 'usd') {
+          throw addError
+        }
+        const moved = await moveCartToCurrency(set, get, currentCart, 'usd')
+        notifyDroppedPromoCodes(moved.droppedPromoCodes)
+        updatedCart = await cartService.addToCart(moved.cart.id, [{ merchandiseId, quantity }])
+        toast.info(
+          `This product isn't available in ${currentCart.currencyCode.toUpperCase()} yet, so your cart is now in USD.`,
+        )
+      }
       set({ cart: updatedCart, isLoading: false })
       syncServiceFee(set, get, updatedCart.id)
       maybeRefreshRecommendations(get, previousCart)
@@ -521,6 +585,18 @@ export const useCartStore = create<CartState>()((set, get) => ({
     if (!cartId) return
     const cart = await cartService.removePromoCode(cartId, code)
     set({ cart })
+  },
+
+  switchCartCurrency: async (currency: string) => {
+    const cart = get().cart
+    if (!cart) return { droppedPromoCodes: [] }
+    const { droppedPromoCodes, unpriced } = await moveCartToCurrency(
+      set,
+      get,
+      cart,
+      currency.toLowerCase(),
+    )
+    return { droppedPromoCodes, unpriced }
   },
 
 

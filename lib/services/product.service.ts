@@ -1,6 +1,7 @@
 import { cache } from 'react'
 import { unstable_cache } from 'next/cache'
 import medusaClient from '../medusa-axios'
+import { getDisplayCurrency } from '../utils/display-currency'
 import type {
   Product,
   ProductVariant,
@@ -457,14 +458,12 @@ const getRegionId = async (): Promise<string | undefined> => {
 
 // Client-safe counterpart, used only by the uncached wrappers explicitly
 // meant to be called from `'use client'` code (getProductByHandleUncached,
-// getRecommendationsByProductId, getProductsByIds). Prefers the region id
-// useCurrencyStore already resolved and cached in a cookie, avoiding a
-// redundant /store/regions round trip on every product fetch.
+// getRecommendationsByProductId, getProductsByIds). Deliberately doesn't trust
+// the old `user_region_id` cookie: returning visitors can still carry one from
+// a region that no longer exists, and the region list is cached anyway.
 const getClientRegionId = async (): Promise<string | undefined> => {
   if (typeof window === 'undefined') return getRegionId()
   const { default: Cookies } = await import('js-cookie')
-  const cachedRegionId = Cookies.get('user_region_id')
-  if (cachedRegionId) return cachedRegionId
   try {
     const { resolveRegionForCountry } = await import('../utils/region-resolver')
     const region = await resolveRegionForCountry(Cookies.get('user_country'))
@@ -479,9 +478,49 @@ const getClientRegionId = async (): Promise<string | undefined> => {
 const PRODUCT_FIELDS =
   '*variants.calculated_price,+metadata,+images,+options.values,+variants.options.value'
 
+const PRODUCT_PRICES_BATCH = 100
+
+// Core `/store/products` can only price by region, and the store's single region is USD -- so
+// prices in the visitor's display currency come from the backend's `/store/product-prices` and
+// replace each raw variant's `calculated_price` before mapping. A variant with no price in that
+// currency keeps its USD price rather than rendering as 0.
+async function overlayDisplayPrices(rawProducts: any[], currency: string): Promise<void> {
+  const needsPrice = rawProducts.filter((p) =>
+    (p?.variants ?? []).some(
+      (v: any) => v?.calculated_price?.currency_code?.toLowerCase() !== currency,
+    ),
+  )
+  if (!needsPrice.length) return
+
+  const priceByVariant = new Map<string, any>()
+  for (let i = 0; i < needsPrice.length; i += PRODUCT_PRICES_BATCH) {
+    const ids = needsPrice.slice(i, i + PRODUCT_PRICES_BATCH).map((p) => p.id)
+    try {
+      const { data } = await medusaClient.get('/store/product-prices', {
+        params: { product_ids: ids.join(','), currency_code: currency },
+      })
+      for (const product of data.products ?? []) {
+        for (const variant of product.variants ?? []) {
+          if (variant?.calculated_price) priceByVariant.set(variant.id, variant.calculated_price)
+        }
+      }
+    } catch (error) {
+      console.error(`Failed to load ${currency} prices; showing USD`, error)
+    }
+  }
+
+  for (const product of needsPrice) {
+    for (const variant of product.variants ?? []) {
+      const displayPrice = priceByVariant.get(variant.id)
+      if (displayPrice) variant.calculated_price = displayPrice
+    }
+  }
+}
+
 const _fetchProductByHandle = async (
   handle: string,
-  regionId?: string,
+  regionId: string | undefined,
+  currency: string,
 ): Promise<Product> => {
   const { data } = await medusaClient.get('/store/products', {
     params: {
@@ -495,6 +534,7 @@ const _fetchProductByHandle = async (
   if (!raw) {
     throw new Error(`Invalid product payload for handle: ${handle}`)
   }
+  await overlayDisplayPrices([raw], currency)
 
   const [digitalAvailability, ratingSummary, sharedGuide] = await Promise.all([
     fetchDigitalAvailability(raw.id),
@@ -508,7 +548,8 @@ const _fetchProductByHandle = async (
 const _fetchProductRecommendations = async (
   productId: string,
   _params: GetProductRecommendationsParams = {},
-  regionId?: string,
+  regionId: string | undefined,
+  currency: string,
 ): Promise<ProductListItem[]> => {
   // `intent` (related/complementary) is accepted by the backend but not yet
   // differentiated server-side (confirmed live) -- both return the same
@@ -520,12 +561,13 @@ const _fetchProductRecommendations = async (
   // enrich with a second call for full list-card data.
   const ids = (data.products ?? []).map((p: any) => p.id)
   if (!ids.length) return []
-  return _fetchProductsByIds(ids, regionId)
+  return _fetchProductsByIds(ids, regionId, currency)
 }
 
 const _fetchProductsByIds = async (
   ids: string[],
-  regionId?: string,
+  regionId: string | undefined,
+  currency: string,
 ): Promise<ProductListItem[]> => {
   if (!ids.length) return []
   const { data } = await medusaClient.get('/store/products', {
@@ -536,14 +578,16 @@ const _fetchProductsByIds = async (
       limit: ids.length,
     },
   })
-  return (data.products ?? []).map(mapProductListItem)
+  const rawProducts = data.products ?? []
+  await overlayDisplayPrices(rawProducts, currency)
+  return rawProducts.map(mapProductListItem)
 }
 
 // ─── Cross-request Next.js Data Cache wrappers (ISR-style, 60s TTL) ──────────
 
 const _cachedGetProductByHandle = unstable_cache(
-  async (handle: string, regionId?: string) =>
-    _fetchProductByHandle(handle, regionId),
+  async (handle: string, regionId: string | undefined, currency: string) =>
+    _fetchProductByHandle(handle, regionId, currency),
   ['product-by-handle'],
   { revalidate: 60, tags: ['product'] },
 )
@@ -552,8 +596,9 @@ const _cachedGetProductRecommendations = unstable_cache(
   async (
     productId: string,
     params: GetProductRecommendationsParams = {},
-    regionId?: string,
-  ) => _fetchProductRecommendations(productId, params, regionId),
+    regionId: string | undefined,
+    currency: string,
+  ) => _fetchProductRecommendations(productId, params, regionId, currency),
   ['product-recommendations'],
   { revalidate: 60, tags: ['product'] },
 )
@@ -561,8 +606,8 @@ const _cachedGetProductRecommendations = unstable_cache(
 // ─── Per-request React cache deduplication ────────────────────────────────────
 
 const _dedupedGetProductByHandle = cache(
-  async (handle: string, regionId?: string) =>
-    _cachedGetProductByHandle(handle, regionId),
+  async (handle: string, regionId: string | undefined, currency: string) =>
+    _cachedGetProductByHandle(handle, regionId, currency),
 )
 
 // ─── Public ProductService ───────────────────────────────────────────────────
@@ -594,6 +639,7 @@ export const ProductService = {
     // store-grid card show the store's default-region price regardless of
     // the customer's actual selected currency.
     const regionId = await getClientRegionId()
+    const currency = await getDisplayCurrency()
     const page = params.after ? Number(params.after) : 1
     const limit = params.first ?? 20
 
@@ -615,7 +661,7 @@ export const ProductService = {
     })
 
     const ids = (data.products ?? []).map((p: any) => p.id)
-    let products = await _fetchProductsByIds(ids, regionId)
+    let products = await _fetchProductsByIds(ids, regionId, currency)
 
     // Preserve the filtered route's order (relevance/recency) rather than
     // whatever order the enrichment call happens to return in.
@@ -652,7 +698,7 @@ export const ProductService = {
   /** Fetches product by handle. Deduplicated per-request + cached 60s across requests. */
   getProductByHandle: async (handle: string): Promise<Product> => {
     const regionId = await getRegionId()
-    return _dedupedGetProductByHandle(handle, regionId)
+    return _dedupedGetProductByHandle(handle, regionId, await getDisplayCurrency())
   },
 
   /**
@@ -665,7 +711,7 @@ export const ProductService = {
    */
   getProductByHandleUncached: async (handle: string): Promise<Product> => {
     const regionId = await getClientRegionId()
-    return _fetchProductByHandle(handle, regionId)
+    return _fetchProductByHandle(handle, regionId, await getDisplayCurrency())
   },
 
   /** Fetches product recommendations. Cached 60s across requests. Takes a handle for API-shape continuity but resolves to the product id internally. */
@@ -674,8 +720,9 @@ export const ProductService = {
     params: GetProductRecommendationsParams = {},
   ): Promise<ProductListItem[]> => {
     const regionId = await getRegionId()
-    const product = await _dedupedGetProductByHandle(handle, regionId)
-    return _cachedGetProductRecommendations(product.id, params, regionId)
+    const currency = await getDisplayCurrency()
+    const product = await _dedupedGetProductByHandle(handle, regionId, currency)
+    return _cachedGetProductRecommendations(product.id, params, regionId, currency)
   },
 
   /**
@@ -690,7 +737,7 @@ export const ProductService = {
     params: GetProductRecommendationsParams = {},
   ): Promise<ProductListItem[]> => {
     const regionId = await getClientRegionId()
-    return _fetchProductRecommendations(productId, params, regionId)
+    return _fetchProductRecommendations(productId, params, regionId, await getDisplayCurrency())
   },
 
   /**
@@ -702,7 +749,7 @@ export const ProductService = {
    */
   getProductsByIds: async (ids: string[]): Promise<ProductListItem[]> => {
     const regionId = await getClientRegionId()
-    return _fetchProductsByIds(ids, regionId)
+    return _fetchProductsByIds(ids, regionId, await getDisplayCurrency())
   },
 
   /**
@@ -723,8 +770,9 @@ export const ProductService = {
       regionId?: string,
     ): Promise<ProductListItem[]> => {
       const finalRegionId = regionId || (await getRegionId())
+      const currency = await getDisplayCurrency()
       const cachedFn = unstable_cache(
-        async (h: string, p: GetCollectionProductsParams, r?: string) => {
+        async (h: string, p: GetCollectionProductsParams, r: string | undefined, cur: string) => {
           // core /store/products doesn't accept a `collection_handle` filter
           // at all on this backend -- confirmed live, it 400s with
           // "Unrecognized fields: 'collection_handle'". Every homepage
@@ -748,12 +796,14 @@ export const ProductService = {
               limit: p.first ?? 20,
             },
           })
-          return (data.products ?? []).map(mapProductListItem)
+          const rawProducts = data.products ?? []
+          await overlayDisplayPrices(rawProducts, cur)
+          return rawProducts.map(mapProductListItem)
         },
         ['collection-products-by-handle'],
         { revalidate: 60, tags: ['collection', 'product'] },
       )
-      return cachedFn(handle, params, finalRegionId)
+      return cachedFn(handle, params, finalRegionId, currency)
     },
   ),
 }

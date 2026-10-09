@@ -1,16 +1,11 @@
 import { create } from 'zustand'
 import Cookies from 'js-cookie'
-import {
-  getRegions,
-  getRegionDisplayCountry,
-  resolveRegionForCountry,
-  type MedusaRegion,
-} from '@/lib/utils/region-resolver'
+import { defaultRegionSettings } from '@/lib/region-data'
+import { getSelectableCurrencies } from '@/lib/services/locale-options.service'
 
 const COOKIE_COUNTRY = 'user_country'
 const COOKIE_CURRENCY = 'user_currency'
 const COOKIE_LANGUAGE = 'user_language'
-const COOKIE_REGION = 'user_region_id'
 
 const COOKIE_OPTIONS: Cookies.CookieAttributes = {
   expires: 365,
@@ -19,54 +14,56 @@ const COOKIE_OPTIONS: Cookies.CookieAttributes = {
   path: '/',
 }
 
+const FALLBACK_CURRENCY = 'USD'
+
+// Three independent settings, as on Driffle: the country only drives the flag, the currency only
+// changes how prices are displayed (the charge currency is decided at checkout per payment
+// method), and the language is reserved for later.
 interface CurrencyState {
   country: string
   currency: string
   language: string
-  regionId: string
   isInitialized: boolean
   isLoading: boolean
 
   initLocation: () => Promise<void>
-  setRegion: (
-    regionId: string,
-    country: string,
-    currency: string,
-    language: string,
-  ) => Promise<void>
+  setPreferences: (country: string, currency: string, language: string) => void
+}
+
+const writeCookies = (country: string, currency: string, language: string) => {
+  Cookies.set(COOKIE_COUNTRY, country, COOKIE_OPTIONS)
+  Cookies.set(COOKIE_CURRENCY, currency, COOKIE_OPTIONS)
+  Cookies.set(COOKIE_LANGUAGE, language, COOKIE_OPTIONS)
+}
+
+// The country's own currency if the admin offers it, otherwise USD.
+const defaultCurrencyFor = (country: string, offered: Set<string>): string => {
+  const local = defaultRegionSettings[country.toUpperCase()]?.currency
+  return local && offered.has(local) ? local : FALLBACK_CURRENCY
 }
 
 export const useCurrencyStore = create<CurrencyState>()((set, get) => ({
-  // Initialize with cookies if available, otherwise a reasonable synchronous
-  // default to prevent hydration mismatch errors if used directly before
-  // initLocation() has had a chance to resolve a real region.
+  // Cookies are set by proxy.ts on the first request (country from the edge's geo-IP header), so
+  // these are usually real values already; the defaults only avoid a hydration mismatch.
   country: Cookies.get(COOKIE_COUNTRY) || 'US',
-  currency: Cookies.get(COOKIE_CURRENCY) || 'USD',
+  currency: Cookies.get(COOKIE_CURRENCY) || FALLBACK_CURRENCY,
   language: Cookies.get(COOKIE_LANGUAGE) || 'EN',
-  regionId: Cookies.get(COOKIE_REGION) || '',
   isInitialized: false,
   isLoading: false,
 
   initLocation: async () => {
-    // Language can change via an in-app SPA navigation to a differently
-    // prefixed locale route without a full reload -- checked on every call.
-    // Currency/region changes always go through a full `window.location.href`
-    // navigation (see LanguageModal.tsx's handleSave), which re-runs this
-    // whole function fresh via proxy.ts's own cookie-setting, so there's no
-    // equivalent "sync from URL" case needed for those here.
+    // Language can change via an in-app navigation to a differently prefixed locale route
+    // without a full reload -- checked on every call.
     let urlLanguageOverride: string | null = null
     if (typeof window !== 'undefined') {
       try {
         const { languages } = await import('@/lib/region-data')
-        const pathParts = window.location.pathname.split('/')
-        const firstSegment = pathParts[1]
-        if (firstSegment) {
-          const isValidLang = languages.some(
-            (l) => l.value.toLowerCase() === firstSegment.toLowerCase(),
-          )
-          if (isValidLang) {
-            urlLanguageOverride = firstSegment.toUpperCase()
-          }
+        const firstSegment = window.location.pathname.split('/')[1]
+        if (
+          firstSegment &&
+          languages.some((l) => l.value.toLowerCase() === firstSegment.toLowerCase())
+        ) {
+          urlLanguageOverride = firstSegment.toUpperCase()
         }
       } catch (e) {
         console.error('Failed to load region data for URL parsing:', e)
@@ -80,85 +77,36 @@ export const useCurrencyStore = create<CurrencyState>()((set, get) => ({
       return
     }
 
-    const applyRegion = (
-      region: MedusaRegion,
-      country: string,
-      language: string,
-    ) => {
-      Cookies.set(COOKIE_COUNTRY, country, COOKIE_OPTIONS)
-      Cookies.set(COOKIE_CURRENCY, region.currencyCode, COOKIE_OPTIONS)
-      Cookies.set(COOKIE_LANGUAGE, language, COOKIE_OPTIONS)
-      Cookies.set(COOKIE_REGION, region.id, COOKIE_OPTIONS)
-
-      set({
-        country,
-        currency: region.currencyCode,
-        language,
-        regionId: region.id,
-        isInitialized: true,
-        isLoading: false,
-      })
-    }
-
     set({ isLoading: true })
-
     const language = urlLanguageOverride || Cookies.get(COOKIE_LANGUAGE) || 'EN'
-    let countryGuess = Cookies.get(COOKIE_COUNTRY)
+    let country = Cookies.get(COOKIE_COUNTRY)
 
-    try {
-      if (!countryGuess) {
-        // No cookie yet (e.g. proxy.ts's edge headers weren't available, or
-        // this is local dev) -- geo-IP detect client-side. Unrelated to
-        // currency/region data itself, just a country signal to match
-        // against real regions below.
-        try {
-          const response = await fetch('https://ipapi.co/json/')
-          if (response.ok) {
-            const data = await response.json()
-            countryGuess = data.country_code || undefined
-          }
-        } catch (geoError) {
-          console.error('IPAPI detection failed:', geoError)
-        }
-      }
-
-      const region = await resolveRegionForCountry(countryGuess)
-
-      // Keep the displayed country consistent with the region actually
-      // resolved -- if the guess didn't match any real region (fell back to
-      // the first one), show one of that region's own countries rather than
-      // a mismatched flag/label.
-      // A geo-IP hit that the region actually covers is the most accurate
-      // thing to show; otherwise fall back to the region's representative
-      // country rather than its arbitrary alphabetically-first one.
-      const country =
-        countryGuess && region.countries.includes(countryGuess.toLowerCase())
-          ? countryGuess.toUpperCase()
-          : getRegionDisplayCountry(region)
-
-      applyRegion(region, country, language)
-    } catch (error) {
-      console.error(
-        'Region detection failed, falling back to the first configured region:',
-        error,
-      )
+    if (!country) {
+      // proxy.ts couldn't read an edge geo-IP header (e.g. local dev) -- detect client-side.
       try {
-        const regions = await getRegions()
-        const region = regions[0]
-        applyRegion(region, getRegionDisplayCountry(region), language)
-      } catch (fallbackError) {
-        console.error('Failed to load any region at all:', fallbackError)
-        set({ isLoading: false, isInitialized: true })
+        const response = await fetch('https://ipapi.co/json/')
+        if (response.ok) country = (await response.json()).country_code || undefined
+      } catch (geoError) {
+        console.error('IPAPI detection failed:', geoError)
       }
     }
+    country = (country || 'US').toUpperCase()
+
+    let currency = (Cookies.get(COOKIE_CURRENCY) || '').toUpperCase()
+    try {
+      const offered = new Set((await getSelectableCurrencies()).map((c) => c.code))
+      if (!offered.has(currency)) currency = defaultCurrencyFor(country, offered)
+    } catch (error) {
+      console.error('Failed to load the currency list; keeping the current currency:', error)
+      currency = currency || FALLBACK_CURRENCY
+    }
+
+    writeCookies(country, currency, language)
+    set({ country, currency, language, isInitialized: true, isLoading: false })
   },
 
-  setRegion: async (regionId, country, currency, language) => {
-    Cookies.set(COOKIE_COUNTRY, country, COOKIE_OPTIONS)
-    Cookies.set(COOKIE_CURRENCY, currency, COOKIE_OPTIONS)
-    Cookies.set(COOKIE_LANGUAGE, language, COOKIE_OPTIONS)
-    Cookies.set(COOKIE_REGION, regionId, COOKIE_OPTIONS)
-
-    set({ regionId, country, currency, language })
+  setPreferences: (country, currency, language) => {
+    writeCookies(country, currency, language)
+    set({ country, currency, language })
   },
 }))

@@ -116,7 +116,8 @@ export async function proxy(request: NextRequest) {
     ? getCountryForCurrency(currencyParam!)
     : (cookieCountry || countryHeader)
 
-  const defaults = defaultRegionSettings[country] || defaultRegionSettings['IN']
+  // A country without its own entry shows USD (the store's default), not another country's currency.
+  const defaults = defaultRegionSettings[country] || { currency: 'USD', language: 'EN' }
   const currency = currencyOverride
     ? currencyParam!
     : (cookieCurrency || defaults.currency)
