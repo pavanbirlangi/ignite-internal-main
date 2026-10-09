@@ -7,14 +7,36 @@ import { CheckoutForm } from '@/components/checkout/CheckoutForm'
 import { CheckoutSummary } from '@/components/checkout/CheckoutSummary'
 import { useCartStore } from '@/store/useCartStore'
 import { useUserStore } from '@/store/useUserStore'
+import { useCurrencyStore } from '@/store/useCurrencyStore'
 import { checkoutService } from '@/lib/services/checkout.service'
 import { extractApiErrorMessage } from '@/lib/utils/api-error'
+import { toast } from 'sonner'
 
 export function CheckoutPageContent() {
   const { locale } = useParams<{ locale: string }>()
   const router = useRouter()
-  const { cart, cartId, isLoading, initCart, applyServiceFee } = useCartStore()
+  const {
+    cart,
+    cartId,
+    isLoading,
+    isSwitchingCurrency,
+    initCart,
+    loadCart,
+    applyServiceFee,
+    switchCartCurrency,
+  } = useCartStore()
   const user = useUserStore((state) => state.user)
+  const displayCurrency = useCurrencyStore((state) => state.currency).toLowerCase()
+
+  // The charge currency is decided by payment method: cards are always charged in USD, and a
+  // customer browsing in another currency can choose to pay in that currency instead to get its
+  // local payment methods (e.g. Bancontact/P24 for EUR) -- also the fallback when a card
+  // declines a USD charge.
+  const [payIn, setPayIn] = React.useState<'usd' | 'local'>('usd')
+  const [checkoutEmail, setCheckoutEmail] = React.useState<string | null>(null)
+  const [cardDeclinedInUsd, setCardDeclinedInUsd] = React.useState(false)
+  const chargeCurrency =
+    displayCurrency === 'usd' || payIn === 'usd' ? 'usd' : displayCurrency
 
   const [clientSecret, setClientSecret] = React.useState<string | null>(null)
   const [sessionError, setSessionError] = React.useState<string | null>(null)
@@ -40,7 +62,9 @@ export function CheckoutPageContent() {
 
   React.useEffect(() => {
     let cancelled = false
-    initCart().finally(() => {
+    // The checkout manages the cart's currency itself (below), so loading it must not move it
+    // back to the display currency.
+    initCart({ syncCurrency: false }).finally(() => {
       if (!cancelled) setCartReady(true)
     })
     return () => {
@@ -53,10 +77,41 @@ export function CheckoutPageContent() {
     // reaching checkout only happens via direct navigation/back-button, so
     // send it back to the cart page rather than showing a $0 payment form.
     if (!cartReady) return
-    if (isLoading) return
+    if (isLoading || isSwitchingCurrency) return
     if (hasCompletedOrderRef.current) return
     if (!cartId || !cart || cart.items.length === 0) {
       router.replace('/cart')
+      return
+    }
+
+    // Put the cart in the charge currency first; the switch produces a new cart id, which re-runs
+    // this effect to create the payment session on it.
+    if (cart.currencyCode.toLowerCase() !== chargeCurrency) {
+      setSessionLoading(true)
+      setSessionError(null)
+      switchCartCurrency(chargeCurrency)
+        .then(({ droppedPromoCodes, unpriced }) => {
+          if (unpriced) {
+            // Some item has no price in this currency, so it can't be charged in it.
+            toast.info(
+              `Some items in your cart can't be paid in ${chargeCurrency.toUpperCase()} yet, so you'll pay by card in USD.`,
+            )
+            if (chargeCurrency !== 'usd') setPayIn('usd')
+            else setSessionLoading(false)
+            return
+          }
+          if (droppedPromoCodes.length) {
+            toast.info(
+              `Coupon ${droppedPromoCodes.join(', ')} can't be used when paying in ${chargeCurrency.toUpperCase()} and was removed.`,
+            )
+          }
+        })
+        .catch((error) => {
+          setSessionError(
+            extractApiErrorMessage(error, 'Could not switch the payment currency. Please try again.'),
+          )
+          setSessionLoading(false)
+        })
       return
     }
 
@@ -94,7 +149,7 @@ export function CheckoutPageContent() {
     // Only re-run when the cart identity actually changes, not on every
     // cart mutation (quantity changes etc. shouldn't re-create the session).
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [cartReady, cartId, isLoading])
+  }, [cartReady, cartId, isLoading, isSwitchingCurrency, chargeCurrency])
 
   // Forces a fresh Stripe session (a real re-POST, not the cached one) whenever the cart's total
   // changes after a session already exists: a stale service fee (item 14's 409) and applying or
@@ -142,6 +197,43 @@ export function CheckoutPageContent() {
     )
   }
 
+  const displayCode = displayCurrency.toUpperCase()
+  const switchButtonClass =
+    'text-primary mt-1 text-sm font-semibold underline underline-offset-2 hover:opacity-80'
+  const paymentNotice =
+    displayCurrency === 'usd' ? null : (
+      <div className="bg-secondary/30 mb-3 rounded-lg border border-white/10 px-4 py-3">
+        {payIn === 'usd' ? (
+          <>
+            <p className="text-sm text-white">
+              {cardDeclinedInUsd
+                ? `Your card couldn't be charged in US dollars. You can pay in ${displayCode} instead.`
+                : 'Card payments are charged in US dollars (USD).'}
+            </p>
+            <button
+              type="button"
+              className={switchButtonClass}
+              onClick={() => {
+                setCardDeclinedInUsd(false)
+                setPayIn('local')
+              }}
+            >
+              Pay in {displayCode} instead
+            </button>
+          </>
+        ) : (
+          <>
+            <p className="text-sm text-white">
+              You&apos;re paying in {displayCode}, with the payment methods available for it.
+            </p>
+            <button type="button" className={switchButtonClass} onClick={() => setPayIn('usd')}>
+              Pay by card in USD instead
+            </button>
+          </>
+        )}
+      </div>
+    )
+
   return (
     <div className="bg-background min-h-screen font-sans">
       <CartNavbar currentStep={2} />
@@ -150,12 +242,29 @@ export function CheckoutPageContent() {
         <CheckoutForm
           cartId={cartId!}
           clientSecret={clientSecret}
-          email={user?.email ?? ''}
+          email={checkoutEmail ?? cart.email ?? user?.email ?? ''}
+          onEmailChange={async (nextEmail) => {
+            setCheckoutEmail(nextEmail)
+            if (nextEmail === cart.email) return
+            // Saved right away rather than at submit: Medusa's cart update resets the currency to
+            // the region's (USD), and reloading here lets the effect above put the cart back in
+            // the charge currency, with a matching payment session, before the customer pays.
+            try {
+              await checkoutService.setCartEmail(cartId!, nextEmail)
+              await loadCart({ syncCurrency: false })
+            } catch (error) {
+              console.error('Failed to save checkout email', error)
+            }
+          }}
           locale={locale}
           onOrderCompleted={() => {
             hasCompletedOrderRef.current = true
           }}
           onServiceFeeStale={refreshPaymentSession}
+          paymentNotice={paymentNotice}
+          onCardDeclined={() => {
+            if (displayCurrency !== 'usd' && payIn === 'usd') setCardDeclinedInUsd(true)
+          }}
         />
         <CheckoutSummary cart={cart} onCartChanged={refreshPaymentSession} />
       </section>
