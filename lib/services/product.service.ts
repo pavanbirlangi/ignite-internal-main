@@ -3,6 +3,7 @@ import { unstable_cache } from 'next/cache'
 import medusaClient from '../medusa-axios'
 import { DEFAULT_CURRENCY, getDisplayCurrency } from '../utils/display-currency'
 import { getCurrencyConverter } from './display-currency.service'
+import { getDiscountPercent } from '@/lib/utils/discount'
 import type {
   Product,
   ProductVariant,
@@ -118,9 +119,7 @@ function mapVariant(
   const discount = hasDiscount
     ? {
         amount: String(calc.original_amount - calc.calculated_amount),
-        percentage: Math.round(
-          ((calc.original_amount - calc.calculated_amount) / calc.original_amount) * 100,
-        ),
+        percentage: getDiscountPercent(calc.original_amount, calc.calculated_amount),
       }
     : null
 
@@ -401,9 +400,7 @@ function mapProductListItem(raw: any): ProductListItem {
     discount: hasDiscount
       ? {
           amount: String(firstCalc.original_amount - firstCalc.calculated_amount),
-          percentage: Math.round(
-            ((firstCalc.original_amount - firstCalc.calculated_amount) / firstCalc.original_amount) * 100,
-          ),
+          percentage: getDiscountPercent(firstCalc.original_amount, firstCalc.calculated_amount),
         }
       : undefined,
     instantDelivery: metaBool(metadata, 'instant_delivery'),

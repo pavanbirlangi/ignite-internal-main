@@ -17,6 +17,7 @@ import CartIcon from '../icons/CartIcon'
 import { toast } from 'sonner'
 
 import { useCartStore } from '@/store/useCartStore'
+import { getDiscountPercent } from '@/lib/utils/discount'
 
 const RECOMMENDATION_PLACEHOLDER_IMAGE =
   'https://placehold.co/205x262/png?text=No+Image'
@@ -70,7 +71,7 @@ const getDiscountPercentage = (
   }
 
   if (compareAtPrice > price && price > 0) {
-    return Math.round(((compareAtPrice - price) / compareAtPrice) * 100)
+    return getDiscountPercent(compareAtPrice, price)
   }
 
   return undefined
@@ -105,7 +106,7 @@ export function CartDrawer() {
           : undefined
       const discountPercentage =
         originalPrice && originalPrice > price
-          ? Math.round(((originalPrice - price) / originalPrice) * 100)
+          ? getDiscountPercent(originalPrice, price)
           : undefined
 
       return {

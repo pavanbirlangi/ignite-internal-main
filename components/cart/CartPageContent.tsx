@@ -10,6 +10,7 @@ import { useCartStore } from '@/store/useCartStore'
 import { ensureCheckoutAllowed } from '@/lib/utils/checkout-guard'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
+import { getDiscountPercent } from '@/lib/utils/discount'
 
 const RECOMMENDATION_PLACEHOLDER_IMAGE =
   'https://placehold.co/205x262/png?text=No+Image'
@@ -61,7 +62,7 @@ const getDiscountPercentage = (
     }
   }
   if (compareAtPrice > price && price > 0) {
-    return Math.round(((compareAtPrice - price) / compareAtPrice) * 100)
+    return getDiscountPercent(compareAtPrice, price)
   }
   return undefined
 }
