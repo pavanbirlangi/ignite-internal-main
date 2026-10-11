@@ -124,15 +124,17 @@ export async function proxy(request: NextRequest) {
     ? currencyParam!
     : (cookieCurrency || defaults.currency)
 
-  // Strict default for language is 'en' unless a cookie is explicitly set
-  const language = cookieLanguage?.toLowerCase() || 'en'
-  
+  // A page's language comes from its URL alone: a prefix (/fr/...) is that language, no prefix is
+  // English. The header picker can't choose a language yet, so a language remembered from a visited
+  // /fr link used to redirect every unprefixed URL to French, with no way back to English.
+  const language = DEFAULT_LOCALE
   const locale = isLocalePrefix ? firstSegment.toLowerCase() : language
-  const languageOverride = isLocalePrefix && firstSegment.toLowerCase() !== (cookieLanguage?.toLowerCase() || 'en')
+  // The cookie just follows the page's language (the header shows it).
+  const languageOverride = cookieLanguage?.toLowerCase() !== locale
 
   // Helper: apply region cookies to any response
   // Force-writes if currencyOverride is true (explicit user intent via URL)
-  // Also force-writes if languageOverride is true (explicit user intent via URL prefix)
+  // Also force-writes the language whenever the page's language differs from the cookie
   const applyRegionCookies = (response: NextResponse, lang: string) => {
     if (!cookieCountry || currencyOverride)
       response.cookies.set('user_country', country, { path: '/' })
@@ -180,18 +182,9 @@ export async function proxy(request: NextRequest) {
   if (!isLocalePrefix) {
     // English has no visible prefix -- rewrite internally to the [locale] route Next.js needs
     // (app/[locale]/...) without changing what the browser shows or triggering a redirect.
-    if (language === DEFAULT_LOCALE) {
-      const url = request.nextUrl.clone()
-      url.pathname = `/${DEFAULT_LOCALE}${pathname === '/' ? '' : pathname}`
-      const response = NextResponse.rewrite(url)
-      applyRegionCookies(response, language)
-      return response
-    }
-
-    const localePath = `/${language}${pathname === '/' ? '' : pathname}`
-    const url = new URL(localePath, request.url)
-    url.search = request.nextUrl.search
-    const response = NextResponse.redirect(url)
+    const url = request.nextUrl.clone()
+    url.pathname = `/${DEFAULT_LOCALE}${pathname === '/' ? '' : pathname}`
+    const response = NextResponse.rewrite(url)
     applyRegionCookies(response, language)
     return response
   }

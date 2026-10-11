@@ -70,15 +70,14 @@ export const useCurrencyStore = create<CurrencyState>()((set, get) => ({
       }
     }
 
+    // The page's language comes from its URL alone (see proxy.ts): no prefix means English.
+    const language = urlLanguageOverride || 'EN'
     if (get().isInitialized) {
-      if (urlLanguageOverride && get().language !== urlLanguageOverride) {
-        set({ language: urlLanguageOverride })
-      }
+      if (get().language !== language) set({ language })
       return
     }
 
     set({ isLoading: true })
-    const language = urlLanguageOverride || Cookies.get(COOKIE_LANGUAGE) || 'EN'
     let country = Cookies.get(COOKIE_COUNTRY)
 
     if (!country) {
