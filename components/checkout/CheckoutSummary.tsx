@@ -5,13 +5,37 @@ import { getProxyImageUrl } from '@/lib/utils'
 import type { CartResponse } from '@/lib/services/cart.service'
 import { CouponInput } from './CouponInput'
 
+// What the customer is actually charged: the payment method's currency and the exact amount in it.
+export interface CheckoutCharge {
+  currency: string
+  amount: number
+}
+
 interface CheckoutSummaryProps {
   cart: CartResponse
+  charge: CheckoutCharge
   onCartChanged: () => void
 }
 
-export function CheckoutSummary({ cart, onCartChanged }: CheckoutSummaryProps) {
+// "USD 10.28" -- the ISO code rather than a symbol, since "$" alone is ambiguous next to a total
+// shown in another currency.
+const formatCharge = ({ currency, amount }: CheckoutCharge) => {
+  try {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: currency.toUpperCase(),
+      currencyDisplay: 'code',
+    }).format(amount)
+  } catch {
+    return `${currency.toUpperCase()} ${amount.toFixed(2)}`
+  }
+}
+
+export function CheckoutSummary({ cart, charge, onCartChanged }: CheckoutSummaryProps) {
+  // Everything is shown in the display currency; the charge line appears only when the payment
+  // method charges in a different one (e.g. a EUR total paid by card in USD), as on Driffle.
   const currency = cart.currencyCode
+  const showCharge = charge.currency.toLowerCase() !== currency.toLowerCase()
 
   return (
     <div className="static w-full lg:sticky lg:top-40">
@@ -98,6 +122,13 @@ export function CheckoutSummary({ cart, onCartChanged }: CheckoutSummaryProps) {
                 {formatCurrency(cart.total, currency)}
               </span>
             </div>
+
+            {showCharge && (
+              <p className="text-muted-foreground -mt-2 text-right text-[12px] font-semibold tracking-wide uppercase">
+                You will pay{' '}
+                <span className="text-white">{formatCharge(charge)}</span>
+              </p>
+            )}
           </div>
         </CardHeader>
 

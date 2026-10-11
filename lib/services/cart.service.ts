@@ -7,6 +7,8 @@ import {
 } from './product.service'
 import { ProductListItem } from '@/types/product'
 import { resolveRegionForCountry } from '../utils/region-resolver'
+import { DEFAULT_CURRENCY } from '../utils/display-currency'
+import { type CurrencyConverter, getDisplayConverter } from './display-currency.service'
 
 export interface CartCmsData {
   id: string
@@ -33,11 +35,16 @@ export interface CartLineItem {
   thumbnail?: string
 }
 
+// Carts are always in USD (the charge currency for card payments). Every amount below is shown in
+// the visitor's display currency -- `currencyCode` -- converted with the admin's exchange rate;
+// `chargeCurrencyCode`/`chargeTotal` are the cart's real currency and total, what Stripe charges.
 export interface CartResponse {
   id: string
   customerId: string | null
   email: string | null
   currencyCode: string
+  chargeCurrencyCode: string
+  chargeTotal: number
   regionId: string | null
   subtotal: number
   total: number
@@ -79,7 +86,7 @@ const resolveRegionId = async (): Promise<string> => {
 
 // ─── Response mapping ───────────────────────────────────────────────────────
 
-function mapCartLineItem(raw: any): CartLineItem {
+function mapCartLineItem(raw: any, convert: (amount: number) => number): CartLineItem {
   return {
     id: raw.id,
     productId: raw.product_id,
@@ -88,10 +95,10 @@ function mapCartLineItem(raw: any): CartLineItem {
     title: raw.product_title || raw.title,
     variantTitle: raw.variant_title,
     quantity: raw.quantity,
-    unitPrice: raw.unit_price,
+    unitPrice: convert(raw.unit_price),
     compareAtUnitPrice:
       typeof raw.compare_at_unit_price === 'number'
-        ? raw.compare_at_unit_price
+        ? convert(raw.compare_at_unit_price)
         : null,
     // Falls back to the product's own gallery images when no thumbnail was
     // set on the product (the line item snapshot just inherits whatever
@@ -101,27 +108,29 @@ function mapCartLineItem(raw: any): CartLineItem {
   }
 }
 
-function mapCart(raw: any): CartResponse {
+function mapCart(raw: any, { currencyCode, convert }: CurrencyConverter): CartResponse {
   const rawItems: any[] = raw.items ?? []
   const feeItem = rawItems.find((item) => item?.metadata?.[SERVICE_FEE_ITEM_FLAG] === true)
   const productItems = rawItems.filter((item) => item !== feeItem)
-  const mappedItems = productItems.map(mapCartLineItem)
+  const mappedItems = productItems.map((item) => mapCartLineItem(item, convert))
 
   return {
     id: raw.id,
     customerId: raw.customer_id ?? null,
     email: raw.email ?? null,
-    currencyCode: raw.currency_code,
+    currencyCode,
+    chargeCurrencyCode: raw.currency_code ?? DEFAULT_CURRENCY,
+    chargeTotal: raw.total ?? 0,
     regionId: raw.region_id ?? null,
     // Medusa's own `subtotal` includes the service-fee line (it's a real line item) -- recomputed
     // here as products-only so a broken-out "Service fee" row in the UI doesn't double-count it.
     subtotal: mappedItems.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0),
-    total: raw.total ?? 0,
-    taxTotal: raw.tax_total ?? 0,
-    shippingTotal: raw.shipping_total ?? 0,
-    serviceFee: feeItem ? Number(feeItem.unit_price) : 0,
+    total: convert(raw.total ?? 0),
+    taxTotal: convert(raw.tax_total ?? 0),
+    shippingTotal: convert(raw.shipping_total ?? 0),
+    serviceFee: feeItem ? convert(Number(feeItem.unit_price)) : 0,
     serviceFeeLabel: feeItem?.title || 'Service Fee',
-    discountTotal: raw.discount_total ?? 0,
+    discountTotal: convert(raw.discount_total ?? 0),
     promoCodes: (raw.promotions ?? []).map((p: any) => p.code).filter(Boolean),
     items: mappedItems,
   }
@@ -136,21 +145,20 @@ function mapCart(raw: any): CartResponse {
 // `+items.metadata` is needed to detect the service-fee line (see mapCart above).
 const CART_FIELDS = '+items.thumbnail,+items.product.images.url,+items.metadata'
 
+const toCart = async (raw: any): Promise<CartResponse> =>
+  mapCart(raw, await getDisplayConverter(raw.currency_code ?? DEFAULT_CURRENCY))
+
 export const cartService = {
-  // Attribution metadata goes in at creation: Medusa's cart-update step resets a cart's currency to
-  // its region's (USD) on every POST /store/carts/:id, so a later metadata update would undo a
-  // non-USD cart.
-  createCart: async (
-    currencyCode: string,
-    metadata?: Record<string, string>,
-  ): Promise<CartResponse> => {
+  // Always USD: the display currency only changes how amounts are shown (see CartResponse).
+  // Attribution metadata goes in at creation so it never needs a separate cart update.
+  createCart: async (metadata?: Record<string, string>): Promise<CartResponse> => {
     const regionId = await resolveRegionId()
     const { data } = await medusaClient.post('/store/carts', {
       region_id: regionId,
-      currency_code: currencyCode.toLowerCase(),
+      currency_code: DEFAULT_CURRENCY,
       ...(metadata && Object.keys(metadata).length ? { metadata } : {}),
     })
-    return mapCart(data.cart)
+    return toCart(data.cart)
   },
 
   getCart: async (cartId: string): Promise<CartResponse> => {
@@ -158,7 +166,7 @@ export const cartService = {
     const { data } = await medusaClient.get(`/store/carts/${encodedId}`, {
       params: { fields: CART_FIELDS },
     })
-    return mapCart(data.cart)
+    return toCart(data.cart)
   },
 
   /**
@@ -190,7 +198,7 @@ export const cartService = {
       { variant_id: line.merchandiseId, quantity: line.quantity },
       { params: { fields: CART_FIELDS } },
     )
-    return mapCart(data.cart)
+    return toCart(data.cart)
   },
 
   removeFromCart: async (
@@ -206,7 +214,7 @@ export const cartService = {
         `/store/carts/${encodedId}/line-items/${encodeURIComponent(lineId)}`,
         { params: { fields: CART_FIELDS } },
       )
-      cart = mapCart(data.parent)
+      cart = await toCart(data.parent)
     }
     return cart
   },
@@ -224,14 +232,14 @@ export const cartService = {
         { quantity: line.quantity },
         { params: { fields: CART_FIELDS } },
       )
-      cart = mapCart(data.cart)
+      cart = await toCart(data.cart)
     }
     return cart
   },
 
-  // A cart's currency is fixed at creation, so the backend copies the cart (products, customer,
-  // email, addresses) into a new one in the requested currency. The copy carries neither the
-  // service fee nor promo codes -- the cart store re-applies both.
+  // Only for carts created before carts became USD-only: a cart's currency is fixed at creation, so
+  // the backend copies the cart (products, customer, email, addresses) into a new one in USD. The
+  // copy carries neither the service fee nor promo codes -- the cart store re-applies both.
   switchCurrency: async (
     cartId: string,
     currencyCode: string,
@@ -271,7 +279,7 @@ export const cartService = {
       `/store/carts/${encodedId}/promotions`,
       { promo_codes: [code] },
     )
-    return mapCart(data.cart)
+    return toCart(data.cart)
   },
 
   removePromoCode: async (cartId: string, code: string): Promise<CartResponse> => {
@@ -280,7 +288,7 @@ export const cartService = {
       `/store/carts/${encodedId}/promotions`,
       { data: { promo_codes: [code] } },
     )
-    return mapCart(data.cart)
+    return toCart(data.cart)
   },
 
   transferCart: async (cartId: string): Promise<CartResponse> => {
@@ -290,7 +298,7 @@ export const cartService = {
       {},
       { params: { fields: CART_FIELDS } },
     )
-    return mapCart(data.cart)
+    return toCart(data.cart)
   },
 
   getCartCmsData: async (): Promise<CartCmsData | null> => {

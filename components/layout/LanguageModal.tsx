@@ -79,8 +79,8 @@ export default function LanguageModal({ children }: { children: React.ReactNode 
   const handleSave = () => {
     setIsSaving(true)
     setPreferences(country, currency, storeLanguage)
-    // A full reload so server-rendered prices (product pages, homepage carousels) pick up the new
-    // currency cookie, and the cart moves to it on the next load.
+    // A full reload so server-rendered prices (product pages, homepage carousels) and the cart's
+    // displayed amounts pick up the new currency cookie. The cart itself stays in USD.
     window.location.reload()
   }
 

@@ -7,6 +7,7 @@ import {
   getCountryForCurrency,
 } from '@/lib/region-data'
 import { DEFAULT_LOCALE, localizedHref } from '@/lib/utils'
+import { IP_COUNTRY_COOKIE } from '@/lib/utils/display-currency'
 
 // /checkout is gated here (not just client-side) because guest checkout is a
 // real, confirmed backend rule -- the license-key fulfillment workflow
@@ -111,7 +112,8 @@ export async function proxy(request: NextRequest) {
   const cookieLanguage = request.cookies.get('user_language')?.value
 
   // Resolve country and currency — query param overrides everything
-  const countryHeader = request.headers.get('cf-ipcountry') || request.headers.get('x-vercel-ip-country') || 'IN'
+  const ipCountry = request.headers.get('cf-ipcountry') || request.headers.get('x-vercel-ip-country')
+  const countryHeader = ipCountry || 'IN'
   const country = currencyOverride
     ? getCountryForCurrency(currencyParam!)
     : (cookieCountry || countryHeader)
@@ -138,6 +140,10 @@ export async function proxy(request: NextRequest) {
       response.cookies.set('user_currency', currency, { path: '/' })
     if (!cookieLanguage || languageOverride)
       response.cookies.set('user_language', lang.toUpperCase(), { path: '/' })
+    // The real geo-IP country, kept apart from `user_country` (which the header picker
+    // overwrites): it decides which payment methods checkout offers.
+    if (ipCountry && request.cookies.get(IP_COUNTRY_COOKIE)?.value !== ipCountry)
+      response.cookies.set(IP_COUNTRY_COOKIE, ipCountry, { path: '/', sameSite: 'lax' })
   }
 
   const pathWithoutLocale = isLocalePrefix

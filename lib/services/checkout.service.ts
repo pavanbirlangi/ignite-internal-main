@@ -35,10 +35,40 @@ export class ServiceFeeOutOfDateError extends Error {
   }
 }
 
+// A checkout payment method and what it charges (`GET /store/payment-methods`). The method decides
+// the charge currency -- the customer never picks one -- and `chargeAmount` is the exact amount
+// in it, shown as "You will pay ..." when it differs from the display currency.
+export interface PaymentMethodOption {
+  id: string
+  label: string
+  providerId: string
+  chargeCurrency: string
+  chargeAmount: number | null
+  available: boolean
+}
+
 const STRIPE_PROVIDER_ID = 'pp_stripe_stripe'
 const DIGITAL_SHIPPING_OPTION_NAME = 'Digital Delivery'
 
 export const checkoutService = {
+  /** `country` is the visitor's IP country (not the header picker's), which decides availability. */
+  getPaymentMethods: async (
+    cartId: string,
+    country?: string,
+  ): Promise<PaymentMethodOption[]> => {
+    const { data } = await medusaClient.get('/store/payment-methods', {
+      params: { cart_id: cartId, ...(country ? { country: country.toLowerCase() } : {}) },
+    })
+    return (data.methods ?? []).map((m: any) => ({
+      id: m.id,
+      label: m.label,
+      providerId: m.provider_id,
+      chargeCurrency: String(m.charge_currency).toLowerCase(),
+      chargeAmount: typeof m.charge_amount === 'number' ? m.charge_amount : null,
+      available: Boolean(m.available),
+    }))
+  },
+
   /**
    * Sets only the cart's email -- confirmed live that Medusa's `complete`
    * does NOT require a billing/shipping address at all (a cart with no

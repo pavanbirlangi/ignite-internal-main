@@ -23,9 +23,7 @@ import {
 } from '@/lib/services/checkout.service'
 import { extractApiErrorMessage } from '@/lib/utils/api-error'
 import { localizedHref } from '@/lib/utils'
-import { formatCurrency } from '@/lib/currency'
 import { useCartStore } from '@/store/useCartStore'
-import { useCurrencyStore } from '@/store/useCurrencyStore'
 
 const stripePromise = loadStripe(
   process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY as string,
@@ -124,11 +122,7 @@ interface CheckoutFormProps {
   // session creation and now (item/region changed, or the fee setting flipped mid-checkout). The
   // parent re-fetches a fresh payment session with the corrected amount and remounts this form.
   onServiceFeeStale: () => void
-  // Explains the charge currency and lets the customer switch it (see CheckoutPageContent).
-  paymentNotice?: React.ReactNode
   onEmailChange?: (email: string) => void
-  // A card error on confirmation -- the parent may offer paying in the local currency instead.
-  onCardDeclined?: () => void
 }
 
 function EmailStep({
@@ -216,8 +210,6 @@ function CheckoutFormInner({
   locale,
   onOrderCompleted,
   onServiceFeeStale,
-  paymentNotice,
-  onCardDeclined,
   onEmailChange,
 }: Omit<CheckoutFormProps, 'clientSecret'>) {
   const stripe = useStripe()
@@ -226,7 +218,6 @@ function CheckoutFormInner({
   const clearCart = useCartStore((state) => state.clearCart)
   const applyServiceFee = useCartStore((state) => state.applyServiceFee)
   const cart = useCartStore((state) => state.cart)
-  const displayCurrency = useCurrencyStore((state) => state.currency)
   const [email, setEmail] = useState(initialEmail)
   const [submitting, setSubmitting] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
@@ -247,7 +238,7 @@ function CheckoutFormInner({
       // No address form is shown here; Medusa's own checkout doesn't require
       // one to complete an order. Email and a payment method are all that's
       // needed (see checkout.service.ts).
-      // Only when it differs: Medusa's cart update resets a non-USD cart's currency to USD.
+      // Only when it differs -- saves a round-trip on the usual path.
       if (cart?.email !== email.trim()) {
         await checkoutService.setCartEmail(cartId, email.trim())
       }
@@ -272,7 +263,6 @@ function CheckoutFormInner({
 
       if (error) {
         setErrorMessage(error.message ?? 'Payment failed. Please try again.')
-        if (error.type === 'card_error') onCardDeclined?.()
         setSubmitting(false)
         return
       }
@@ -346,21 +336,6 @@ function CheckoutFormInner({
         <h2 className="mb-4 text-lg font-semibold text-white md:text-xl">
           Payment method
         </h2>
-        {paymentNotice}
-        {/* The exact charge, with its ISO code: shown whenever it's not a plain USD charge to a
-            customer browsing in USD -- a bare "$" or a different display currency would
-            otherwise leave the actual amount ambiguous. */}
-        {cart &&
-          (cart.currencyCode.toUpperCase() !== 'USD' ||
-            displayCurrency.toUpperCase() !== 'USD') && (
-          <p className="text-muted-foreground mb-3 text-xs">
-            You will be charged{' '}
-            <span className="text-white font-semibold">
-              {formatCurrency(cart.total, cart.currencyCode)} {cart.currencyCode.toUpperCase()}
-            </span>
-            .
-          </p>
-        )}
         <PaymentElement />
         <p className="text-muted-foreground mt-2 text-xs">
           Some cards ask for a billing postal code here. That's Stripe
@@ -392,8 +367,6 @@ export function CheckoutForm({
   locale,
   onOrderCompleted,
   onServiceFeeStale,
-  paymentNotice,
-  onCardDeclined,
   onEmailChange,
 }: CheckoutFormProps) {
   return (
@@ -415,8 +388,6 @@ export function CheckoutForm({
         locale={locale}
         onOrderCompleted={onOrderCompleted}
         onServiceFeeStale={onServiceFeeStale}
-        paymentNotice={paymentNotice}
-        onCardDeclined={onCardDeclined}
         onEmailChange={onEmailChange}
       />
     </Elements>
