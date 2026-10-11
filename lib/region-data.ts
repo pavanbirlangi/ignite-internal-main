@@ -143,7 +143,6 @@ export const currencies = [
 
 export const languages = [
   { value: 'ID', label: 'bahasa Indonesia' },
-  { value: 'PT', label: 'Brasileiro' },
   { value: 'DA', label: 'Dansk' },
   { value: 'DE', label: 'Deutsch' },
   { value: 'EN', label: 'English' },
