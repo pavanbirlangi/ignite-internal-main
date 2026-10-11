@@ -84,11 +84,12 @@ function getItemSummary(order: OrderDetails | null): string {
 
   return lineItems
     .map(({ node }) => {
-      const quantity = node.quantity > 1 ? `(${node.quantity}x) ` : ''
+      // The quantity follows its own title, so "(2x)" can't read as applying to the whole list.
+      const quantity = node.quantity > 1 ? ` (${node.quantity}x)` : ''
       const itemTitle =
         getVariantDisplayName(node.variant?.title) ?? (node.title || 'Untitled Product')
 
-      return `${quantity}${itemTitle}`
+      return `${itemTitle}${quantity}`
     })
     .join(' | ')
 }

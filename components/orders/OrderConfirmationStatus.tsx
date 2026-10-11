@@ -74,7 +74,7 @@ const stateContent: Record<
 export default function OrderConfirmationStatus({
   state = 'success-key-ready',
   orderCode = '#ZRSYPNNQ',
-  itemSummary = '(2x) Call Of Duty Black OPS 2 | (2x) Read Dead Redemption | Dispatch',
+  itemSummary = 'Call Of Duty Black OPS 2 (2x) | Read Dead Redemption (2x) | Dispatch',
   productImage = '/images/404.png',
   actionHref,
 }: OrderConfirmationStatusProps) {
