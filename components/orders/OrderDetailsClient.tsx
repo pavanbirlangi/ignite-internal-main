@@ -3,6 +3,7 @@
 import { ChevronRight, Download } from 'lucide-react'
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
+import { toast } from 'sonner'
 import { OrderDetailItem } from '@/components/orders/OrderDetailItem'
 import { TransactionDetails } from '@/components/orders/TransactionDetails'
 import { RevealProductModal } from '@/components/library/RevealProductModal'
@@ -41,8 +42,8 @@ export default function OrderDetailsClient({
     null,
   )
 
-  // License keys state (for PDF download only – modal fetches its own)
-  const [keysData, setKeysData] = useState<KeyAssignment[]>([])
+  // Keys are fetched only when "Download All Keys" is clicked: on this backend fetching a key
+  // *is* the reveal, so loading them with the page marked every key revealed unseen.
   const [keysLoading, setKeysLoading] = useState(false)
 
   useEffect(() => {
@@ -87,37 +88,6 @@ export default function OrderDetailsClient({
       isMounted = false
     }
   }, [orderId])
-
-  // Fetch license keys for PDF download. Session-authenticated, no email
-  // needed (confirmed live -- see keys.service.ts).
-  useEffect(() => {
-    if (!order?.id) return
-
-    let cancelled = false
-    setKeysData([])
-    setKeysLoading(true)
-
-    async function fetchKeys() {
-      try {
-        const keys = await keysService.getOrderKeys(order!.id)
-        if (!cancelled) {
-          setKeysData(keys)
-        }
-      } catch (err) {
-        console.error('Failed to fetch license keys:', err)
-      } finally {
-        if (!cancelled) {
-          setKeysLoading(false)
-        }
-      }
-    }
-
-    fetchKeys()
-
-    return () => {
-      cancelled = true
-    }
-  }, [order?.id])
 
   const lineItems = order?.lineItems?.edges ?? []
 
@@ -176,9 +146,18 @@ export default function OrderDetailsClient({
     }
   }
 
-  function handleDownloadAllKeys() {
-    if (order) {
-      generateKeysPdf(order, keysData)
+  async function handleDownloadAllKeys() {
+    if (!order) return
+
+    setKeysLoading(true)
+    try {
+      const keys: KeyAssignment[] = await keysService.getOrderKeys(order.id)
+      generateKeysPdf(order, keys)
+    } catch (err) {
+      console.error('Failed to fetch license keys:', err)
+      toast.error('Could not load your keys. Please try again.')
+    } finally {
+      setKeysLoading(false)
     }
   }
 
