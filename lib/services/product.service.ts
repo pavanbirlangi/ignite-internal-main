@@ -133,10 +133,14 @@ function mapVariant(
     : { url: '', altText: null }
 
   // Digital-goods availability (license-key stock), not Medusa's own
-  // inventory system -- digital products don't use manage_inventory.
-  const availableForSale = digitalAvailability
-    ? digitalAvailability.unused_key_count > 0
-    : true
+  // inventory system -- digital products don't use manage_inventory. A key
+  // product with no unused keys left can still be bought when the admin allows
+  // backorders: the order then waits in the manual key-assignment queue.
+  const availableForSale =
+    !digitalAvailability ||
+    !digitalAvailability.is_license_key_product ||
+    digitalAvailability.unused_key_count > 0 ||
+    raw.allow_backorder === true
 
   return {
     id: raw.id,
@@ -261,9 +265,8 @@ function mapProductDetail(
     (sum, v) => sum + v.unused_key_count,
     0,
   )
-  const inStock = digitalAvailability.size > 0
-    ? totalStock > 0
-    : true
+  const inStock =
+    variants.length === 0 || variants.some((v: ProductVariant) => v.availableForSale)
 
   // Products now point at a shared guide via `activation_guide_id`; the old per-product
   // fields are only a fallback for products that haven't been migrated to the library.
