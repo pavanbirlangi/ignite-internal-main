@@ -91,11 +91,14 @@ export function RevealProductModal({
     }
   }, [isOpen, product.orderId, product.variantId])
 
+  // A refunded assignment is a key the admin revoked: never show it, even if a key comes back.
+  const activeAssignments = assignments.filter((a) => a.status !== 'refunded')
+  const isRevoked = assignments.length > 0 && activeAssignments.length === 0
+  const pendingCount = activeAssignments.filter((a) => a.status === 'pending_manual').length
   const isPending =
-    assignments.length > 0 &&
-    assignments.every((a) => a.status === 'pending_manual')
-  const keys = assignments.map((a) => a.key).filter((k): k is string => !!k)
-  const latestRevealedAt = assignments.find((a) => a.revealedAt)?.revealedAt
+    activeAssignments.length > 0 && pendingCount === activeAssignments.length
+  const keys = activeAssignments.map((a) => a.key).filter((k): k is string => !!k)
+  const latestRevealedAt = activeAssignments.find((a) => a.revealedAt)?.revealedAt
 
   React.useEffect(() => {
     if (!isOpen || !product.handle) return
@@ -160,6 +163,12 @@ export function RevealProductModal({
                   <div className="flex items-center justify-center rounded-xl bg-red-500/10 p-4">
                     <p className="text-sm text-red-400">{error}</p>
                   </div>
+                ) : isRevoked ? (
+                  <div className="bg-secondary flex items-center justify-center rounded-xl p-4">
+                    <p className="text-muted-foreground text-sm">
+                      This key was revoked because the order was refunded.
+                    </p>
+                  </div>
                 ) : isPending ? (
                   <div className="bg-secondary flex items-center justify-center rounded-xl p-4">
                     <p className="text-muted-foreground text-sm">
@@ -167,7 +176,18 @@ export function RevealProductModal({
                     </p>
                   </div>
                 ) : keys.length > 0 ? (
-                  <KeyList keys={keys} />
+                  <div className="flex flex-col gap-4">
+                    <KeyList keys={keys} />
+                    {pendingCount > 0 && (
+                      <div className="bg-secondary flex items-center justify-center rounded-xl p-4">
+                        <p className="text-muted-foreground text-sm">
+                          {pendingCount === 1
+                            ? '1 more key is being prepared -- check back soon.'
+                            : `${pendingCount} more keys are being prepared -- check back soon.`}
+                        </p>
+                      </div>
+                    )}
+                  </div>
                 ) : (
                   <div className="bg-secondary flex items-center justify-center rounded-xl p-4">
                     <p className="text-muted-foreground text-sm">

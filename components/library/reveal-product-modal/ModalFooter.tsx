@@ -16,8 +16,9 @@ interface ModalFooterProps {
 }
 
 /**
- * Formats an ISO date string to a human-readable label.
- * Example: "April 13, 2026 at 10:12 AM UTC"
+ * Formats an ISO date string in the viewer's own timezone, matching the order dates shown
+ * elsewhere on the page.
+ * Example: "April 13, 2026 at 03:42 PM GMT+5:30"
  */
 function formatRevealDate(iso: string): string {
   try {
@@ -28,17 +29,16 @@ function formatRevealDate(iso: string): string {
       year: 'numeric',
       month: 'long',
       day: 'numeric',
-      timeZone: 'UTC',
     }).format(date)
 
     const timePart = new Intl.DateTimeFormat('en-US', {
       hour: '2-digit',
       minute: '2-digit',
       hour12: true,
-      timeZone: 'UTC',
+      timeZoneName: 'short',
     }).format(date)
 
-    return `${datePart} at ${timePart} UTC`
+    return `${datePart} at ${timePart}`
   } catch {
     return iso
   }
