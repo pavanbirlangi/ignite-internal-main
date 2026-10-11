@@ -1,7 +1,8 @@
 import { cache } from 'react'
 import { unstable_cache } from 'next/cache'
 import medusaClient from '../medusa-axios'
-import { getDisplayCurrency } from '../utils/display-currency'
+import { DEFAULT_CURRENCY, getDisplayCurrency } from '../utils/display-currency'
+import { getCurrencyConverter } from './display-currency.service'
 import type {
   Product,
   ProductVariant,
@@ -94,6 +95,8 @@ interface DigitalAvailability {
   is_license_key_product: boolean
   unused_key_count: number
   fulfillment_mode: string | null
+  allow_backorder?: boolean
+  purchasable?: boolean
 }
 
 function mapVariant(
@@ -135,12 +138,16 @@ function mapVariant(
   // Digital-goods availability (license-key stock), not Medusa's own
   // inventory system -- digital products don't use manage_inventory. A key
   // product with no unused keys left can still be bought when the admin allows
-  // backorders: the order then waits in the manual key-assignment queue.
-  const availableForSale =
-    !digitalAvailability ||
-    !digitalAvailability.is_license_key_product ||
-    digitalAvailability.unused_key_count > 0 ||
-    raw.allow_backorder === true
+  // backorders: the order then waits in the manual key-assignment queue. The
+  // backend's `purchasable` already combines both; the fallback covers a
+  // response without it. A variant with no price can't be bought at all.
+  const purchasable =
+    digitalAvailability?.purchasable ??
+    (!digitalAvailability ||
+      !digitalAvailability.is_license_key_product ||
+      digitalAvailability.unused_key_count > 0 ||
+      raw.allow_backorder === true)
+  const availableForSale = Boolean(calc) && purchasable
 
   return {
     id: raw.id,
@@ -481,44 +488,30 @@ const getClientRegionId = async (): Promise<string | undefined> => {
 const PRODUCT_FIELDS =
   '*variants.calculated_price,+metadata,+images,+options.values,+variants.options.value'
 
-const PRODUCT_PRICES_BATCH = 100
-
-// Core `/store/products` can only price by region, and the store's single region is USD -- so
-// prices in the visitor's display currency come from the backend's `/store/product-prices` and
-// replace each raw variant's `calculated_price` before mapping. A variant with no price in that
-// currency keeps its USD price rather than rendering as 0.
-async function overlayDisplayPrices(rawProducts: any[], currency: string): Promise<void> {
-  const needsPrice = rawProducts.filter((p) =>
-    (p?.variants ?? []).some(
-      (v: any) => v?.calculated_price?.currency_code?.toLowerCase() !== currency,
-    ),
-  )
-  if (!needsPrice.length) return
-
-  const priceByVariant = new Map<string, any>()
-  for (let i = 0; i < needsPrice.length; i += PRODUCT_PRICES_BATCH) {
-    const ids = needsPrice.slice(i, i + PRODUCT_PRICES_BATCH).map((p) => p.id)
-    try {
-      const { data } = await medusaClient.get('/store/product-prices', {
-        params: { product_ids: ids.join(','), currency_code: currency },
-      })
-      for (const product of data.products ?? []) {
-        for (const variant of product.variants ?? []) {
-          if (variant?.calculated_price) priceByVariant.set(variant.id, variant.calculated_price)
-        }
+// Products are priced in USD only; prices in the visitor's display currency are the USD amounts
+// times the admin-managed exchange rate (display-currency.service.ts), applied to each raw
+// variant's `calculated_price` before mapping so every downstream price (cards, product page,
+// sale/compare-at, discount %) is converted the same way. A variant with no price stays unpriced.
+async function convertDisplayPrices(rawProducts: any[], currency: string): Promise<void> {
+  const converter = await getCurrencyConverter(DEFAULT_CURRENCY, currency)
+  if (converter.currencyCode === DEFAULT_CURRENCY) return
+  for (const product of rawProducts) {
+    for (const variant of product?.variants ?? []) {
+      const calc = variant?.calculated_price
+      if (!calc || calc.currency_code?.toLowerCase() !== DEFAULT_CURRENCY) continue
+      variant.calculated_price = {
+        ...calc,
+        calculated_amount: converter.convert(Number(calc.calculated_amount)),
+        original_amount: converter.convert(Number(calc.original_amount ?? calc.calculated_amount)),
+        currency_code: converter.currencyCode,
       }
-    } catch (error) {
-      console.error(`Failed to load ${currency} prices; showing USD`, error)
-    }
-  }
-
-  for (const product of needsPrice) {
-    for (const variant of product.variants ?? []) {
-      const displayPrice = priceByVariant.get(variant.id)
-      if (displayPrice) variant.calculated_price = displayPrice
     }
   }
 }
+
+// A product with no price can't be added to a cart -- listing it would show "0.00" with an add
+// button that fails, so list views leave it out until the admin prices it.
+const hasPrice = (product: ProductListItem) => Boolean(product.price)
 
 const _fetchProductByHandle = async (
   handle: string,
@@ -537,7 +530,7 @@ const _fetchProductByHandle = async (
   if (!raw) {
     throw new Error(`Invalid product payload for handle: ${handle}`)
   }
-  await overlayDisplayPrices([raw], currency)
+  await convertDisplayPrices([raw], currency)
 
   const [digitalAvailability, ratingSummary, sharedGuide] = await Promise.all([
     fetchDigitalAvailability(raw.id),
@@ -582,8 +575,8 @@ const _fetchProductsByIds = async (
     },
   })
   const rawProducts = data.products ?? []
-  await overlayDisplayPrices(rawProducts, currency)
-  return rawProducts.map(mapProductListItem)
+  await convertDisplayPrices(rawProducts, currency)
+  return rawProducts.map(mapProductListItem).filter(hasPrice)
 }
 
 // ─── Cross-request Next.js Data Cache wrappers (ISR-style, 60s TTL) ──────────
@@ -800,8 +793,8 @@ export const ProductService = {
             },
           })
           const rawProducts = data.products ?? []
-          await overlayDisplayPrices(rawProducts, cur)
-          return rawProducts.map(mapProductListItem)
+          await convertDisplayPrices(rawProducts, cur)
+          return rawProducts.map(mapProductListItem).filter(hasPrice)
         },
         ['collection-products-by-handle'],
         { revalidate: 60, tags: ['collection', 'product'] },
