@@ -3,7 +3,7 @@ import { Check, X } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
 
-type ConfirmationState = 'success-key-ready' | 'success-processing' | 'failed'
+type ConfirmationState = 'success-key-ready' | 'success-processing' | 'refunded' | 'failed'
 
 interface OrderConfirmationStatusProps {
   state?: ConfirmationState
@@ -40,6 +40,17 @@ const stateContent: Record<
     title: 'Order Confirmed',
     description:
       'Your payment has been successfully processed. Your activation key will be available shortly.',
+    buttonLabel: 'Order History',
+    buttonClassName:
+      'border-muted-foreground bg-transparent hover:bg-white/5 text-white',
+    iconWrapperClassName: 'bg-[#0B5028]/70',
+    iconClassName: 'bg-[#00C950] text-[#05331A]',
+    showOrderCard: true,
+  },
+  refunded: {
+    title: 'Order Refunded',
+    description:
+      'This order was refunded to your original payment method. Depending on your bank, it can take a few business days to appear.',
     buttonLabel: 'Order History',
     buttonClassName:
       'border-muted-foreground bg-transparent hover:bg-white/5 text-white',

@@ -16,6 +16,8 @@ interface TransactionDetailsProps {
   serviceFeeLabel?: string
   tax?: string
   refunded?: string
+  // With a refund, "total" is shown as "Total paid" and this as the final "Net paid" row.
+  netPaid?: string
   total: string
 }
 
@@ -51,6 +53,7 @@ export function TransactionDetails({
   serviceFeeLabel = 'Service Fee',
   tax,
   refunded,
+  netPaid,
   total,
 }: TransactionDetailsProps) {
   return (
@@ -69,8 +72,15 @@ export function TransactionDetails({
           {discount && <TransactionItem label="Discount" value={discount} />}
           {serviceFee && <TransactionItem label={serviceFeeLabel} value={serviceFee} />}
           {tax && <TransactionItem label="Tax" value={tax} />}
-          {refunded && <TransactionItem label="Refunded" value={refunded} />}
-          <TransactionItem label="Total" value={total} isTotal />
+          {refunded ? (
+            <>
+              <TransactionItem label="Total paid" value={total} />
+              <TransactionItem label="Refunded" value={refunded} />
+              <TransactionItem label="Net paid" value={netPaid ?? total} isTotal />
+            </>
+          ) : (
+            <TransactionItem label="Total" value={total} isTotal />
+          )}
         </div>
       </div>
     </div>

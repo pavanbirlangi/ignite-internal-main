@@ -6,6 +6,7 @@ import { getPaymentMethodName } from '@/lib/orders/payment-method'
 export type ConfirmationState =
   | 'success-key-ready'
   | 'success-processing'
+  | 'refunded'
   | 'failed'
 
 export interface OrderConfirmationViewModel {
@@ -37,8 +38,12 @@ export function getConfirmationState(
   const financialStatus = normalizeStatus(order.financialStatus)
   const fulfillmentStatus = normalizeStatus(order.fulfillmentStatus)
 
+  // A full refund means the order was paid and the money went back -- not a failed payment.
+  if (financialStatus === 'REFUNDED') {
+    return 'refunded'
+  }
+
   if (
-    financialStatus === 'REFUNDED' ||
     financialStatus === 'VOIDED' ||
     fulfillmentStatus === 'CANCELLED' ||
     fulfillmentStatus === 'CANCELED'

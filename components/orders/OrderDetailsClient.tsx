@@ -303,6 +303,13 @@ export default function OrderDetailsClient({
           serviceFeeLabel={order.platformFeeLabel}
           tax={formatOptionalAmount(order.totalTaxV2)}
           refunded={formatOptionalAmount(order.totalRefundedV2, '-')}
+          netPaid={formatOrderPrice(
+            Math.max(
+              0,
+              Number(order.totalPrice?.amount ?? 0) - Number(order.totalRefundedV2?.amount ?? 0),
+            ).toFixed(2),
+            order.totalPrice?.currencyCode,
+          )}
           total={formatOrderPrice(
             order.totalPrice?.amount,
             order.totalPrice?.currencyCode,
