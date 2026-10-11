@@ -16,6 +16,7 @@ import { orderService, type OrderDetails } from '@/lib/services/order.service'
 import { keysService, type KeyAssignment } from '@/lib/services/keys.service'
 import type { OrderDetailsClientProps } from '@/types/OrderDetailsTypes'
 import type { ProductDetails } from '@/components/library/reveal-product-modal/types'
+import { getVariantDisplayName } from '@/lib/orders/variant-title'
 
 export default function OrderDetailsClient({
   orderId,
@@ -268,10 +269,7 @@ export default function OrderDetailsClient({
             const node = item.node
             const variant = node?.variant
             const productTitle = node?.title || 'Untitled Product'
-            const variantName =
-              variant?.title && variant.title !== 'Default Title'
-                ? variant.title
-                : undefined
+            const variantName = getVariantDisplayName(variant?.title)
 
             return (
               <OrderDetailItem

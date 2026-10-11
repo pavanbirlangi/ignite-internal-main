@@ -1,6 +1,7 @@
 import { jsPDF } from 'jspdf'
 import type { OrderDetails } from '@/lib/services/order.service'
 import { formatOrderDate, formatOrderPrice } from './order-formatters'
+import { getVariantDisplayName } from '@/lib/orders/variant-title'
 
 const BRAND_BLUE = [59, 130, 246] as const // #3B82F6
 const DARK_BG = [17, 24, 39] as const
@@ -93,10 +94,8 @@ export function generateReceiptPdf(order: OrderDetails): void {
     const node = item.node
     const variant = node?.variant
     const productTitle = node?.title || 'Untitled Product'
-    const variantName =
-      variant?.title && variant.title !== 'Default Title'
-        ? ` (${variant.title})`
-        : ''
+    const variantDisplayName = getVariantDisplayName(variant?.title)
+    const variantName = variantDisplayName ? ` (${variantDisplayName})` : ''
 
     // Check for page overflow
     if (y > 260) {

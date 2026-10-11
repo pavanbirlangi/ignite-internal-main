@@ -1,5 +1,6 @@
 import { formatOrderPrice } from '@/lib/orders/order-formatters'
 import { type OrderDetails } from '@/lib/services/order.service'
+import { getVariantDisplayName } from '@/lib/orders/variant-title'
 
 export type ConfirmationState =
   | 'success-key-ready'
@@ -77,11 +78,8 @@ function getItemSummary(order: OrderDetails | null): string {
   return lineItems
     .map(({ node }) => {
       const quantity = node.quantity > 1 ? `(${node.quantity}x) ` : ''
-      const title = node.variant?.title
       const itemTitle =
-        title && title !== 'Default Title'
-          ? title
-          : node.title || 'Untitled Product'
+        getVariantDisplayName(node.variant?.title) ?? (node.title || 'Untitled Product')
 
       return `${quantity}${itemTitle}`
     })
@@ -107,8 +105,8 @@ export function buildOrderConfirmationViewModel(
       order?.totalPrice?.currencyCode,
     ),
     serviceFee:
-      order?.platformFee !== undefined && order?.currency
-        ? formatOrderPrice(order.platformFee.toFixed(2), order.currency)
+      order?.platformFee !== undefined && order?.totalPrice?.currencyCode
+        ? formatOrderPrice(order.platformFee.toFixed(2), order.totalPrice.currencyCode)
         : '-',
     serviceFeeLabel: order?.platformFeeLabel || 'Service Fee',
     paymentMode: getPaymentMode(order),

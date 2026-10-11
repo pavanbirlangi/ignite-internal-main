@@ -3,6 +3,7 @@ import type { OrderDetails } from '@/lib/services/order.service'
 import type { KeyAssignment } from '@/lib/services/keys.service'
 import { formatOrderDate } from './order-formatters'
 import { parseCredentialKey } from './parse-credential-key'
+import { getVariantDisplayName } from '@/lib/orders/variant-title'
 
 const BRAND_BLUE = [59, 130, 246] as const
 const DARK_BG = [17, 24, 39] as const
@@ -91,10 +92,8 @@ export function generateKeysPdf(
     const node = item.node
     const productTitle = node?.title || 'Untitled Product'
     const variant = node?.variant
-    const variantName =
-      variant?.title && variant.title !== 'Default Title'
-        ? ` — ${variant.title}`
-        : ''
+    const variantDisplayName = getVariantDisplayName(variant?.title)
+    const variantName = variantDisplayName ? ` — ${variantDisplayName}` : ''
 
     // Match real keys by variant id. Note: `order` still comes from the
     // not-yet-migrated order.service.ts (Phase 9), so `variant?.id` here
