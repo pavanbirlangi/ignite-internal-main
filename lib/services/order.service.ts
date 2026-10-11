@@ -80,10 +80,6 @@ export interface Order {
   // Products only. Medusa's own `subtotal` includes the service-fee line (a real line item), so
   // this is what a "Subtotal" row next to a separate fee row should show.
   itemsSubtotal: number
-  // Refunds Medusa recorded on the order's payments. Medusa keeps a refund record only after the
-  // payment provider (Stripe) accepted it -- a failed provider call removes it again -- so this
-  // never counts a refund that wasn't actually sent to Stripe.
-  refundedAmount: number
 }
 
 export interface OrderDetails extends Order {
@@ -122,8 +118,10 @@ function mapFinancialStatus(status?: string): string {
     case 'partially_captured':
       return 'PAID'
     case 'refunded':
-    case 'partially_refunded':
       return 'REFUNDED'
+    // Still a paid order -- only part of it went back to the customer.
+    case 'partially_refunded':
+      return 'PARTIALLY_REFUNDED'
     case 'canceled':
       return 'VOIDED'
     // `authorized`/`partially_authorized` collapse into 'PENDING' rather than
@@ -225,7 +223,6 @@ function mapOrder(raw: any): Order {
       (sum, item) => sum + Number(item.unit_price ?? 0) * (item.quantity ?? 1),
       0,
     ),
-    refundedAmount: Number(raw.summary?.refunded_total ?? 0),
   }
 }
 
@@ -252,7 +249,12 @@ export const orderService = {
     let orders: Order[] = (data.orders ?? []).map(mapOrder)
 
     if (params.financialStatus) {
-      orders = orders.filter((o) => o.financialStatus === params.financialStatus)
+      // The "Refunded" tab shows partly refunded orders too.
+      const statuses =
+        params.financialStatus === 'REFUNDED'
+          ? ['REFUNDED', 'PARTIALLY_REFUNDED']
+          : [params.financialStatus]
+      orders = orders.filter((o) => statuses.includes(o.financialStatus))
     }
     if (params.fulfillmentStatus) {
       orders = orders.filter((o) => o.fulfillmentStatus === params.fulfillmentStatus)

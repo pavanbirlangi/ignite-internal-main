@@ -39,14 +39,15 @@ export function getConfirmationState(
   if (
     financialStatus === 'REFUNDED' ||
     financialStatus === 'VOIDED' ||
-    financialStatus === 'PARTIALLY_REFUNDED' ||
     fulfillmentStatus === 'CANCELLED' ||
     fulfillmentStatus === 'CANCELED'
   ) {
     return 'failed'
   }
 
-  if (financialStatus === 'PAID' && fulfillmentStatus === 'FULFILLED') {
+  // A partial refund leaves the order paid: only part of it went back to the customer.
+  const isPaid = financialStatus === 'PAID' || financialStatus === 'PARTIALLY_REFUNDED'
+  if (isPaid && fulfillmentStatus === 'FULFILLED') {
     return 'success-key-ready'
   }
 

@@ -16,6 +16,7 @@ const SOFT_BG: RGB = [31, 41, 55]
 const STATUS_STYLES: Record<string, { label: string; color: RGB }> = {
   PAID: { label: 'PAID', color: [22, 163, 74] },
   REFUNDED: { label: 'REFUNDED', color: [217, 119, 6] },
+  PARTIALLY_REFUNDED: { label: 'PARTIALLY REFUNDED', color: [217, 119, 6] },
   VOIDED: { label: 'VOIDED', color: MUTED },
   PENDING: { label: 'PAYMENT PENDING', color: MUTED },
 }

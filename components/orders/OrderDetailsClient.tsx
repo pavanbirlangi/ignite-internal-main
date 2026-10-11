@@ -18,6 +18,10 @@ import type { OrderDetailsClientProps } from '@/types/OrderDetailsTypes'
 import type { ProductDetails } from '@/components/library/reveal-product-modal/types'
 import { getVariantDisplayName } from '@/lib/orders/variant-title'
 
+// Paid orders have a receipt, including partly refunded ones (it lists the refund).
+const hasReceipt = (order: OrderDetails) =>
+  order.financialStatus === 'PAID' || order.financialStatus === 'PARTIALLY_REFUNDED'
+
 // An amount for an optional Transaction Details row -- undefined (row hidden) when it's zero.
 function formatOptionalAmount(price: OrderDetails['totalTaxV2'], sign = ''): string | undefined {
   const amount = Number(price?.amount ?? 0)
@@ -228,9 +232,9 @@ export default function OrderDetailsClient({
           <div className="flex flex-col gap-3 sm:flex-row">
             <button
               onClick={handleDownloadReceipt}
-              disabled={!order || order.financialStatus !== 'PAID'}
+              disabled={!order || !hasReceipt(order)}
               title={
-                order && order.financialStatus !== 'PAID'
+                order && !hasReceipt(order)
                   ? 'A receipt is available once payment is confirmed'
                   : undefined
               }
