@@ -53,6 +53,8 @@ export interface OrderLineItemNode {
 
 export interface OrderPaymentMethod {
   gateway?: string | null
+  /** Stripe payment method type (card, alipay, link, ...), when the backend sends it. */
+  type?: string | null
   brand?: string | null
   lastDigits?: string | null
 }
@@ -331,12 +333,11 @@ export const orderService = {
         amount: raw.summary?.refunded_total ?? 0,
         currencyCode,
       },
-      // Confirmed live: this backend route has never been exercised against
-      // a real Stripe charge (only the `pp_system_default` test provider),
-      // so brand/last4 legitimately come back null for every test order --
-      // rendered as an optional/nullable "gateway only" state, not an error.
+      // brand/last4 are set only for cards; other methods (e.g. Alipay) come
+      // back with just the gateway, and `type` once the backend sends it (R-73).
       paymentMethod: {
         gateway: paymentMethod.gateway ?? null,
+        type: paymentMethod.type ?? null,
         brand: paymentMethod.brand ?? null,
         lastDigits: paymentMethod.last4 ?? null,
       },

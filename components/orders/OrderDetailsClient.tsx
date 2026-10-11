@@ -18,6 +18,7 @@ import { keysService, type KeyAssignment } from '@/lib/services/keys.service'
 import type { OrderDetailsClientProps } from '@/types/OrderDetailsTypes'
 import type { ProductDetails } from '@/components/library/reveal-product-modal/types'
 import { getVariantDisplayName } from '@/lib/orders/variant-title'
+import { getPaymentMethodName } from '@/lib/orders/payment-method'
 
 // Paid orders have a receipt, including partly refunded ones (it lists the refund).
 const hasReceipt = (order: OrderDetails) =>
@@ -98,8 +99,7 @@ export default function OrderDetailsClient({
     .filter(Boolean)
     .join(' ')
 
-  const paymentModeDisplay =
-    paymentMode || order?.paymentMethod?.gateway || 'Not available'
+  const paymentModeDisplay = paymentMode || getPaymentMethodName(order?.paymentMethod)
 
   // -- Handlers --
 

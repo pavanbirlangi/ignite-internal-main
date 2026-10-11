@@ -1,6 +1,7 @@
 import { formatOrderPrice } from '@/lib/orders/order-formatters'
 import { type OrderDetails } from '@/lib/services/order.service'
 import { getVariantDisplayName } from '@/lib/orders/variant-title'
+import { getPaymentMethodName } from '@/lib/orders/payment-method'
 
 export type ConfirmationState =
   | 'success-key-ready'
@@ -66,7 +67,7 @@ function getPaymentMode(order: OrderDetails | null): string {
     .filter(Boolean)
     .join(' ')
 
-  return paymentMode || order.paymentMethod?.gateway || 'Not available'
+  return paymentMode || getPaymentMethodName(order.paymentMethod)
 }
 
 function getItemSummary(order: OrderDetails | null): string {

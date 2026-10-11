@@ -2,6 +2,7 @@ import { jsPDF } from 'jspdf'
 import type { OrderDetails } from '@/lib/services/order.service'
 import { formatOrderDate, formatOrderPrice } from './order-formatters'
 import { getVariantDisplayName } from '@/lib/orders/variant-title'
+import { getPaymentMethodName } from '@/lib/orders/payment-method'
 
 type RGB = readonly [number, number, number]
 
@@ -32,10 +33,10 @@ const toNumber = (amount?: string | number) => {
 const capitalize = (value: string) => value.charAt(0).toUpperCase() + value.slice(1)
 
 function paymentMethodLabel(order: OrderDetails): string {
-  const { brand, lastDigits, gateway } = order.paymentMethod ?? {}
+  const { brand, lastDigits } = order.paymentMethod ?? {}
   if (brand && lastDigits) return `${capitalize(brand)} ending in ${lastDigits}`
   if (brand) return capitalize(brand)
-  return gateway ? capitalize(gateway) : 'Not available'
+  return getPaymentMethodName(order.paymentMethod)
 }
 
 // The receipt records the charge itself, so every amount is in the currency the payment was
