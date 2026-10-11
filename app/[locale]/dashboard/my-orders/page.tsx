@@ -23,7 +23,9 @@ function formatPrice(price: Order['totalPrice']): string {
 }
 
 function getDisplayStatus(order: Order): OrderStatus {
-  if (order.financialStatus === 'REFUNDED') return 'REFUNDED'
+  if (order.financialStatus === 'REFUNDED') {
+    return order.refundedAmount < Number(order.totalPrice.amount) ? 'PARTIALLY_REFUNDED' : 'REFUNDED'
+  }
   if (order.financialStatus === 'VOIDED') return 'VOIDED'
   if (order.fulfillmentStatus === 'FULFILLED') return 'FULFILLED'
   if (order.financialStatus === 'PAID') return 'PAID'

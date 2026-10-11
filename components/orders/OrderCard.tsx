@@ -95,7 +95,7 @@ export function OrderCard({
         <div
           className={`w-fit rounded px-3 py-1 text-xs font-bold uppercase ${getStatusColor(status)}`}
         >
-          {status}
+          {status.replace(/_/g, ' ')}
         </div>
       </div>
 

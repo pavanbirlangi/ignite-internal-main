@@ -77,6 +77,10 @@ export interface Order {
   // store owner gave it via `POST /admin/service-fee`'s `label`, not a hardcoded string.
   platformFee?: number
   platformFeeLabel: string
+  // Refunds Medusa recorded on the order's payments. Medusa keeps a refund record only after the
+  // payment provider (Stripe) accepted it -- a failed provider call removes it again -- so this
+  // never counts a refund that wasn't actually sent to Stripe.
+  refundedAmount: number
 }
 
 export interface OrderDetails extends Order {
@@ -206,12 +210,15 @@ function mapOrder(raw: any): Order {
     processedAt: raw.created_at,
     financialStatus: mapFinancialStatus(raw.payment_status),
     fulfillmentStatus: mapFulfillmentStatus(raw.fulfillment_status),
-    totalPrice: { amount: raw.total ?? 0, currencyCode },
+    // A refund adds a credit line that lowers Medusa's `total` (to 0 for a full refund), so the
+    // order's amount is its original total -- what the customer paid -- with refunds shown apart.
+    totalPrice: { amount: raw.summary?.original_order_total ?? raw.total ?? 0, currencyCode },
     lineItems: {
       edges: productItems.map((item: any) => mapLineItem(item, currencyCode)),
     },
     platformFee: feeItem ? Number(feeItem.unit_price) : undefined,
     platformFeeLabel: feeItem?.title || 'Service Fee',
+    refundedAmount: Number(raw.summary?.refunded_total ?? 0),
   }
 }
 
