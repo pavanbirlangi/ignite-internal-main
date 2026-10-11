@@ -77,6 +77,9 @@ export interface Order {
   // store owner gave it via `POST /admin/service-fee`'s `label`, not a hardcoded string.
   platformFee?: number
   platformFeeLabel: string
+  // Products only. Medusa's own `subtotal` includes the service-fee line (a real line item), so
+  // this is what a "Subtotal" row next to a separate fee row should show.
+  itemsSubtotal: number
   // Refunds Medusa recorded on the order's payments. Medusa keeps a refund record only after the
   // payment provider (Stripe) accepted it -- a failed provider call removes it again -- so this
   // never counts a refund that wasn't actually sent to Stripe.
@@ -218,6 +221,10 @@ function mapOrder(raw: any): Order {
     },
     platformFee: feeItem ? Number(feeItem.unit_price) : undefined,
     platformFeeLabel: feeItem?.title || 'Service Fee',
+    itemsSubtotal: productItems.reduce(
+      (sum, item) => sum + Number(item.unit_price ?? 0) * (item.quantity ?? 1),
+      0,
+    ),
     refundedAmount: Number(raw.summary?.refunded_total ?? 0),
   }
 }

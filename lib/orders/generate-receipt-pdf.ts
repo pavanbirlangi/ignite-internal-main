@@ -127,14 +127,12 @@ export function generateReceiptPdf(order: OrderDetails): void {
   }
   drawTableHeader()
 
-  let productSubtotal = 0
   for (const { node } of order.lineItems?.edges ?? []) {
     const variantName = getVariantDisplayName(node?.variant?.title)
     const title = `${node?.title || 'Untitled Product'}${variantName ? ` (${variantName})` : ''}`
     const quantity = node?.quantity ?? 1
     const unitPrice = toNumber(node?.variant?.price?.amount)
     const amount = unitPrice * quantity
-    productSubtotal += amount
 
     setText(10, INK)
     const titleLines: string[] = doc.splitTextToSize(title, qtyX - MARGIN - 14)
@@ -156,15 +154,14 @@ export function generateReceiptPdf(order: OrderDetails): void {
     y += 3
   }
 
-  // — Totals. Medusa's own subtotal includes the service-fee line (it's a real order line item),
-  // so the products are summed here and the fee gets its own row.
+  // — Totals. The subtotal is products only; the service fee gets its own row.
   const discount = toNumber(order.totalDiscountV2?.amount)
   const fee = order.platformFee ?? 0
   const tax = toNumber(order.totalTaxV2?.amount)
   const total = toNumber(order.totalPrice?.amount)
   const refunded = toNumber(order.totalRefundedV2?.amount)
 
-  const rows: Array<[string, string]> = [['Subtotal', money(productSubtotal)]]
+  const rows: Array<[string, string]> = [['Subtotal', money(order.itemsSubtotal)]]
   if (discount > 0) rows.push(['Discount', `-${money(discount)}`])
   if (fee > 0) rows.push([order.platformFeeLabel || 'Service Fee', money(fee)])
   if (tax > 0) rows.push(['Tax', money(tax)])

@@ -10,6 +10,10 @@ interface TransactionDetailsProps {
   transactionNumber?: string
   paymentMode?: string
   subtotal?: string
+  // Optional rows: each is shown only when passed (i.e. when it applies to the order).
+  discount?: string
+  serviceFee?: string
+  serviceFeeLabel?: string
   tax?: string
   refunded?: string
   total: string
@@ -42,8 +46,11 @@ export function TransactionDetails({
   transactionNumber = '-',
   paymentMode = '-',
   subtotal = '-',
-  tax = '-',
-  refunded = '-',
+  discount,
+  serviceFee,
+  serviceFeeLabel = 'Service Fee',
+  tax,
+  refunded,
   total,
 }: TransactionDetailsProps) {
   return (
@@ -59,8 +66,10 @@ export function TransactionDetails({
           />
           <TransactionItem label="Payment Mode" value={paymentMode} />
           <TransactionItem label="Subtotal" value={subtotal} />
-          <TransactionItem label="Tax" value={tax} />
-          <TransactionItem label="Refunded" value={refunded} />
+          {discount && <TransactionItem label="Discount" value={discount} />}
+          {serviceFee && <TransactionItem label={serviceFeeLabel} value={serviceFee} />}
+          {tax && <TransactionItem label="Tax" value={tax} />}
+          {refunded && <TransactionItem label="Refunded" value={refunded} />}
           <TransactionItem label="Total" value={total} isTotal />
         </div>
       </div>

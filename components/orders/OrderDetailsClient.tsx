@@ -18,6 +18,12 @@ import type { OrderDetailsClientProps } from '@/types/OrderDetailsTypes'
 import type { ProductDetails } from '@/components/library/reveal-product-modal/types'
 import { getVariantDisplayName } from '@/lib/orders/variant-title'
 
+// An amount for an optional Transaction Details row -- undefined (row hidden) when it's zero.
+function formatOptionalAmount(price: OrderDetails['totalTaxV2'], sign = ''): string | undefined {
+  const amount = Number(price?.amount ?? 0)
+  return amount > 0 ? `${sign}${formatOrderPrice(amount, price?.currencyCode)}` : undefined
+}
+
 export default function OrderDetailsClient({
   orderId,
 }: OrderDetailsClientProps) {
@@ -304,18 +310,16 @@ export default function OrderDetailsClient({
         <TransactionDetails
           transactionNumber={`${order.orderNumber}`}
           paymentMode={paymentModeDisplay}
-          subtotal={formatOrderPrice(
-            order.subtotalPriceV2?.amount,
-            order.subtotalPriceV2?.currencyCode,
-          )}
-          tax={formatOrderPrice(
-            order.totalTaxV2?.amount,
-            order.totalTaxV2?.currencyCode,
-          )}
-          refunded={formatOrderPrice(
-            order.totalRefundedV2?.amount,
-            order.totalRefundedV2?.currencyCode,
-          )}
+          subtotal={formatOrderPrice(order.itemsSubtotal, order.totalPrice?.currencyCode)}
+          discount={formatOptionalAmount(order.totalDiscountV2, '-')}
+          serviceFee={
+            order.platformFee
+              ? formatOrderPrice(order.platformFee, order.totalPrice?.currencyCode)
+              : undefined
+          }
+          serviceFeeLabel={order.platformFeeLabel}
+          tax={formatOptionalAmount(order.totalTaxV2)}
+          refunded={formatOptionalAmount(order.totalRefundedV2, '-')}
           total={formatOrderPrice(
             order.totalPrice?.amount,
             order.totalPrice?.currencyCode,
