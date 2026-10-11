@@ -3,11 +3,25 @@ import type { OrderDetails } from '@/lib/services/order.service'
 import { formatOrderDate, formatOrderPrice } from './order-formatters'
 import { getVariantDisplayName } from '@/lib/orders/variant-title'
 
-const BRAND_BLUE = [59, 130, 246] as const // #3B82F6
-const DARK_BG = [17, 24, 39] as const
-const TEXT_WHITE = [255, 255, 255] as const
-const TEXT_MUTED = [156, 163, 175] as const
-const BORDER_COLOR = [55, 65, 81] as const
+type RGB = readonly [number, number, number]
+
+// The receipt's dark theme: dark page, white text, muted labels, blue accent.
+const BRAND: RGB = [59, 130, 246] // #3B82F6
+const PAGE_BG: RGB = [17, 24, 39]
+const INK: RGB = [255, 255, 255]
+const MUTED: RGB = [156, 163, 175]
+const BORDER: RGB = [55, 65, 81]
+const SOFT_BG: RGB = [31, 41, 55]
+
+const STATUS_STYLES: Record<string, { label: string; color: RGB }> = {
+  PAID: { label: 'PAID', color: [22, 163, 74] },
+  REFUNDED: { label: 'REFUNDED', color: [217, 119, 6] },
+  VOIDED: { label: 'VOIDED', color: MUTED },
+  PENDING: { label: 'PAYMENT PENDING', color: MUTED },
+}
+
+const MARGIN = 20
+const PAGE_BOTTOM = 270
 
 const toNumber = (amount?: string | number) => {
   const value = typeof amount === 'string' ? Number.parseFloat(amount) : (amount ?? 0)
@@ -16,211 +30,204 @@ const toNumber = (amount?: string | number) => {
 
 const capitalize = (value: string) => value.charAt(0).toUpperCase() + value.slice(1)
 
-function drawLine(doc: jsPDF, y: number, width: number) {
-  doc.setDrawColor(...BORDER_COLOR)
-  doc.setLineWidth(0.3)
-  doc.line(20, y, width - 20, y)
+function paymentMethodLabel(order: OrderDetails): string {
+  const { brand, lastDigits, gateway } = order.paymentMethod ?? {}
+  if (brand && lastDigits) return `${capitalize(brand)} ending in ${lastDigits}`
+  if (brand) return capitalize(brand)
+  return gateway ? capitalize(gateway) : 'Not available'
 }
 
-// Every amount is in the currency the payment was charged in (USD) -- the receipt records the
-// charge itself, not the display currency the customer browsed in.
+// The receipt records the charge itself, so every amount is in the currency the payment was
+// charged in (USD) -- never the display currency the customer browsed in, whose rate moves daily
+// and wouldn't match their card statement.
 export function generateReceiptPdf(order: OrderDetails): void {
   const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' })
   const pageWidth = doc.internal.pageSize.getWidth()
+  const right = pageWidth - MARGIN
   const currency = order.totalPrice?.currencyCode ?? 'usd'
   const money = (amount: number) => formatOrderPrice(amount, currency)
 
-  // — Dark background
-  doc.setFillColor(...DARK_BG)
-  doc.rect(0, 0, pageWidth, doc.internal.pageSize.getHeight(), 'F')
+  const setText = (size: number, color: RGB, style: 'normal' | 'bold' = 'normal') => {
+    doc.setFontSize(size)
+    doc.setTextColor(...color)
+    doc.setFont('helvetica', style)
+  }
+  const rule = (y: number, from = MARGIN, to = right) => {
+    doc.setDrawColor(...BORDER)
+    doc.setLineWidth(0.3)
+    doc.line(from, y, to, y)
+  }
 
-  let y = 20
+  const fillPage = () => {
+    doc.setFillColor(...PAGE_BG)
+    doc.rect(0, 0, pageWidth, doc.internal.pageSize.getHeight(), 'F')
+  }
+  const addPage = () => {
+    doc.addPage()
+    fillPage()
+  }
+  fillPage()
 
   // — Header
-  doc.setFontSize(22)
-  doc.setTextColor(...TEXT_WHITE)
-  doc.setFont('helvetica', 'bold')
-  doc.text('Increddy', 20, y)
+  doc.setFillColor(...BRAND)
+  doc.rect(0, 0, pageWidth, 4, 'F')
 
-  doc.setFontSize(12)
-  doc.setTextColor(...BRAND_BLUE)
-  doc.setFont('helvetica', 'bold')
-  doc.text('ORDER RECEIPT', pageWidth - 20, y, { align: 'right' })
+  let y = 22
+  setText(20, INK, 'bold')
+  doc.text('Increddy', MARGIN, y)
+  setText(9, MUTED)
+  doc.text('increddy.com', MARGIN, y + 6)
 
-  y += 12
-  drawLine(doc, y, pageWidth)
-  y += 10
+  setText(9, MUTED, 'bold')
+  doc.text('RECEIPT', right, y - 6, { align: 'right' })
+  setText(16, INK, 'bold')
+  doc.text(`#${order.orderNumber}`, right, y + 1, { align: 'right' })
 
-  // — Order metadata
-  const metaItems = [
-    {
-      label: 'Order Number',
-      value: `#${order.orderNumber}`,
-    },
-    {
-      label: 'Date',
-      value: order.processedAt ? formatOrderDate(order.processedAt) : '-',
-    },
-    {
-      label: 'Billed To',
-      value: order.email || '-',
-    },
-    {
-      label: 'Payment Method',
-      value: order.paymentMethod?.brand
-        ? `${capitalize(order.paymentMethod.brand)}${
-            order.paymentMethod.lastDigits ? ` ending in ${order.paymentMethod.lastDigits}` : ''
-          }`
-        : order.paymentMethod?.gateway || 'Not available',
-    },
+  const status = STATUS_STYLES[order.financialStatus] ?? STATUS_STYLES.PENDING
+  setText(8, [255, 255, 255], 'bold')
+  const pillWidth = doc.getTextWidth(status.label) + 6
+  doc.setFillColor(...status.color)
+  doc.roundedRect(right - pillWidth, y + 4, pillWidth, 5.5, 1.5, 1.5, 'F')
+  doc.text(status.label, right - pillWidth / 2, y + 7.8, { align: 'center' })
+
+  y += 18
+  rule(y)
+  y += 9
+
+  // — Details, two columns
+  const details: Array<[string, string]> = [
+    ['BILLED TO', order.email || '-'],
+    ['DATE', order.processedAt ? formatOrderDate(order.processedAt) : '-'],
+    ['PAYMENT METHOD', paymentMethodLabel(order)],
+    ['CURRENCY', currency.toUpperCase()],
   ]
+  const columnX = [MARGIN, pageWidth / 2 + 5]
+  details.forEach(([label, value], index) => {
+    const x = columnX[index % 2]
+    const rowY = y + Math.floor(index / 2) * 13
+    setText(7.5, MUTED, 'bold')
+    doc.text(label, x, rowY)
+    setText(10, INK)
+    doc.text(value, x, rowY + 5)
+  })
+  y += 2 * 13 + 4
 
-  for (const item of metaItems) {
-    doc.setFontSize(9)
-    doc.setTextColor(...TEXT_MUTED)
-    doc.setFont('helvetica', 'normal')
-    doc.text(item.label, 20, y)
-    doc.setFontSize(10)
-    doc.setTextColor(...TEXT_WHITE)
-    doc.setFont('helvetica', 'bold')
-    doc.text(item.value, pageWidth - 20, y, { align: 'right' })
-    y += 8
+  // — Items table
+  const qtyX = 122
+  const unitX = 155
+  const drawTableHeader = () => {
+    doc.setFillColor(...SOFT_BG)
+    doc.rect(MARGIN, y - 5, right - MARGIN, 8, 'F')
+    setText(7.5, MUTED, 'bold')
+    doc.text('ITEM', MARGIN + 3, y)
+    doc.text('QTY', qtyX, y, { align: 'center' })
+    doc.text('UNIT PRICE', unitX, y, { align: 'right' })
+    doc.text('AMOUNT', right - 3, y, { align: 'right' })
+    y += 9
   }
+  drawTableHeader()
 
-  y += 4
-  drawLine(doc, y, pageWidth)
-  y += 10
-
-  // — Line items header
-  doc.setFontSize(9)
-  doc.setTextColor(...TEXT_MUTED)
-  doc.setFont('helvetica', 'bold')
-  doc.text('Product', 20, y)
-  doc.text('Qty', 115, y, { align: 'center' })
-  doc.text('Unit Price', 150, y, { align: 'right' })
-  doc.text('Amount', pageWidth - 20, y, { align: 'right' })
-  y += 6
-
-  // — Line items
-  const lineItems = order.lineItems?.edges ?? []
-  doc.setFont('helvetica', 'normal')
   let productSubtotal = 0
-
-  for (const item of lineItems) {
-    const node = item.node
-    const variant = node?.variant
-    const productTitle = node?.title || 'Untitled Product'
-    const variantDisplayName = getVariantDisplayName(variant?.title)
-    const variantName = variantDisplayName ? ` (${variantDisplayName})` : ''
-
-    // Check for page overflow
-    if (y > 260) {
-      doc.addPage()
-      doc.setFillColor(...DARK_BG)
-      doc.rect(
-        0,
-        0,
-        pageWidth,
-        doc.internal.pageSize.getHeight(),
-        'F',
-      )
-      y = 20
-    }
-
-    doc.setFontSize(10)
-    doc.setTextColor(...TEXT_WHITE)
-    const titleLines = doc.splitTextToSize(
-      `${productTitle}${variantName}`,
-      80,
-    )
-    doc.text(titleLines, 20, y)
-
+  for (const { node } of order.lineItems?.edges ?? []) {
+    const variantName = getVariantDisplayName(node?.variant?.title)
+    const title = `${node?.title || 'Untitled Product'}${variantName ? ` (${variantName})` : ''}`
     const quantity = node?.quantity ?? 1
-    const unitPrice = toNumber(variant?.price?.amount)
-    productSubtotal += unitPrice * quantity
+    const unitPrice = toNumber(node?.variant?.price?.amount)
+    const amount = unitPrice * quantity
+    productSubtotal += amount
 
-    doc.setTextColor(...TEXT_MUTED)
-    doc.text(`${quantity}`, 115, y, { align: 'center' })
-    doc.text(money(unitPrice), 150, y, { align: 'right' })
-
-    doc.setTextColor(...TEXT_WHITE)
-    doc.text(money(unitPrice * quantity), pageWidth - 20, y, { align: 'right' })
-
-    y += titleLines.length * 5 + 4
+    setText(10, INK)
+    const titleLines: string[] = doc.splitTextToSize(title, qtyX - MARGIN - 14)
+    const rowHeight = titleLines.length * 5 + 4
+    if (y + rowHeight > PAGE_BOTTOM) {
+      addPage()
+      y = 24
+      drawTableHeader()
+      setText(10, INK)
+    }
+    doc.text(titleLines, MARGIN + 3, y)
+    setText(10, MUTED)
+    doc.text(String(quantity), qtyX, y, { align: 'center' })
+    doc.text(money(unitPrice), unitX, y, { align: 'right' })
+    setText(10, INK)
+    doc.text(money(amount), right - 3, y, { align: 'right' })
+    y += rowHeight
+    rule(y - 3)
+    y += 3
   }
 
-  y += 4
-  drawLine(doc, y, pageWidth)
-  y += 10
-
-  // — Transaction summary. Medusa's own subtotal includes the service-fee line (it's a real order
-  // line item), so the products are summed above and the fee gets its own row. Discount, tax and
-  // refunds only show when they apply.
+  // — Totals. Medusa's own subtotal includes the service-fee line (it's a real order line item),
+  // so the products are summed here and the fee gets its own row.
   const discount = toNumber(order.totalDiscountV2?.amount)
   const fee = order.platformFee ?? 0
   const tax = toNumber(order.totalTaxV2?.amount)
+  const total = toNumber(order.totalPrice?.amount)
   const refunded = toNumber(order.totalRefundedV2?.amount)
-  const summaryItems = [{ label: 'Subtotal', value: money(productSubtotal) }]
-  if (discount > 0) summaryItems.push({ label: 'Discount', value: `-${money(discount)}` })
-  if (fee > 0) summaryItems.push({ label: order.platformFeeLabel || 'Service Fee', value: money(fee) })
-  if (tax > 0) summaryItems.push({ label: 'Tax', value: money(tax) })
-  if (refunded > 0) summaryItems.push({ label: 'Refunded', value: `-${money(refunded)}` })
 
-  for (const item of summaryItems) {
-    doc.setFontSize(10)
-    doc.setTextColor(...TEXT_MUTED)
-    doc.setFont('helvetica', 'normal')
-    doc.text(item.label, 20, y)
-    doc.setTextColor(...TEXT_WHITE)
-    doc.text(item.value, pageWidth - 20, y, { align: 'right' })
-    y += 8
+  const rows: Array<[string, string]> = [['Subtotal', money(productSubtotal)]]
+  if (discount > 0) rows.push(['Discount', `-${money(discount)}`])
+  if (fee > 0) rows.push([order.platformFeeLabel || 'Service Fee', money(fee)])
+  if (tax > 0) rows.push(['Tax', money(tax)])
+
+  if (y + rows.length * 7 + 40 > PAGE_BOTTOM) {
+    addPage()
+    y = 24
+  }
+  y += 4
+  const labelX = 118
+  for (const [label, value] of rows) {
+    setText(10, MUTED)
+    doc.text(label, labelX, y)
+    setText(10, INK)
+    doc.text(value, right - 3, y, { align: 'right' })
+    y += 7
   }
 
-  y += 2
-  drawLine(doc, y, pageWidth)
+  rule(y - 3, labelX, right)
+  y += 4
+  setText(12, INK, 'bold')
+  doc.text('Total paid', labelX, y)
+  setText(12, BRAND, 'bold')
+  doc.text(`${money(total)} ${currency.toUpperCase()}`, right - 3, y, { align: 'right' })
   y += 8
 
-  // — Total
-  doc.setFontSize(13)
-  doc.setTextColor(...TEXT_WHITE)
-  doc.setFont('helvetica', 'bold')
-  doc.text('Total', 20, y)
-  doc.text(
-    `${money(toNumber(order.totalPrice?.amount))} ${currency.toUpperCase()}`,
-    pageWidth - 20,
-    y,
-    { align: 'right' },
-  )
+  if (refunded > 0) {
+    setText(10, MUTED)
+    doc.text('Refunded', labelX, y)
+    doc.text(`-${money(refunded)}`, right - 3, y, { align: 'right' })
+    y += 7
+    setText(10, INK, 'bold')
+    doc.text('Net paid', labelX, y)
+    doc.text(money(Math.max(total - refunded, 0)), right - 3, y, { align: 'right' })
+    y += 7
+  }
 
-  y += 16
+  // — Note
+  y += 6
+  setText(8.5, MUTED, 'bold')
+  doc.text('NOTE', MARGIN, y)
+  y += 4.5
+  setText(8.5, MUTED)
+  const note = doc.splitTextToSize(
+    `All amounts are in ${currency.toUpperCase()}, the currency your payment was charged in. ` +
+      'Prices shown in another currency while shopping are converted estimates; your bank ' +
+      'statement shows this amount, converted by your bank if your card uses a different currency.',
+    right - MARGIN,
+  )
+  doc.text(note, MARGIN, y)
 
-  doc.setFontSize(8)
-  doc.setTextColor(...TEXT_MUTED)
-  doc.setFont('helvetica', 'normal')
-  doc.text(
-    `All amounts are in ${currency.toUpperCase()}, the currency your payment was charged in.`,
-    pageWidth / 2,
-    y,
-    { align: 'center' },
-  )
-  y += 8
-
-  // — Footer
-  doc.setFontSize(8)
-  doc.setTextColor(...TEXT_MUTED)
-  doc.setFont('helvetica', 'normal')
-  doc.text(
-    'This is a computer-generated receipt and does not require a signature.',
-    pageWidth / 2,
-    y,
-    { align: 'center' },
-  )
-  doc.text(
-    'Thank you for shopping with Increddy!',
-    pageWidth / 2,
-    y + 5,
-    { align: 'center' },
-  )
+  // — Footer, on every page
+  const pageCount = doc.getNumberOfPages()
+  for (let page = 1; page <= pageCount; page++) {
+    doc.setPage(page)
+    rule(275)
+    setText(9, INK, 'bold')
+    doc.text('Thank you for shopping with Increddy!', MARGIN, 281)
+    setText(8, MUTED)
+    doc.text('Questions about this order? Visit increddy.com/help', MARGIN, 286)
+    doc.text('This receipt was generated electronically and is valid without a signature.', MARGIN, 290)
+    if (pageCount > 1) doc.text(`Page ${page} of ${pageCount}`, right, 286, { align: 'right' })
+  }
 
   doc.save(`Increddy-Receipt-${order.orderNumber}.pdf`)
 }
