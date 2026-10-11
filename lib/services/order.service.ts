@@ -81,6 +81,8 @@ export interface Order {
 
 export interface OrderDetails extends Order {
   statusUrl?: string | null
+  email?: string | null
+  totalDiscountV2?: OrderPrice
   totalRefundedV2?: OrderPrice
   totalTaxV2?: OrderPrice
   subtotalPriceV2?: OrderPrice
@@ -305,7 +307,9 @@ export const orderService = {
 
     return {
       ...base,
+      email: raw.email ?? null,
       subtotalPriceV2: { amount: raw.subtotal ?? 0, currencyCode },
+      totalDiscountV2: { amount: raw.discount_total ?? 0, currencyCode },
       totalTaxV2: { amount: raw.tax_total ?? 0, currencyCode },
       totalRefundedV2: {
         amount: raw.summary?.refunded_total ?? 0,
