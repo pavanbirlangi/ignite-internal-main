@@ -1,6 +1,12 @@
 import { create } from 'zustand'
 
-export type AuthMode = 'login' | 'register' | 'recover' | 'email-sent' | 'recover-email-sent'
+export type AuthMode =
+  | 'login'
+  | 'register'
+  | 'recover'
+  | 'email-sent'
+  | 'recover-email-sent'
+  | 'email-code'
 
 interface AuthModalState {
   open: boolean

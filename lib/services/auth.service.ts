@@ -324,6 +324,54 @@ export const authService = {
    * -- verified live via the equivalent emailpass path, since a real Google
    * consent flow can't be driven headlessly to test this directly.
    */
+  /**
+   * Passwordless sign-in, step 1: emails a 6-digit code and a magic link (`/auth/magic-link`).
+   * Works for any email -- an unknown one becomes a new account on verify -- and answers the same
+   * either way. Throws with the backend's message on 429 (asked again within 60s, or too often).
+   */
+  requestLoginCode: async (email: string): Promise<{ expiresInSeconds: number }> => {
+    const { data } = await medusaClient.post('/store/auth/otp/request', { email })
+    return { expiresInSeconds: data.expires_in_seconds ?? 600 }
+  },
+
+  /**
+   * Passwordless sign-in, step 2: the emailed code (with its email) or the magic-link token. Same
+   * customer JWT as a password login. For an email with no account yet the token carries no
+   * customer, so the account is created with it and the token refreshed -- as after a first
+   * Google login (completeGoogleAuth below).
+   */
+  verifyLoginCode: async (
+    input: { email: string; code: string } | { token: string },
+  ): Promise<LoginResponse> => {
+    const { data } = await medusaClient.post('/store/auth/otp/verify', input)
+    let finalToken: string = data.token
+
+    if (data.new_customer) {
+      const payload = decodeJwtPayload(data.token)
+      const userMetadata = (payload?.user_metadata ?? {}) as { email?: string }
+      const email = userMetadata.email ?? ('email' in input ? input.email : undefined)
+
+      await medusaClient.post(
+        '/store/customers',
+        { email, first_name: '', last_name: '' },
+        { headers: { Authorization: `Bearer ${data.token}` } },
+      )
+      const refreshed = await medusaClient.post(
+        '/auth/token/refresh',
+        {},
+        { headers: { Authorization: `Bearer ${data.token}` } },
+      )
+      finalToken = refreshed.data.token
+    }
+
+    return {
+      token: {
+        accessToken: finalToken,
+        expiresAt: tokenExpiryIso(finalToken),
+      },
+    }
+  },
+
   completeGoogleAuth: async (
     code: string,
     state: string,

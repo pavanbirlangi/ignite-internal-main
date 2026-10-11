@@ -15,6 +15,7 @@ import { LoginForm } from './LoginForm'
 import { RegisterForm } from './RegisterForm'
 import { RecoverForm } from './RecoverForm'
 import { RecoverEmailSent } from './RecoverEmailSent'
+import { EmailCodeForm } from './EmailCodeForm'
 import { AuthMode, useAuthModalStore } from '@/store/useAuthModalStore'
 
 export default function AuthModal({
@@ -56,6 +57,7 @@ export default function AuthModal({
               {mode === 'register' && 'Register New Account'}
               {mode === 'recover' && 'Recover Password'}
               {mode === 'recover-email-sent' && 'Confirm Registered Mail'}
+              {mode === 'email-code' && 'Sign In With Email Code'}
             </DialogTitle>
             <DialogClose className="cursor-pointer rounded-full transition-colors hover:bg-white/10">
               <X className="text-muted-foreground h-4 w-4" strokeWidth={2.5} />
@@ -66,6 +68,7 @@ export default function AuthModal({
             <LoginForm
               onSwitchToRegister={() => setMode('register')}
               onSwitchToRecover={() => setMode('recover')}
+              onSwitchToEmailCode={() => setMode('email-code')}
               onLoginSuccess={() => handleOpenChange(false)}
             />
           )}
@@ -82,6 +85,12 @@ export default function AuthModal({
             />
           )}
           {mode === 'recover-email-sent' && <RecoverEmailSent />}
+          {mode === 'email-code' && (
+            <EmailCodeForm
+              onSwitchToLogin={() => setMode('login')}
+              onSuccess={() => handleOpenChange(false)}
+            />
+          )}
         </div>
       </DialogContent>
     </Dialog>

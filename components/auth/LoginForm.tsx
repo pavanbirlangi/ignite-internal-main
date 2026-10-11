@@ -24,10 +24,12 @@ type LoginFormValues = z.infer<typeof loginSchema>
 export function LoginForm({
   onSwitchToRegister,
   onSwitchToRecover,
+  onSwitchToEmailCode,
   onLoginSuccess,
 }: {
   onSwitchToRegister: () => void
   onSwitchToRecover?: () => void
+  onSwitchToEmailCode?: () => void
   onLoginSuccess?: () => void
 }) {
   const [isLoading, setIsLoading] = useState(false)
@@ -163,7 +165,7 @@ export function LoginForm({
           >
             {isLoading ? 'Logging in...' : 'Login'}
           </button>
-          <div className="flex justify-start">
+          <div className="flex items-center justify-between">
             <button
               type="button"
               onClick={onSwitchToRecover}
@@ -171,6 +173,15 @@ export function LoginForm({
             >
               Forgot password?
             </button>
+            {onSwitchToEmailCode && (
+              <button
+                type="button"
+                onClick={onSwitchToEmailCode}
+                className="text-primary hover:text-primary/80 cursor-pointer text-xs font-semibold underline transition-colors focus:outline-none"
+              >
+                Email me a sign-in code
+              </button>
+            )}
           </div>
         </div>
       </form>
