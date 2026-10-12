@@ -7,9 +7,13 @@ import {
   loadStripe,
   type Appearance,
   type CustomFontSource,
+  type PaymentIntent,
+  type StripeExpressCheckoutElementConfirmEvent,
+  type StripeExpressCheckoutElementReadyEvent,
 } from '@stripe/stripe-js'
 import {
   Elements,
+  ExpressCheckoutElement,
   PaymentElement,
   useStripe,
   useElements,
@@ -222,6 +226,66 @@ function CheckoutFormInner({
   const [submitting, setSubmitting] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
 
+  // Wallet buttons (Apple Pay, Google Pay) shown above the card form only when the browser can use
+  // one of them, so there's no empty gap when neither is available.
+  const [hasWallets, setHasWallets] = useState(false)
+
+  const returnUrl = () =>
+    `${window.location.origin}${localizedHref(locale, '/checkout/complete')}?cart_id=${cartId}`
+
+  // No address form is shown here; Medusa's own checkout doesn't require one to complete an order.
+  // Email and a payment method are all that's needed (see checkout.service.ts).
+  const prepareCart = async () => {
+    // Only when it differs -- saves a round-trip on the usual path.
+    if (cart?.email !== email.trim()) {
+      await checkoutService.setCartEmail(cartId, email.trim())
+    }
+    await checkoutService.ensureDigitalShippingMethod(cartId)
+  }
+
+  const isPaid = (paymentIntent?: PaymentIntent) =>
+    paymentIntent?.status === 'requires_capture' || paymentIntent?.status === 'succeeded'
+
+  const completeOrder = async () => {
+    const result = await checkoutService.completeCart(cartId)
+    // Tell the parent page to stop watching the cart before touching it
+    // at all -- CheckoutPageContent redirects to /cart the instant it
+    // sees an empty cart, and clearing the cart here re-renders that
+    // still-mounted component synchronously, ahead of router.push
+    // actually completing navigation. Reordering push-then-clear alone
+    // wasn't enough to win that race; this closes it properly.
+    onOrderCompleted()
+    clearCart()
+    router.push(`/order/confirmation/${result.orderId}`)
+  }
+
+  const handleCompletionError = async (err: unknown) => {
+    if (err instanceof ServiceFeeOutOfDateError) {
+      // The charge that just went through was for the OLD total -- it must not be silently
+      // retried. Re-sync the fee, get a fresh payment session for the corrected amount, and
+      // make the customer explicitly review and submit again.
+      setErrorMessage(
+        'Your order total changed. Please review it below and submit payment again.',
+      )
+      try {
+        await applyServiceFee()
+      } catch (syncError) {
+        console.error('Failed to re-sync service fee after 409', syncError)
+      }
+      onServiceFeeStale()
+    } else if (err instanceof CheckoutRiskBlockedError) {
+      setErrorMessage(
+        err.message ||
+          "We couldn't process this order. Please contact support or try a different payment method.",
+      )
+    } else {
+      setErrorMessage(
+        extractApiErrorMessage(err, 'Something went wrong completing your order.'),
+      )
+    }
+    setSubmitting(false)
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!stripe || !elements) return
@@ -235,14 +299,7 @@ function CheckoutFormInner({
     setErrorMessage(null)
 
     try {
-      // No address form is shown here; Medusa's own checkout doesn't require
-      // one to complete an order. Email and a payment method are all that's
-      // needed (see checkout.service.ts).
-      // Only when it differs -- saves a round-trip on the usual path.
-      if (cart?.email !== email.trim()) {
-        await checkoutService.setCartEmail(cartId, email.trim())
-      }
-      await checkoutService.ensureDigitalShippingMethod(cartId)
+      await prepareCart()
 
       const { error: submitError } = await elements.submit()
       if (submitError) {
@@ -255,9 +312,7 @@ function CheckoutFormInner({
 
       const { error, paymentIntent } = await stripe.confirmPayment({
         elements,
-        confirmParams: {
-          return_url: `${window.location.origin}${localizedHref(locale, '/checkout/complete')}?cart_id=${cartId}`,
-        },
+        confirmParams: { return_url: returnUrl() },
         redirect: 'if_required',
       })
 
@@ -272,54 +327,62 @@ function CheckoutFormInner({
       // wallets and bank redirects) never reach this line -- the browser
       // has already navigated to return_url above, and /checkout/complete
       // finishes the job when the customer comes back.
-      if (
-        paymentIntent &&
-        (paymentIntent.status === 'requires_capture' ||
-          paymentIntent.status === 'succeeded')
-      ) {
-        const result = await checkoutService.completeCart(cartId)
-        // Tell the parent page to stop watching the cart before touching it
-        // at all -- CheckoutPageContent redirects to /cart the instant it
-        // sees an empty cart, and clearing the cart here re-renders that
-        // still-mounted component synchronously, ahead of router.push
-        // actually completing navigation. Reordering push-then-clear alone
-        // wasn't enough to win that race; this closes it properly.
-        onOrderCompleted()
-        clearCart()
-        router.push(`/order/confirmation/${result.orderId}`)
+      if (isPaid(paymentIntent)) {
+        await completeOrder()
         return
       }
 
       setSubmitting(false)
-    } catch (err: any) {
-      if (err instanceof ServiceFeeOutOfDateError) {
-        // The charge that just went through was for the OLD total -- it must not be silently
-        // retried. Re-sync the fee, get a fresh payment session for the corrected amount, and
-        // make the customer explicitly review and submit again.
-        setErrorMessage(
-          'Your order total changed. Please review it below and submit payment again.',
-        )
-        try {
-          await applyServiceFee()
-        } catch (syncError) {
-          console.error('Failed to re-sync service fee after 409', syncError)
-        }
-        onServiceFeeStale()
-      } else if (err instanceof CheckoutRiskBlockedError) {
-        setErrorMessage(
-          err.message ||
-            "We couldn't process this order. Please contact support or try a different payment method.",
-        )
-      } else {
-        setErrorMessage(
-          extractApiErrorMessage(
-            err,
-            'Something went wrong completing your order.',
-          ),
-        )
-      }
-      setSubmitting(false)
+    } catch (err) {
+      await handleCompletionError(err)
     }
+  }
+
+  // Apple Pay / Google Pay: the customer approved the payment in the wallet sheet. Same steps as
+  // "Pay now", without the card form's own validation (elements.submit), which would fail on the
+  // empty card fields. Telling the sheet about a failure closes it with an error.
+  const handleExpressConfirm = async (event: StripeExpressCheckoutElementConfirmEvent) => {
+    if (!stripe || !elements) return
+
+    if (!EMAIL_PATTERN.test(email.trim())) {
+      event.paymentFailed({ reason: 'fail' })
+      setErrorMessage('Please add a valid email address above.')
+      return
+    }
+
+    setSubmitting(true)
+    setErrorMessage(null)
+
+    try {
+      await prepareCart()
+
+      const { error, paymentIntent } = await stripe.confirmPayment({
+        elements,
+        confirmParams: { return_url: returnUrl() },
+        redirect: 'if_required',
+      })
+
+      if (error) {
+        event.paymentFailed({ reason: 'fail' })
+        setErrorMessage(error.message ?? 'Payment failed. Please try again.')
+        setSubmitting(false)
+        return
+      }
+
+      if (isPaid(paymentIntent)) {
+        await completeOrder()
+        return
+      }
+
+      setSubmitting(false)
+    } catch (err) {
+      event.paymentFailed({ reason: 'fail' })
+      await handleCompletionError(err)
+    }
+  }
+
+  const handleExpressReady = ({ availablePaymentMethods }: StripeExpressCheckoutElementReadyEvent) => {
+    setHasWallets(Boolean(availablePaymentMethods?.applePay || availablePaymentMethods?.googlePay))
   }
 
   return (
@@ -336,6 +399,26 @@ function CheckoutFormInner({
         <h2 className="mb-4 text-lg font-semibold text-white md:text-xl">
           Payment method
         </h2>
+        <div className={hasWallets ? 'mb-4' : 'invisible h-0 overflow-hidden'}>
+          <ExpressCheckoutElement
+            options={{
+              // 'always' also offers Apple Pay in Chrome/Edge/Firefox on desktop (the customer
+              // scans a code with their iPhone); 'auto' shows it in Safari only. Link stays in
+              // the card form below, so it isn't offered twice.
+              paymentMethods: {
+                applePay: 'always',
+                googlePay: 'always',
+                link: 'never',
+                amazonPay: 'never',
+                paypal: 'never',
+                klarna: 'never',
+              },
+              buttonHeight: 48,
+            }}
+            onReady={handleExpressReady}
+            onConfirm={handleExpressConfirm}
+          />
+        </div>
         <PaymentElement />
         <p className="text-muted-foreground mt-2 text-xs">
           Some cards ask for a billing postal code here. That's Stripe
