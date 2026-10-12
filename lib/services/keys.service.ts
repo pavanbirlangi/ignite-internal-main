@@ -31,10 +31,16 @@ export const keysService = {
    * email-based lookup this replaces was calling a dead endpoint). Fetching
    * this route *is* the reveal action -- the backend workflow is literally
    * named `reveal-license-key`, there's no separate reveal call.
+   * With `variantId`, only that product's keys are revealed and returned (the
+   * reveal modal); without it, every key on the order ("Download All Keys").
    */
-  getOrderKeys: async (orderId: string): Promise<KeyAssignment[]> => {
+  getOrderKeys: async (
+    orderId: string,
+    options: { variantId?: string } = {},
+  ): Promise<KeyAssignment[]> => {
     const { data } = await medusaClient.get(
       `/store/orders/${encodeURIComponent(orderId)}/key`,
+      options.variantId ? { params: { variant_id: options.variantId } } : undefined,
     )
     return (data.keys ?? []).map(mapKeyAssignment)
   },

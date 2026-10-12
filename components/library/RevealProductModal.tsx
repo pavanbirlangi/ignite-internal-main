@@ -63,9 +63,12 @@ export function RevealProductModal({
       setError(null)
 
       try {
-        const data = await keysService.getOrderKeys(product.orderId)
+        // Only this product's keys: asking for the whole order would reveal every product's key.
+        const data = await keysService.getOrderKeys(product.orderId, {
+          variantId: product.variantId || undefined,
+        })
         if (!cancelled) {
-          // Filter to the selected variant only (an order can contain other products)
+          // Still filtered here, so an older backend answering with the whole order is harmless.
           const variantAssignments = product.variantId
             ? data.filter((a) => a.variantId === product.variantId)
             : data
