@@ -128,8 +128,8 @@ export function CartDrawer() {
     })
   }, [cart])
 
-  // No promotion module exists yet -- footer/order-summary totals show the
-  // pre-tax subtotal, not the tax-inclusive total. See cart.service.ts.
+  // The footer's "Cart Total" is the products only, like the cart page: the
+  // service fee and tax are shown and charged at checkout, not in the cart.
   const itemsSubtotal = React.useMemo(
     () => cartItems.reduce((acc, item) => acc + item.price * item.quantity, 0),
     [cartItems],
@@ -306,7 +306,7 @@ export function CartDrawer() {
         {/* Fixed Footer */}
         {cartCount > 0 && (
           <CartFooter
-            total={itemsSubtotal + (cart?.serviceFee ?? 0)}
+            total={itemsSubtotal}
             count={cartCount}
             currencyCode={subtotalCurrencyCode}
           />
