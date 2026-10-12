@@ -37,6 +37,11 @@ const nextConfig: NextConfig = {
         protocol: 'https',
         hostname: '*.s3.*.amazonaws.com',
       },
+      {
+        // Product images once the S3 bucket is served through CloudFront (backend R-80).
+        protocol: 'https',
+        hostname: 'cdn.increddy.com',
+      },
     ],
   },
   async rewrites() {
