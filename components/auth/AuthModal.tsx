@@ -25,7 +25,8 @@ export default function AuthModal({
   children: React.ReactNode
   defaultMode?: AuthMode
 }) {
-  const { open, mode, openModal, closeModal, setMode } = useAuthModalStore()
+  const { open, mode, verifyEmail, openModal, closeModal, setMode, showVerifyEmail } =
+    useAuthModalStore()
 
   const handleOpenChange = (newOpen: boolean) => {
     if (newOpen) {
@@ -58,6 +59,7 @@ export default function AuthModal({
               {mode === 'recover' && 'Recover Password'}
               {mode === 'recover-email-sent' && 'Confirm Registered Mail'}
               {mode === 'email-code' && 'Sign In With Email Code'}
+              {mode === 'verify-email' && 'Verify Your Email'}
             </DialogTitle>
             <DialogClose className="cursor-pointer rounded-full transition-colors hover:bg-white/10">
               <X className="text-muted-foreground h-4 w-4" strokeWidth={2.5} />
@@ -69,13 +71,14 @@ export default function AuthModal({
               onSwitchToRegister={() => setMode('register')}
               onSwitchToRecover={() => setMode('recover')}
               onSwitchToEmailCode={() => setMode('email-code')}
+              onEmailNotVerified={showVerifyEmail}
               onLoginSuccess={() => handleOpenChange(false)}
             />
           )}
           {mode === 'register' && (
             <RegisterForm
               onSwitchToLogin={() => setMode('login')}
-              onSuccess={() => setMode('login')}
+              onSuccess={showVerifyEmail}
             />
           )}
           {mode === 'recover' && (
@@ -87,6 +90,14 @@ export default function AuthModal({
           {mode === 'recover-email-sent' && <RecoverEmailSent />}
           {mode === 'email-code' && (
             <EmailCodeForm
+              onSwitchToLogin={() => setMode('login')}
+              onSuccess={() => handleOpenChange(false)}
+            />
+          )}
+          {mode === 'verify-email' && verifyEmail && (
+            <EmailCodeForm
+              key={verifyEmail}
+              verifyEmail={verifyEmail}
               onSwitchToLogin={() => setMode('login')}
               onSuccess={() => handleOpenChange(false)}
             />

@@ -5,7 +5,7 @@ import { Eye, EyeOff } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { SocialButtons } from './SocialButtons'
 import { INPUT_CLASS, OrDivider } from './shared'
-import { authService } from '@/lib/services/auth.service'
+import { authService, isEmailNotVerifiedError } from '@/lib/services/auth.service'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
@@ -25,11 +25,14 @@ export function LoginForm({
   onSwitchToRegister,
   onSwitchToRecover,
   onSwitchToEmailCode,
+  onEmailNotVerified,
   onLoginSuccess,
 }: {
   onSwitchToRegister: () => void
   onSwitchToRecover?: () => void
   onSwitchToEmailCode?: () => void
+  // The password was right but the account's email isn't verified yet: show the code step.
+  onEmailNotVerified?: (email: string) => void
   onLoginSuccess?: () => void
 }) {
   const [isLoading, setIsLoading] = useState(false)
@@ -78,6 +81,19 @@ export function LoginForm({
         onLoginSuccess()
       }
     } catch (err: any) {
+      if (isEmailNotVerifiedError(err) && onEmailNotVerified) {
+        const email = data.email.trim().toLowerCase()
+        // A code may already be on its way (e.g. right after signup): a "wait 60 seconds"
+        // answer still means the customer has a recent code, so show the code step either way.
+        try {
+          await authService.requestLoginCode(email, 'verify')
+        } catch (codeError) {
+          console.error('Could not send a verification code:', codeError)
+        }
+        toast.info('Please verify your email. We sent you a code.')
+        onEmailNotVerified(email)
+        return
+      }
       console.error('Login failed:', err)
       const errorMessage =
         err.response?.data?.message || 'Invalid email or password'

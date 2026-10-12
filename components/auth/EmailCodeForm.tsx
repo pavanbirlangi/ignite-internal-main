@@ -19,17 +19,24 @@ const LINK_BUTTON_CLASS =
 
 // Passwordless sign-in: the customer gets one email with a 6-digit code and a magic link. Works for
 // new and existing customers alike -- an unknown email becomes a new account.
+//
+// With `verifyEmail` set it is the email-verification step instead: a new password account must
+// enter the code it was just sent before it can sign in. The form starts at the code step (the code
+// is already on its way) and entering it verifies the email and signs the customer in.
 export function EmailCodeForm({
   onSwitchToLogin,
   onSuccess,
+  verifyEmail,
 }: {
   onSwitchToLogin: () => void
   onSuccess?: () => void
+  verifyEmail?: string | null
 }) {
+  const isVerify = Boolean(verifyEmail)
   const [email, setEmail] = useState('')
   const [code, setCode] = useState('')
-  const [codeSentTo, setCodeSentTo] = useState<string | null>(null)
-  const [cooldown, setCooldown] = useState(0)
+  const [codeSentTo, setCodeSentTo] = useState<string | null>(verifyEmail ?? null)
+  const [cooldown, setCooldown] = useState(verifyEmail ? RESEND_COOLDOWN_SECONDS : 0)
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
 
@@ -43,7 +50,7 @@ export function EmailCodeForm({
     setIsLoading(true)
     setError(null)
     try {
-      await authService.requestLoginCode(target)
+      await authService.requestLoginCode(target, isVerify ? 'verify' : 'login')
       setCodeSentTo(target)
       setCode('')
       setCooldown(RESEND_COOLDOWN_SECONDS)
@@ -75,7 +82,7 @@ export function EmailCodeForm({
     setError(null)
     try {
       await completeSignIn(await authService.verifyLoginCode({ email: codeSentTo, code }))
-      toast.success('Login successful')
+      toast.success(isVerify ? 'Email verified. You are signed in.' : 'Login successful')
       onSuccess?.()
     } catch (err) {
       setError(extractApiErrorMessage(err, 'This code is invalid or has expired.'))
@@ -123,10 +130,18 @@ export function EmailCodeForm({
 
   return (
     <form onSubmit={handleCodeSubmit} noValidate>
-      <p className="text-muted-foreground mb-4 text-sm font-medium">
-        We sent a 6-digit code to <span className="text-white">{codeSentTo}</span>. It expires in
-        10 minutes. You can also use the sign-in link in that email.
-      </p>
+      {isVerify ? (
+        <p className="text-muted-foreground mb-4 text-sm font-medium">
+          Please verify your email to finish setting up your account. We sent a 6-digit code to{' '}
+          <span className="text-white">{codeSentTo}</span>. It expires in 10 minutes. You can also
+          use the link in that email.
+        </p>
+      ) : (
+        <p className="text-muted-foreground mb-4 text-sm font-medium">
+          We sent a 6-digit code to <span className="text-white">{codeSentTo}</span>. It expires in
+          10 minutes. You can also use the sign-in link in that email.
+        </p>
+      )}
       <div className="mb-6">
         <Input
           type="text"
@@ -143,19 +158,25 @@ export function EmailCodeForm({
         {errorText}
       </div>
       <button type="submit" disabled={isLoading} className={PRIMARY_BUTTON_CLASS}>
-        {isLoading ? 'Signing in...' : 'Sign In'}
+        {isLoading ? (isVerify ? 'Verifying...' : 'Signing in...') : isVerify ? 'Verify Email' : 'Sign In'}
       </button>
       <div className="flex items-center justify-between">
-        <button
-          type="button"
-          onClick={() => {
-            setCodeSentTo(null)
-            setError(null)
-          }}
-          className={LINK_BUTTON_CLASS}
-        >
-          Use a different email
-        </button>
+        {isVerify ? (
+          <button type="button" onClick={onSwitchToLogin} className={LINK_BUTTON_CLASS}>
+            Back to login
+          </button>
+        ) : (
+          <button
+            type="button"
+            onClick={() => {
+              setCodeSentTo(null)
+              setError(null)
+            }}
+            className={LINK_BUTTON_CLASS}
+          >
+            Use a different email
+          </button>
+        )}
         <button
           type="button"
           disabled={isLoading || cooldown > 0}

@@ -49,7 +49,8 @@ export function RegisterForm({
   onSuccess,
 }: {
   onSwitchToLogin: () => void
-  onSuccess: () => void
+  // Called with the new account's email: it must be verified (the code is already emailed).
+  onSuccess: (email: string) => void
 }) {
   const [isLoading, setIsLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
@@ -94,8 +95,8 @@ export function RegisterForm({
         password: data.password,
         turnstileToken: turnstileToken ?? undefined,
       })
-      toast.success('Registration successful')
-      onSuccess()
+      toast.success('Account created. Check your email for a verification code.')
+      onSuccess(data.email.trim().toLowerCase())
     } catch (err: any) {
       console.error('Registration failed:', err)
       const errorMessage = err.response?.data?.message || 'Registration failed'

@@ -329,8 +329,16 @@ export const authService = {
    * Works for any email -- an unknown one becomes a new account on verify -- and answers the same
    * either way. Throws with the backend's message on 429 (asked again within 60s, or too often).
    */
-  requestLoginCode: async (email: string): Promise<{ expiresInSeconds: number }> => {
-    const { data } = await medusaClient.post('/store/auth/otp/request', { email })
+  requestLoginCode: async (
+    email: string,
+    purpose: 'login' | 'verify' = 'login',
+  ): Promise<{ expiresInSeconds: number }> => {
+    // "verify" sends the "Verify your email" wording of the same code and link (new password
+    // accounts must verify before they can sign in).
+    const { data } = await medusaClient.post('/store/auth/otp/request', {
+      email,
+      ...(purpose === 'verify' ? { purpose } : {}),
+    })
     return { expiresInSeconds: data.expires_in_seconds ?? 600 }
   },
 
@@ -420,4 +428,13 @@ export const authService = {
       },
     }
   },
+}
+
+/**
+ * True when the backend refused a sign-in because the account's email isn't verified yet
+ * (403 `{ type: "email_not_verified" }`): a password account registered but never confirmed.
+ */
+export function isEmailNotVerifiedError(err: unknown): boolean {
+  const response = (err as { response?: { status?: number; data?: { type?: string } } })?.response
+  return response?.status === 403 && response.data?.type === 'email_not_verified'
 }
