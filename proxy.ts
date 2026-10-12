@@ -52,6 +52,35 @@ async function isProtectedRouteSessionValid(
   }
 }
 
+// The currencies the admin has enabled (Medusa Admin -> Currencies), for validating ?currency=
+// links such as the product feeds' (/es/minecraft-java-bedrock-edition?currency=EUR). Fetched only
+// when a link carries the parameter, and cached for 5 minutes like display-currency.service.
+const ENABLED_CURRENCIES_TTL_MS = 5 * 60 * 1000
+let enabledCurrenciesCache: { expiresAt: number; codes: Set<string> } | null = null
+
+async function getEnabledCurrencyCodes(): Promise<Set<string> | null> {
+  if (enabledCurrenciesCache && enabledCurrenciesCache.expiresAt > Date.now()) {
+    return enabledCurrenciesCache.codes
+  }
+  const backendUrl = process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL
+  const publishableKey = process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY
+  if (!backendUrl || !publishableKey) return null
+
+  try {
+    const response = await fetch(`${backendUrl}/store/display-currencies`, {
+      headers: { 'x-publishable-api-key': publishableKey },
+      cache: 'no-store',
+    })
+    if (!response.ok) return null
+    const data = (await response.json()) as { currencies?: { code: string }[] }
+    const codes = new Set(['USD', ...(data.currencies ?? []).map((c) => String(c.code).toUpperCase())])
+    enabledCurrenciesCache = { expiresAt: Date.now() + ENABLED_CURRENCIES_TTL_MS, codes }
+    return codes
+  } catch {
+    return null
+  }
+}
+
 function isProtectedRoute(pathname: string) {
   return PROTECTED_ROUTES.some(
     (route) => pathname === route || pathname.startsWith(`${route}/`),
@@ -91,7 +120,10 @@ export async function proxy(request: NextRequest) {
 
   // --- Handle ?currency= query parameter ---
   const currencyParam = request.nextUrl.searchParams.get('currency')?.trim().toUpperCase()
-  const validCurrencyCodes = new Set(regionCurrencies.map((c) => c.value))
+  // The admin's enabled list; the built-in list only if the backend can't be reached.
+  const validCurrencyCodes = currencyParam
+    ? ((await getEnabledCurrencyCodes()) ?? new Set(regionCurrencies.map((c) => c.value)))
+    : new Set<string>()
   let currencyOverride = false
 
   // If an invalid/empty currency param is present, strip it and redirect to clean URL
