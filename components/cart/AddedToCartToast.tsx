@@ -120,6 +120,18 @@ function AddedToCartToast({
  * Pinned bottom-right per toast rather than globally -- the app's `<Toaster>`
  * stays top-center for every other toast.
  */
+// One id for every add-to-cart popup: a second add replaces the first instead of stacking.
+const ADDED_TO_CART_TOAST_ID = 'added-to-cart'
+
+// The cart drawer is a modal sheet: while it's open nothing outside it can be clicked, so a
+// popup there could be neither used nor closed. The drawer already shows the new item and total.
+let cartDrawerOpen = false
+
+export function setCartDrawerOpen(open: boolean) {
+  cartDrawerOpen = open
+  if (open) toast.dismiss(ADDED_TO_CART_TOAST_ID)
+}
+
 export function showAddedToCartToast(item: {
   title: string
   thumbnail?: string
@@ -127,8 +139,9 @@ export function showAddedToCartToast(item: {
   quantity: number
   currencyCode: string
 }) {
+  if (cartDrawerOpen) return
   toast.custom(
     (id) => <AddedToCartToast {...item} onDismiss={() => toast.dismiss(id)} />,
-    { position: 'bottom-right', duration: 6000 },
+    { id: ADDED_TO_CART_TOAST_ID, position: 'bottom-right', duration: 6000 },
   )
 }

@@ -18,6 +18,7 @@ import { toast } from 'sonner'
 
 import { useCartStore } from '@/store/useCartStore'
 import { getDiscountPercent } from '@/lib/utils/discount'
+import { setCartDrawerOpen } from '@/components/cart/AddedToCartToast'
 
 const RECOMMENDATION_PLACEHOLDER_IMAGE =
   'https://placehold.co/205x262/png?text=No+Image'
@@ -79,6 +80,12 @@ const getDiscountPercentage = (
 
 export function CartDrawer() {
   const [open, setOpen] = React.useState(false)
+
+  // Keeps the add-to-cart popup away while the drawer is open (see setCartDrawerOpen).
+  React.useEffect(() => {
+    setCartDrawerOpen(open)
+    return () => setCartDrawerOpen(false)
+  }, [open])
   const router = useRouter()
   const {
     cart,
