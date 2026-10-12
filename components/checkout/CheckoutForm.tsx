@@ -226,8 +226,8 @@ function CheckoutFormInner({
   const [submitting, setSubmitting] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
 
-  // Wallet buttons (Apple Pay, Google Pay) shown above the card form only when the browser can use
-  // one of them, so there's no empty gap when neither is available.
+  // Express buttons (Apple Pay, Google Pay, Link) shown above the card form only when at least one
+  // is available, so there's no empty gap otherwise.
   const [hasWallets, setHasWallets] = useState(false)
 
   const returnUrl = () =>
@@ -382,7 +382,13 @@ function CheckoutFormInner({
   }
 
   const handleExpressReady = ({ availablePaymentMethods }: StripeExpressCheckoutElementReadyEvent) => {
-    setHasWallets(Boolean(availablePaymentMethods?.applePay || availablePaymentMethods?.googlePay))
+    setHasWallets(
+      Boolean(
+        availablePaymentMethods?.applePay ||
+          availablePaymentMethods?.googlePay ||
+          availablePaymentMethods?.link,
+      ),
+    )
   }
 
   return (
@@ -403,12 +409,12 @@ function CheckoutFormInner({
           <ExpressCheckoutElement
             options={{
               // 'always' also offers Apple Pay in Chrome/Edge/Firefox on desktop (the customer
-              // scans a code with their iPhone); 'auto' shows it in Safari only. Link stays in
-              // the card form below, so it isn't offered twice.
+              // scans a code with their iPhone); 'auto' shows it in Safari only. Link gets its
+              // own one-click button here too (it is offered in every region).
               paymentMethods: {
                 applePay: 'always',
                 googlePay: 'always',
-                link: 'never',
+                link: 'auto',
                 amazonPay: 'never',
                 paypal: 'never',
                 klarna: 'never',
