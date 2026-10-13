@@ -359,7 +359,8 @@ function mapProductListItem(raw: any): ProductListItem {
     return {
       id: v.id,
       title: v.title,
-      availableForSale: true,
+      // Set by attachListStock below; a variant it couldn't check stays buyable.
+      availableForSale: v.purchasable ?? true,
       selectedOptions: Array.isArray(v.options)
         ? v.options.map((o: any) => ({ name: o.option?.title ?? '', value: o.value ?? '' }))
         : [],
@@ -483,7 +484,32 @@ const getClientRegionId = async (): Promise<string | undefined> => {
 // ─── Raw fetchers ──────────────────────────────────────────────────────────
 
 const PRODUCT_FIELDS =
-  '*variants.calculated_price,+metadata,+images,+options.values,+variants.options.value'
+  '*variants.calculated_price,+metadata,+images,+options.values,+variants.options.value,+variants.allow_backorder'
+
+// List cards show "Out of Stock" when a variant can't be bought. A variant with "Allow backorders"
+// on always can (the order waits for a manual key award); for the others, only the backend's
+// digital-availability route knows whether an unused key is left, so it's asked once per such
+// product. Sets `purchasable` on each raw variant for mapProductListItem.
+type StockCheckProduct = {
+  id: string
+  variants?: { id: string; allow_backorder?: boolean; purchasable?: boolean }[]
+}
+
+async function attachListStock(rawProducts: StockCheckProduct[]): Promise<void> {
+  const unsure = rawProducts.filter((p) =>
+    (p?.variants ?? []).some((v) => v?.allow_backorder !== true),
+  )
+  const availability = await Promise.all(
+    unsure.map((p) => fetchDigitalAvailability(p.id)),
+  )
+  unsure.forEach((product, i) => {
+    for (const variant of product.variants ?? []) {
+      if (variant?.allow_backorder === true) continue
+      const purchasable = availability[i].get(variant.id)?.purchasable
+      if (typeof purchasable === 'boolean') variant.purchasable = purchasable
+    }
+  })
+}
 
 // Products are priced in USD only; prices in the visitor's display currency are the USD amounts
 // times the admin-managed exchange rate (display-currency.service.ts), applied to each raw
@@ -572,7 +598,7 @@ const _fetchProductsByIds = async (
     },
   })
   const rawProducts = data.products ?? []
-  await convertDisplayPrices(rawProducts, currency)
+  await Promise.all([convertDisplayPrices(rawProducts, currency), attachListStock(rawProducts)])
   return rawProducts.map(mapProductListItem).filter(hasPrice)
 }
 
@@ -790,7 +816,7 @@ export const ProductService = {
             },
           })
           const rawProducts = data.products ?? []
-          await convertDisplayPrices(rawProducts, cur)
+          await Promise.all([convertDisplayPrices(rawProducts, cur), attachListStock(rawProducts)])
           return rawProducts.map(mapProductListItem).filter(hasPrice)
         },
         ['collection-products-by-handle'],
