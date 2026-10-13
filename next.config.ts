@@ -7,6 +7,10 @@ const nextConfig: NextConfig = {
     formats: ['image/avif', 'image/webp'],
     // Cache optimized images on the server for 24 hours
     minimumCacheTTL: 86400,
+    // Show images in the browser when opened on their own ("Open image in new tab") instead of
+    // downloading them -- Next's default is "attachment". Safe here: the optimizer never serves
+    // SVG (dangerouslyAllowSVG is off, and image-loader.ts serves SVGs directly).
+    contentDispositionType: 'inline',
     // Custom loader rewrites /cdn-shopify/ proxy paths → absolute cdn.shopify.com URLs
     // so the optimizer can fetch and serve them as WebP/AVIF without 400 errors
     loaderFile: './lib/image-loader.ts',
