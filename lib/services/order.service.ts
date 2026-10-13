@@ -57,6 +57,10 @@ export interface OrderPaymentMethod {
   type?: string | null
   brand?: string | null
   lastDigits?: string | null
+  // What the customer was actually charged. Differs from the order's USD total only for a local
+  // method charged in its own currency (e.g. Bancontact in EUR, backend R-78).
+  chargeCurrency?: string | null
+  chargeAmount?: number | null
 }
 
 export interface OrderLineItemEdge {
@@ -339,6 +343,11 @@ export const orderService = {
         gateway: paymentMethod.gateway ?? null,
         type: paymentMethod.type ?? null,
         brand: paymentMethod.brand ?? null,
+        chargeCurrency: paymentMethod.charge_currency ?? null,
+        chargeAmount:
+          paymentMethod.charge_amount !== undefined && paymentMethod.charge_amount !== null
+            ? Number(paymentMethod.charge_amount)
+            : null,
         lastDigits: paymentMethod.last4 ?? null,
       },
       // platformFee/platformFeeLabel already come from `base` (mapOrder) above.

@@ -1,7 +1,7 @@
 import { formatOrderPrice } from '@/lib/orders/order-formatters'
 import { type OrderDetails } from '@/lib/services/order.service'
 import { getVariantDisplayName } from '@/lib/orders/variant-title'
-import { getPaymentMethodName } from '@/lib/orders/payment-method'
+import { getForeignCharge, getPaymentMethodName } from '@/lib/orders/payment-method'
 
 export type ConfirmationState =
   | 'success-key-ready'
@@ -75,6 +75,15 @@ function getPaymentMode(order: OrderDetails | null): string {
   return paymentMode || getPaymentMethodName(order.paymentMethod)
 }
 
+// The order's total; for a local method charged in its own currency, what was charged first and
+// the USD order total after it ("€ 11.63 ($ 12.99)").
+function getOrderAmount(order: OrderDetails | null): string {
+  const total = formatOrderPrice(order?.totalPrice?.amount, order?.totalPrice?.currencyCode)
+  const foreign = getForeignCharge(order?.paymentMethod, order?.totalPrice?.currencyCode)
+  if (!foreign) return total
+  return `${formatOrderPrice(foreign.amount, foreign.currency.toUpperCase())} (${total})`
+}
+
 function getItemSummary(order: OrderDetails | null): string {
   const lineItems = order?.lineItems?.edges ?? []
 
@@ -108,10 +117,7 @@ export function buildOrderConfirmationViewModel(
     productImage:
       order?.lineItems?.edges?.[0]?.node?.variant?.image?.url ??
       '/images/404.png',
-    orderAmount: formatOrderPrice(
-      order?.totalPrice?.amount,
-      order?.totalPrice?.currencyCode,
-    ),
+    orderAmount: getOrderAmount(order),
     serviceFee:
       order?.platformFee !== undefined && order?.totalPrice?.currencyCode
         ? formatOrderPrice(order.platformFee.toFixed(2), order.totalPrice.currencyCode)

@@ -2,7 +2,7 @@ import { jsPDF } from 'jspdf'
 import type { OrderDetails } from '@/lib/services/order.service'
 import { formatOrderDate, formatOrderPrice } from './order-formatters'
 import { getVariantDisplayName } from '@/lib/orders/variant-title'
-import { getPaymentMethodName } from '@/lib/orders/payment-method'
+import { getForeignCharge, getPaymentMethodName } from '@/lib/orders/payment-method'
 
 type RGB = readonly [number, number, number]
 
@@ -28,6 +28,25 @@ const PAGE_BOTTOM = 270
 const toNumber = (amount?: string | number) => {
   const value = typeof amount === 'string' ? Number.parseFloat(amount) : (amount ?? 0)
   return Number.isFinite(value) ? value : 0
+}
+
+// An amount with its currency code, no symbol ("11.63 EUR", "17,325 KRW"): jsPDF's built-in font
+// can't draw every currency symbol (₩, zł).
+const amountWithCode = (amount: number, currencyCode: string) => {
+  const code = currencyCode.toUpperCase()
+  let digits = 2
+  try {
+    digits =
+      new Intl.NumberFormat('en-US', { style: 'currency', currency: code }).resolvedOptions()
+        .maximumFractionDigits ?? 2
+  } catch {
+    digits = 2
+  }
+  const number = new Intl.NumberFormat('en-US', {
+    minimumFractionDigits: digits,
+    maximumFractionDigits: digits,
+  }).format(amount)
+  return `${number} ${code}`
 }
 
 const capitalize = (value: string) => value.charAt(0).toUpperCase() + value.slice(1)
@@ -190,6 +209,18 @@ export function generateReceiptPdf(order: OrderDetails): void {
   doc.text(`${money(total)} ${currency.toUpperCase()}`, right - 3, y, { align: 'right' })
   y += 8
 
+  // A local method charged in its own currency (e.g. Bancontact in EUR): the amount on the
+  // customer's bank statement.
+  const foreignCharge = getForeignCharge(order.paymentMethod, currency)
+  if (foreignCharge) {
+    const chargedCode = foreignCharge.currency.toUpperCase()
+    setText(10, MUTED)
+    doc.text(`Charged in ${chargedCode}`, labelX, y)
+    setText(10, INK)
+    doc.text(amountWithCode(foreignCharge.amount, chargedCode), right - 3, y, { align: 'right' })
+    y += 7
+  }
+
   if (refunded > 0) {
     setText(10, MUTED)
     doc.text('Refunded', labelX, y)
@@ -208,9 +239,14 @@ export function generateReceiptPdf(order: OrderDetails): void {
   y += 4.5
   setText(8.5, MUTED)
   const note = doc.splitTextToSize(
-    `All amounts are in ${currency.toUpperCase()}, the currency your payment was charged in. ` +
-      'Prices shown in another currency while shopping are converted estimates; your bank ' +
-      'statement shows this amount, converted by your bank if your card uses a different currency.',
+    foreignCharge
+      ? `Amounts are in ${currency.toUpperCase()}, the store's currency. You paid with ` +
+          `${getPaymentMethodName(order.paymentMethod)} in ${foreignCharge.currency.toUpperCase()}: ` +
+          `${amountWithCode(foreignCharge.amount, foreignCharge.currency)} was charged, ` +
+          'converted at the rate fixed when you paid. Your bank statement shows that amount.'
+      : `All amounts are in ${currency.toUpperCase()}, the currency your payment was charged in. ` +
+          'Prices shown in another currency while shopping are converted estimates; your bank ' +
+          'statement shows this amount, converted by your bank if your card uses a different currency.',
     right - MARGIN,
   )
   doc.text(note, MARGIN, y)

@@ -18,7 +18,7 @@ import { keysService, type KeyAssignment } from '@/lib/services/keys.service'
 import type { OrderDetailsClientProps } from '@/types/OrderDetailsTypes'
 import type { ProductDetails } from '@/components/library/reveal-product-modal/types'
 import { getVariantDisplayName } from '@/lib/orders/variant-title'
-import { getPaymentMethodName } from '@/lib/orders/payment-method'
+import { getForeignCharge, getPaymentMethodName } from '@/lib/orders/payment-method'
 
 // Paid orders have a receipt, including partly refunded ones (it lists the refund).
 const hasReceipt = (order: OrderDetails) =>
@@ -303,6 +303,15 @@ export default function OrderDetailsClient({
           serviceFeeLabel={order.platformFeeLabel}
           tax={formatOptionalAmount(order.totalTaxV2)}
           refunded={formatOptionalAmount(order.totalRefundedV2, '-')}
+          charged={(() => {
+            const foreign = getForeignCharge(order.paymentMethod, order.totalPrice?.currencyCode)
+            return foreign
+              ? {
+                  currency: foreign.currency.toUpperCase(),
+                  amount: formatOrderPrice(foreign.amount, foreign.currency.toUpperCase()),
+                }
+              : undefined
+          })()}
           netPaid={formatOrderPrice(
             Math.max(
               0,

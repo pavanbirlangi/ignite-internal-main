@@ -5,6 +5,17 @@ const METHOD_NAMES: Record<string, string> = {
   card: 'Card',
   alipay: 'Alipay',
   link: 'Link',
+  wechat_pay: 'WeChat Pay',
+  bancontact: 'Bancontact',
+  eps: 'EPS',
+  ideal: 'iDEAL',
+  mb_way: 'MB WAY',
+  p24: 'Przelewy24',
+  kr_card: 'Korean card',
+  kakao_pay: 'Kakao Pay',
+  naver_pay: 'Naver Pay',
+  payco: 'PAYCO',
+  samsung_pay: 'Samsung Pay',
 }
 
 // Medusa payment provider ids, used only when the backend doesn't say which method was used.
@@ -29,4 +40,19 @@ export function getPaymentMethodName(paymentMethod?: OrderPaymentMethod | null):
   }
 
   return 'Not available'
+}
+
+/**
+ * The amount actually charged, when it was in another currency than the order's (a local method
+ * such as Bancontact in EUR); null for a normal USD payment.
+ */
+export function getForeignCharge(
+  paymentMethod: OrderPaymentMethod | null | undefined,
+  orderCurrency: string | undefined,
+): { currency: string; amount: number } | null {
+  const currency = paymentMethod?.chargeCurrency?.toLowerCase()
+  const amount = paymentMethod?.chargeAmount
+  if (!currency || amount === null || amount === undefined || !Number.isFinite(amount)) return null
+  if (!orderCurrency || currency === orderCurrency.toLowerCase()) return null
+  return { currency, amount }
 }

@@ -18,6 +18,8 @@ interface TransactionDetailsProps {
   refunded?: string
   // With a refund, "total" is shown as "Total paid" and this as the final "Net paid" row.
   netPaid?: string
+  // A local method charged in its own currency (e.g. Bancontact in EUR): what was actually charged.
+  charged?: { currency: string; amount: string }
   total: string
 }
 
@@ -54,6 +56,7 @@ export function TransactionDetails({
   tax,
   refunded,
   netPaid,
+  charged,
   total,
 }: TransactionDetailsProps) {
   return (
@@ -72,6 +75,9 @@ export function TransactionDetails({
           {discount && <TransactionItem label="Discount" value={discount} />}
           {serviceFee && <TransactionItem label={serviceFeeLabel} value={serviceFee} />}
           {tax && <TransactionItem label="Tax" value={tax} />}
+          {charged && (
+            <TransactionItem label={`Charged in ${charged.currency}`} value={charged.amount} />
+          )}
           {refunded ? (
             <>
               <TransactionItem label="Total paid" value={total} />
