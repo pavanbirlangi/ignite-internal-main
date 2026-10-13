@@ -106,7 +106,7 @@ export function CartPageContent() {
         image:
           item.thumbnail ||
           'https://placehold.co/205x262/1a1a1a/555555?text=No+Image',
-        badges: [],
+        badges: item.tags,
         originalPrice,
         availableForSale: true,
       }

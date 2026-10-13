@@ -33,6 +33,8 @@ export interface CartLineItem {
   unitPrice: number
   compareAtUnitPrice: number | null
   thumbnail?: string
+  // The product's tags (Medusa Admin → product → Tags), shown as badges under the title.
+  tags: string[]
 }
 
 // Carts are always in USD (the charge currency for card payments). Every amount below is shown in
@@ -105,6 +107,9 @@ function mapCartLineItem(raw: any, convert: (amount: number) => number): CartLin
     // product.thumbnail was at add-to-cart time, including null) -- same
     // fallback product.service.ts's mapProductListItem already applies.
     thumbnail: raw.thumbnail || raw.product?.images?.[0]?.url,
+    tags: Array.isArray(raw.product?.tags)
+      ? raw.product.tags.map((t: { value?: string } | null) => t?.value).filter(Boolean)
+      : [],
   }
 }
 
@@ -143,7 +148,9 @@ function mapCart(raw: any, { currencyCode, convert }: CurrencyConverter): CartRe
 // line item has `thumbnail: null` even though the product has 3 real
 // gallery images, same root cause as the store-grid thumbnail bug).
 // `+items.metadata` is needed to detect the service-fee line (see mapCart above).
-const CART_FIELDS = '+items.thumbnail,+items.product.images.url,+items.metadata'
+// `+items.product.tags.value` feeds the tag badges on the cart page.
+const CART_FIELDS =
+  '+items.thumbnail,+items.product.images.url,+items.metadata,+items.product.tags.value'
 
 const toCart = async (raw: any): Promise<CartResponse> =>
   mapCart(raw, await getDisplayConverter(raw.currency_code ?? DEFAULT_CURRENCY))
