@@ -41,6 +41,9 @@ export class ServiceFeeOutOfDateError extends Error {
 export interface PaymentMethodOption {
   id: string
   label: string
+  // global: card (+ wallets, Link) and Alipay, charged in USD for everyone.
+  // local: shown only to its country (e.g. Bancontact in BE), charged in its own currency.
+  kind: 'global' | 'local'
   providerId: string
   chargeCurrency: string
   chargeAmount: number | null
@@ -62,6 +65,7 @@ export const checkoutService = {
     return (data.methods ?? []).map((m: any) => ({
       id: m.id,
       label: m.label,
+      kind: m.kind === 'local' ? 'local' : 'global',
       providerId: m.provider_id,
       chargeCurrency: String(m.charge_currency).toLowerCase(),
       chargeAmount: typeof m.charge_amount === 'number' ? m.charge_amount : null,
@@ -117,9 +121,15 @@ export const checkoutService = {
    * payment collection/session on every mount, which would otherwise orphan
    * a fresh Stripe PaymentIntent each time the checkout page reloads.
    */
+  /**
+   * The cart's Stripe payment session. With `methodId` (a local method such as "bancontact") the
+   * session is that method's, charged in its own currency; without it, the usual USD session for
+   * card, wallets, Link and Alipay. An existing session is reused only when it's of the kind asked
+   * for -- switching method creates a new one (the backend replaces the old).
+   */
   getOrCreateStripeSession: async (
     cartId: string,
-    options: { forceRefresh?: boolean } = {},
+    options: { forceRefresh?: boolean; methodId?: string | null } = {},
   ): Promise<StripePaymentSession> => {
     const encodedId = encodeURIComponent(cartId)
     const { data: cartData } = await medusaClient.get(
@@ -141,7 +151,16 @@ export const checkoutService = {
     // `forceRefresh` skips reusing a cached session -- used after the service fee changes
     // post-session-creation (see ServiceFeeOutOfDateError), so the payment provider recalculates
     // the charge amount against the cart's current total instead of confirming the stale one.
-    if (existingSession?.data?.client_secret && !options.forceRefresh) {
+    // A local-method session's PaymentIntent carries its method in metadata (backend R-78).
+    const existingMethodId: string | null = existingSession?.data?.metadata?.usd_amount
+      ? (existingSession.data.metadata.method_id ?? null)
+      : null
+    const wantedMethodId = options.methodId ?? null
+    if (
+      existingSession?.data?.client_secret &&
+      !options.forceRefresh &&
+      existingMethodId === wantedMethodId
+    ) {
       return {
         id: existingSession.id,
         providerId: STRIPE_PROVIDER_ID,
@@ -159,7 +178,10 @@ export const checkoutService = {
 
     const { data: sessionData } = await medusaClient.post(
       `/store/payment-collections/${paymentCollectionId}/payment-sessions`,
-      { provider_id: STRIPE_PROVIDER_ID },
+      {
+        provider_id: STRIPE_PROVIDER_ID,
+        ...(wantedMethodId ? { data: { method_id: wantedMethodId } } : {}),
+      },
     )
     const session = (sessionData.payment_collection.payment_sessions ?? []).find(
       (s: any) => s.provider_id === STRIPE_PROVIDER_ID,

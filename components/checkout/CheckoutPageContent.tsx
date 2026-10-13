@@ -23,6 +23,11 @@ export function CheckoutPageContent() {
   const [sessionError, setSessionError] = React.useState<string | null>(null)
   const [sessionLoading, setSessionLoading] = React.useState(true)
   const [paymentMethods, setPaymentMethods] = React.useState<PaymentMethodOption[]>([])
+  // The local method the customer picked (e.g. "bancontact"), or null for the usual USD methods
+  // (card, wallets, Link, Alipay). Only visitors whose country has local methods ever see the choice.
+  const [selectedMethodId, setSelectedMethodId] = React.useState<string | null>(null)
+  const [switchingMethod, setSwitchingMethod] = React.useState(false)
+  const [methodError, setMethodError] = React.useState<string | null>(null)
   // Flipped the instant an order finishes, before the cart is cleared or any
   // navigation happens. `router.push` doesn't block -- clearing the cart
   // right after a successful payment triggers a synchronous re-render of
@@ -126,12 +131,43 @@ export function CheckoutPageContent() {
   const refreshPaymentSession = React.useCallback(() => {
     if (!cartId) return
     checkoutService
-      .getOrCreateStripeSession(cartId, { forceRefresh: true })
+      .getOrCreateStripeSession(cartId, { forceRefresh: true, methodId: selectedMethodId })
       .then((session) => setClientSecret(session.clientSecret))
       .catch((error) => {
         console.error('Failed to refresh payment session', error)
       })
-  }, [cartId])
+  }, [cartId, selectedMethodId])
+
+  // Switching between the usual methods and a local one needs a new payment in the other
+  // currency, so a new session (and payment form) for it.
+  const selectMethod = React.useCallback(
+    (methodId: string | null) => {
+      if (!cartId || methodId === selectedMethodId || switchingMethod) return
+      setSwitchingMethod(true)
+      setMethodError(null)
+      checkoutService
+        .getOrCreateStripeSession(cartId, { methodId })
+        .then((session) => {
+          setSelectedMethodId(methodId)
+          setClientSecret(session.clientSecret)
+        })
+        .catch((error) => {
+          setMethodError(
+            extractApiErrorMessage(error, 'This payment method is not available right now.'),
+          )
+        })
+        .finally(() => setSwitchingMethod(false))
+    },
+    [cartId, selectedMethodId, switchingMethod],
+  )
+
+  // A local method that is no longer offered (e.g. switched off in Stripe) falls back to the usual ones.
+  React.useEffect(() => {
+    if (!selectedMethodId || !paymentMethods.length) return
+    if (!paymentMethods.some((m) => m.id === selectedMethodId && m.kind === 'local')) {
+      selectMethod(null)
+    }
+  }, [paymentMethods, selectedMethodId, selectMethod])
 
   if (isLoading || sessionLoading || !cart) {
     return (
@@ -165,10 +201,15 @@ export function CheckoutPageContent() {
     )
   }
 
-  // The payment method decides the charge currency (card -> USD); the customer never picks one.
-  // For a method charging in the cart's own currency the cart's live total is exact; otherwise the
-  // backend's converted amount is. Until the methods load, the cart's total is what card charges.
-  const paymentMethod = paymentMethods.find((m) => m.available) ?? null
+  // The payment method decides the charge currency (card -> USD, a local method -> its own); the
+  // customer never picks a currency. For a method charging in the cart's own currency the cart's
+  // live total is exact; otherwise the backend's converted amount is. Until the methods load, the
+  // cart's total is what card charges.
+  const localMethods = paymentMethods.filter((m) => m.kind === 'local' && m.available)
+  const paymentMethod =
+    (selectedMethodId && localMethods.find((m) => m.id === selectedMethodId)) ||
+    paymentMethods.find((m) => m.kind === 'global' && m.available) ||
+    null
   const charge: CheckoutCharge =
     paymentMethod &&
     paymentMethod.chargeCurrency !== cart.chargeCurrencyCode.toLowerCase() &&
@@ -191,6 +232,11 @@ export function CheckoutPageContent() {
             hasCompletedOrderRef.current = true
           }}
           onServiceFeeStale={refreshPaymentSession}
+          localMethods={localMethods}
+          selectedMethodId={selectedMethodId}
+          onSelectMethod={selectMethod}
+          switchingMethod={switchingMethod}
+          methodError={methodError}
         />
         <CheckoutSummary cart={cart} charge={charge} onCartChanged={refreshPaymentSession} />
       </section>

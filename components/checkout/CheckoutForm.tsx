@@ -28,6 +28,8 @@ import {
 import { extractApiErrorMessage } from '@/lib/utils/api-error'
 import { localizedHref } from '@/lib/utils'
 import { useCartStore } from '@/store/useCartStore'
+import type { PaymentMethodOption } from '@/lib/services/checkout.service'
+import { formatCurrency } from '@/lib/currency'
 
 const stripePromise = loadStripe(
   process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY as string,
@@ -127,6 +129,53 @@ interface CheckoutFormProps {
   // parent re-fetches a fresh payment session with the corrected amount and remounts this form.
   onServiceFeeStale: () => void
   onEmailChange?: (email: string) => void
+  // Local payment methods for this visitor's country (charged in their own currency), and which
+  // one is selected (null = the usual USD methods). Empty for most visitors: no choice is shown.
+  localMethods?: PaymentMethodOption[]
+  selectedMethodId?: string | null
+  onSelectMethod?: (methodId: string | null) => void
+  switchingMethod?: boolean
+  methodError?: string | null
+}
+
+// Same look as Stripe's own method rows below it (stripeAppearance: .Tab border and background).
+function MethodOption({
+  selected,
+  disabled,
+  title,
+  detail,
+  onSelect,
+}: {
+  selected: boolean
+  disabled: boolean
+  title: string
+  detail: string
+  onSelect: () => void
+}) {
+  return (
+    <button
+      type="button"
+      role="radio"
+      aria-checked={selected}
+      disabled={disabled}
+      onClick={onSelect}
+      className={`flex w-full items-center justify-between gap-3 rounded-[6px] border bg-[#171717] px-4 py-3.5 text-left transition-colors disabled:cursor-wait ${
+        selected ? 'border-[#2468DF]' : 'border-[#3A3A3A] hover:border-[#5A5A5A]'
+      }`}
+    >
+      <span className="flex items-center gap-3">
+        <span
+          className={`flex size-4 shrink-0 items-center justify-center rounded-full border ${
+            selected ? 'border-[#2468DF]' : 'border-[#6A6A6A]'
+          }`}
+        >
+          {selected && <span className="size-2 rounded-full bg-[#2468DF]" />}
+        </span>
+        <span className="text-sm font-semibold text-white">{title}</span>
+      </span>
+      <span className="text-muted-foreground text-xs font-medium">{detail}</span>
+    </button>
+  )
 }
 
 function EmailStep({
@@ -215,6 +264,11 @@ function CheckoutFormInner({
   onOrderCompleted,
   onServiceFeeStale,
   onEmailChange,
+  localMethods = [],
+  selectedMethodId = null,
+  onSelectMethod,
+  switchingMethod = false,
+  methodError = null,
 }: Omit<CheckoutFormProps, 'clientSecret'>) {
   const stripe = useStripe()
   const elements = useElements()
@@ -257,6 +311,15 @@ function CheckoutFormInner({
     onOrderCompleted()
     clearCart()
     router.push(`/order/confirmation/${result.orderId}`)
+  }
+
+  // Some local methods are confirmed later, e.g. MB WAY once the customer approves it in their
+  // bank's app. The completion page waits for that and then places the order.
+  const waitForPayment = (paymentIntentClientSecret: string) => {
+    onOrderCompleted()
+    router.push(
+      `/checkout/complete?cart_id=${encodeURIComponent(cartId)}&payment_intent_client_secret=${encodeURIComponent(paymentIntentClientSecret)}`,
+    )
   }
 
   const handleCompletionError = async (err: unknown) => {
@@ -332,6 +395,11 @@ function CheckoutFormInner({
         return
       }
 
+      if (paymentIntent?.status === 'processing' && paymentIntent.client_secret) {
+        waitForPayment(paymentIntent.client_secret)
+        return
+      }
+
       setSubmitting(false)
     } catch (err) {
       await handleCompletionError(err)
@@ -374,6 +442,11 @@ function CheckoutFormInner({
         return
       }
 
+      if (paymentIntent?.status === 'processing' && paymentIntent.client_secret) {
+        waitForPayment(paymentIntent.client_secret)
+        return
+      }
+
       setSubmitting(false)
     } catch (err) {
       event.paymentFailed({ reason: 'fail' })
@@ -405,7 +478,34 @@ function CheckoutFormInner({
         <h2 className="mb-4 text-lg font-semibold text-white md:text-xl">
           Payment method
         </h2>
-        <div className={hasWallets ? 'mb-4' : 'invisible h-0 overflow-hidden'}>
+        {localMethods.length > 0 && (
+          <div role="radiogroup" aria-label="Payment method" className="mb-4 flex flex-col gap-2">
+            <MethodOption
+              selected={!selectedMethodId}
+              disabled={switchingMethod}
+              title="Card, wallets & Alipay"
+              detail="Charged in USD"
+              onSelect={() => onSelectMethod?.(null)}
+            />
+            {localMethods.map((method) => (
+              <MethodOption
+                key={method.id}
+                selected={selectedMethodId === method.id}
+                disabled={switchingMethod}
+                title={method.label}
+                detail={
+                  method.chargeAmount !== null
+                    ? `Charged in ${method.chargeCurrency.toUpperCase()} · ${formatCurrency(method.chargeAmount, method.chargeCurrency.toUpperCase())}`
+                    : `Charged in ${method.chargeCurrency.toUpperCase()}`
+                }
+                onSelect={() => onSelectMethod?.(method.id)}
+              />
+            ))}
+            {methodError && <p className="text-red text-xs font-semibold">{methodError}</p>}
+          </div>
+        )}
+        {/* Wallet and Link buttons belong to the USD payment; a local method's payment can't use them. */}
+        <div className={hasWallets && !selectedMethodId ? 'mb-4' : 'invisible h-0 overflow-hidden'}>
           <ExpressCheckoutElement
             options={{
               // 'always' also offers Apple Pay in Chrome/Edge/Firefox on desktop (the customer
@@ -440,7 +540,7 @@ function CheckoutFormInner({
         type="submit"
         variant="primary"
         size="md"
-        disabled={!stripe || submitting}
+        disabled={!stripe || submitting || switchingMethod}
         className="w-full"
       >
         {submitting ? 'Processing...' : 'Pay now'}
@@ -457,6 +557,11 @@ export function CheckoutForm({
   onOrderCompleted,
   onServiceFeeStale,
   onEmailChange,
+  localMethods,
+  selectedMethodId,
+  onSelectMethod,
+  switchingMethod,
+  methodError,
 }: CheckoutFormProps) {
   return (
     // Keyed on clientSecret: @stripe/react-stripe-js does not reinitialize Elements when the
@@ -478,6 +583,11 @@ export function CheckoutForm({
         onOrderCompleted={onOrderCompleted}
         onServiceFeeStale={onServiceFeeStale}
         onEmailChange={onEmailChange}
+        localMethods={localMethods}
+        selectedMethodId={selectedMethodId}
+        onSelectMethod={onSelectMethod}
+        switchingMethod={switchingMethod}
+        methodError={methodError}
       />
     </Elements>
   )
