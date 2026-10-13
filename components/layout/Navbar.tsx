@@ -7,6 +7,7 @@ import {
   useState,
   type KeyboardEvent,
 } from 'react'
+import { createPortal } from 'react-dom'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter, usePathname } from 'next/navigation'
@@ -40,9 +41,25 @@ import type { ProductListItem } from '@/types/product'
 import SearchSuggestions from '../home/SearchSuggestions'
 import { MobileSidebar } from './MobileSidebar'
 import { MobileSearch } from './MobileSearch'
-import { NavItem } from './navbar/nav-item'
+import { PlatformNav, type PlatformNavItem } from './navbar/PlatformNav'
 import { UserMenu } from './navbar/UserMenu'
 import type { NavbarData } from '@/lib/services/navbar.service'
+
+// Used when the CMS navbar has no items. Each icon sits in a div so it lifts like the CMS icons.
+const DEFAULT_PLATFORM_ITEMS: PlatformNavItem[] = [
+  { name: 'PC', href: '/store?platform=pc', icon: <div><PCIcon /></div> },
+  { name: 'Xbox', href: '/store?platform=xbox', icon: <div><XboxIcon /></div> },
+  {
+    name: 'PlayStation',
+    href: '/store?platform=playstation',
+    icon: <div><PlayStationIcon /></div>,
+  },
+  {
+    name: 'Nintendo',
+    href: '/store?platform=nintendo',
+    icon: <div><NintendoIcon /></div>,
+  },
+]
 
 export default function Navbar({
   navbarData,
@@ -55,6 +72,8 @@ export default function Navbar({
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false)
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false)
   const [inputValue, setInputValue] = useState('')
+  // Suggestion picked with the arrow keys (suggestions.length = "See all results"), -1 for none.
+  const [activeIndex, setActiveIndex] = useState(-1)
   const searchRef = useRef<HTMLInputElement>(null)
   const searchContainerRef = useRef<HTMLDivElement>(null)
   const [isClient, setIsClient] = useState(false)
@@ -72,6 +91,39 @@ export default function Navbar({
 
   const suggestions = data?.products ?? []
   const suggestionsOpen = searchOpen && shouldFetch
+  // Rows the arrow keys can move through: every suggestion plus "See all results".
+  const optionCount =
+    suggestionsOpen && !isLoading && suggestions.length > 0
+      ? suggestions.length + 1
+      : 0
+
+  // The cart and checkout pages render their own navbar, so this one is hidden there.
+  const navHidden =
+    pathname?.includes('/cart') || pathname?.includes('/checkout')
+
+  const openSearch = useCallback(() => {
+    setActiveIndex(-1)
+    setSearchOpen(true)
+  }, [])
+
+  // "/" (when not typing) or Ctrl/Cmd+K opens the search from anywhere.
+  useEffect(() => {
+    if (navHidden) return
+    const onShortcut = (e: globalThis.KeyboardEvent) => {
+      const typing = (e.target as HTMLElement | null)?.closest(
+        'input, textarea, select, [contenteditable="true"]',
+      )
+      const isShortcut =
+        (e.key.toLowerCase() === 'k' && (e.metaKey || e.ctrlKey)) ||
+        (e.key === '/' && !typing && !e.metaKey && !e.ctrlKey && !e.altKey)
+      if (!isShortcut) return
+      e.preventDefault()
+      if (window.matchMedia('(min-width: 1024px)').matches) openSearch()
+      else setMobileSearchOpen(true)
+    }
+    window.addEventListener('keydown', onShortcut)
+    return () => window.removeEventListener('keydown', onShortcut)
+  }, [navHidden, openSearch])
 
   useEffect(() => {
     setIsClient(true)
@@ -105,10 +157,14 @@ export default function Navbar({
   useEffect(() => {
     if (searchOpen) {
       document.body.style.overflow = 'hidden'
-      searchRef.current?.focus()
+      // No scroll: the bar is still a small circle at this point, and scrolling it to the caret
+      // would push the magnifier out of view while it grows.
+      searchRef.current?.focus({ preventScroll: true })
       searchRef.current?.select()
     } else {
       document.body.style.overflow = 'unset'
+      // The hidden input mustn't keep focus, or "/" would type into it instead of reopening.
+      if (document.activeElement === searchRef.current) searchRef.current?.blur()
       // Reset input when closing
       setInputValue('')
     }
@@ -142,7 +198,26 @@ export default function Navbar({
   )
 
   const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') navigateToStore(inputValue)
+    if ((e.key === 'ArrowDown' || e.key === 'ArrowUp') && optionCount > 0) {
+      e.preventDefault()
+      // Wraps around at both ends.
+      setActiveIndex((index) =>
+        e.key === 'ArrowDown'
+          ? index >= optionCount - 1
+            ? 0
+            : index + 1
+          : index <= 0
+            ? optionCount - 1
+            : index - 1,
+      )
+    }
+    if (e.key === 'Enter') {
+      if (activeIndex >= 0 && activeIndex < suggestions.length) {
+        handleSelectProduct(suggestions[activeIndex])
+      } else {
+        navigateToStore(inputValue)
+      }
+    }
     if (e.key === 'Escape') setSearchOpen(false)
   }
 
@@ -154,7 +229,7 @@ export default function Navbar({
 
   // CartNavbar (Cart -> Checkout -> Redeem step flow) renders its own
   // navbar/logo for this route group, so the global one hides itself.
-  if (pathname?.includes('/cart') || pathname?.includes('/checkout')) {
+  if (navHidden) {
     return null
   }
 
@@ -206,103 +281,141 @@ export default function Navbar({
           <div
             ref={searchContainerRef}
             className={cn(
-              'relative flex max-w-2xl items-center gap-14 rounded-full border pr-22.5 pl-11 transition-all duration-200 ease-in-out max-lg:hidden',
+              'relative flex max-w-2xl items-center rounded-full border py-2 pr-18.5 pl-7 transition-all duration-200 ease-in-out max-lg:hidden',
               !isScrolled
                 ? 'bg-background/60 border-white/5 shadow-lg backdrop-blur-2xl'
                 : 'scale-90 border-transparent bg-transparent shadow-none',
             )}
           >
-            {navbarData?.nav_items ? (
-              navbarData.nav_items.map((item) => (
-                <NavItem key={item.name} href={item.to}>
-                  <div
-                    className="flex items-center justify-center [&>svg]:h-7 [&>svg]:w-7"
-                    dangerouslySetInnerHTML={{ __html: item.icon }}
-                  />
-                  <span className="trim font-medium">{item.name}</span>
-                </NavItem>
-              ))
-            ) : (
-              <>
-                <NavItem href="/store?platform=pc">
-                  <PCIcon />
-                  <span className="trim font-medium">PC</span>
-                </NavItem>
-                <NavItem href="/store?platform=xbox">
-                  <XboxIcon />
-                  <span className="trim font-medium">Xbox</span>
-                </NavItem>
-                <NavItem href="/store?platform=playstation">
-                  <PlayStationIcon />
-                  <span className="trim font-medium">PlayStation</span>
-                </NavItem>
-                <NavItem href="/store?platform=nintendo">
-                  <NintendoIcon />
-                  <span className="trim font-medium">Nintendo</span>
-                </NavItem>
-              </>
-            )}
+            <PlatformNav
+              hidden={searchOpen}
+              items={
+                navbarData?.nav_items
+                  ? navbarData.nav_items.map((item) => ({
+                      name: item.name,
+                      href: item.to,
+                      icon: (
+                        <div
+                          className="flex items-center justify-center [&>svg]:h-7 [&>svg]:w-7"
+                          dangerouslySetInnerHTML={{ __html: item.icon }}
+                        />
+                      ),
+                    }))
+                  : DEFAULT_PLATFORM_ITEMS
+              }
+            />
 
-            {/* Search Button + Expanded Input */}
+            {/* Search: a round button that grows into a search bar over the platform items. */}
             <div
               className={cn(
-                'bg-primary shadow-primary/20 absolute inset-y-0 right-0 -m-px flex w-16 items-center overflow-hidden rounded-full text-white shadow-md transition-all duration-300',
-                searchOpen &&
-                'w-[calc(100%+2px)] overflow-visible ring-2 ring-white',
+                'peer/search group/search bg-primary absolute inset-y-0 right-0 -m-px flex w-16 items-center overflow-hidden rounded-full text-white',
+                'transition-[width,scale,box-shadow,filter] duration-[420ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none',
+                searchOpen
+                  ? 'w-[calc(100%+2px)] shadow-[0_0_0_1px_rgba(255,255,255,0.22),0_0_36px_-6px_rgba(36,104,223,0.9)]'
+                  : 'shadow-primary/30 shadow-md hover:scale-106 hover:shadow-[0_0_26px_-2px_rgba(36,104,223,0.75)] hover:brightness-110 active:scale-95',
               )}
+              // The width waits a moment (one delay per transitioned property above) so the
+              // platform items have faded before the bar reaches them, and on closing so the
+              // text has faded before the bar shrinks. Hover effects stay instant.
+              style={{
+                transitionDelay: `${searchOpen ? 60 : 110}ms, 0ms, 0ms, 0ms`,
+              }}
             >
-              {/* Search icon / open button */}
-              <div
-                role="button"
+              <button
+                type="button"
                 aria-label="Open search"
+                aria-keyshortcuts="/ Control+K Meta+K"
+                tabIndex={searchOpen ? -1 : 0}
                 className={cn(
-                  'absolute inset-y-0 left-0 flex aspect-square items-center justify-center rounded-full transition hover:bg-white/10 active:scale-90 active:bg-transparent',
-                  searchOpen && 'pointer-events-none',
+                  'absolute inset-y-0 left-0 z-10 flex aspect-square items-center justify-center rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-white/70',
+                  '[&_svg]:transition-transform [&_svg]:duration-300 [&_svg]:ease-[cubic-bezier(0.34,1.56,0.64,1)]',
+                  searchOpen
+                    ? 'pointer-events-none'
+                    : 'group-hover/search:[&_svg]:scale-110 group-hover/search:[&_svg]:-rotate-12',
                 )}
-                onClick={() => setSearchOpen(true)}
+                onClick={openSearch}
               >
                 <SearchIcon />
-              </div>
+              </button>
 
-              {/* Input */}
+              {/* Fades in once the bar has room, so the placeholder is never clipped. */}
               <input
                 ref={searchRef}
                 type="text"
                 value={inputValue}
-                onChange={(e) => setInputValue(e.target.value)}
+                onChange={(e) => {
+                  setInputValue(e.target.value)
+                  setActiveIndex(-1)
+                }}
                 onKeyDown={handleKeyDown}
                 autoComplete="off"
+                role="combobox"
                 aria-label="Search products"
-                className="bg-primary h-full w-full rounded-full px-16 text-lg font-medium text-white transition-all placeholder:text-white/60 focus:outline-none"
+                aria-expanded={suggestionsOpen}
+                aria-controls="navbar-search-results"
+                aria-activedescendant={
+                  activeIndex >= 0
+                    ? `navbar-search-option-${activeIndex}`
+                    : undefined
+                }
+                tabIndex={searchOpen ? 0 : -1}
+                className={cn(
+                  'bg-primary h-full w-full rounded-full px-16 text-lg font-medium text-white placeholder:text-white/60 focus:outline-none',
+                  'transition-[opacity,translate] duration-300 ease-out motion-reduce:transition-none',
+                  searchOpen
+                    ? 'translate-x-0 opacity-100 delay-200 duration-300'
+                    : 'pointer-events-none translate-x-2 opacity-0 duration-100',
+                )}
                 placeholder="Search for games, software & more"
               />
 
-              {/* Suggestions dropdown */}
-              {suggestionsOpen && (
-                <div className="absolute top-[calc(100%+8px)] right-0 left-0 min-w-100">
-                  <SearchSuggestions
-                    suggestions={suggestions}
-                    isLoading={isLoading && shouldFetch}
-                    query={debouncedQuery}
-                    onSelect={handleSelectProduct}
-                    onSearchAll={() => navigateToStore(inputValue)}
-                  />
-                </div>
-              )}
-
-              {/* Close button */}
-              <div
-                role="button"
+              <button
+                type="button"
                 aria-label="Close search"
+                tabIndex={searchOpen ? 0 : -1}
                 className={cn(
-                  'absolute inset-y-0 right-0 flex aspect-square items-center justify-center rounded-full transition hover:bg-white/10 active:scale-90 active:bg-transparent',
-                  !searchOpen && 'pointer-events-none opacity-0',
+                  'absolute inset-y-0 right-0 flex aspect-square items-center justify-center rounded-full hover:bg-white/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/70 active:scale-90',
+                  'transition-[opacity,rotate,scale,background-color] duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] motion-reduce:transition-none',
+                  searchOpen
+                    ? 'scale-100 rotate-0 opacity-100 delay-200'
+                    : 'pointer-events-none scale-50 -rotate-90 opacity-0',
                 )}
                 onClick={() => setSearchOpen(false)}
               >
                 <XIcon />
-              </div>
+              </button>
             </div>
+
+            {/* Hover hint under the closed button */}
+            {!searchOpen && (
+              <span
+                aria-hidden
+                className="bg-secondary/95 pointer-events-none absolute top-full right-0 mt-3 flex -translate-y-1 items-center gap-2 rounded-lg border border-white/10 px-2.5 py-1.5 text-xs font-medium whitespace-nowrap text-white/80 opacity-0 shadow-lg backdrop-blur transition-[opacity,translate] duration-200 peer-hover/search:translate-y-0 peer-hover/search:opacity-100 peer-hover/search:delay-300"
+              >
+                Search
+                <kbd className="rounded border border-white/15 bg-white/5 px-1.5 font-sans text-[11px] text-white">
+                  /
+                </kbd>
+              </span>
+            )}
+
+            {/* Suggestions dropdown */}
+            {suggestionsOpen && (
+              <div
+                id="navbar-search-results"
+                className="absolute top-[calc(100%+8px)] right-0 left-0 min-w-100"
+              >
+                <SearchSuggestions
+                  suggestions={suggestions}
+                  isLoading={isLoading && shouldFetch}
+                  query={debouncedQuery}
+                  onSelect={handleSelectProduct}
+                  onSearchAll={() => navigateToStore(inputValue)}
+                  activeIndex={activeIndex}
+                  idPrefix="navbar-search-option"
+                />
+              </div>
+            )}
           </div>
 
           {/* User Actions */}
@@ -325,6 +438,20 @@ export default function Navbar({
           </div>
         </div>
       </nav>
+      {/* Dims and blurs the page while the desktop search is open; clicking it closes the search
+          (the outside-click handler above). Portaled because the scrolled header's backdrop blur
+          would otherwise trap a fixed element inside the header. */}
+      {isClient &&
+        createPortal(
+          <div
+            aria-hidden
+            className={cn(
+              'fixed inset-0 z-40 bg-black/50 backdrop-blur-[3px] transition-opacity duration-300 motion-reduce:transition-none max-lg:hidden',
+              searchOpen ? 'opacity-100' : 'pointer-events-none opacity-0',
+            )}
+          />,
+          document.body,
+        )}
       <MobileSidebar
         isOpen={isMobileSidebarOpen}
         onClose={() => setIsMobileSidebarOpen(false)}

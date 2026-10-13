@@ -1,10 +1,22 @@
 'use client'
 
 import SearchIcon from '../icons/SearchIcon'
-import { SuggestionRow } from './search-suggestions/suggestion-row'
+import {
+  ACTIVE_ROW_CLASS,
+  SuggestionRow,
+} from './search-suggestions/suggestion-row'
+import { cn } from '@/lib/utils'
 import type { SearchSuggestionsProps } from '@/types/SearchSuggestionTypes'
 
 const SKELETON_COUNT = 3
+
+// Rows drop in one after another.
+const rowEntrance = (index: number) => ({
+  animationDelay: `${index * 35}ms`,
+  animationFillMode: 'both' as const,
+})
+const ROW_ENTRANCE_CLASS =
+  'animate-in fade-in-0 slide-in-from-top-1 duration-200 motion-reduce:animate-none'
 
 export default function SearchSuggestions({
   suggestions,
@@ -12,14 +24,19 @@ export default function SearchSuggestions({
   query,
   onSelect,
   onSearchAll,
+  activeIndex = -1,
+  idPrefix = 'search-suggestion',
 }: SearchSuggestionsProps) {
   const label = query.trim() ? 'Search Results' : 'Trending Searches'
 
   return (
-    <div className="bg-secondary md:max-h-auto hidden-scrollbar absolute top-full right-0 left-0 z-50 mt-2 max-h-[85vh] w-full overflow-hidden overflow-y-auto rounded-xl border border-white/10 shadow-2xl shadow-black/80 md:mx-auto md:w-[672px]">
+    <div
+      role="listbox"
+      className="bg-secondary md:max-h-auto hidden-scrollbar animate-in fade-in-0 slide-in-from-top-2 zoom-in-[0.98] absolute top-full right-0 left-0 z-50 mt-2 max-h-[85vh] w-full origin-top overflow-hidden overflow-y-auto rounded-xl border border-white/10 shadow-2xl shadow-black/80 duration-200 motion-reduce:animate-none md:mx-auto md:w-[672px]"
+    >
       <div className="flex flex-col gap-6 p-4 md:gap-8 md:px-5 md:pt-6 md:pb-5">
         {/* Heading */}
-        <h2 className="text-lg leading-none font-semibold text-white capitalize md:text-[20px]">
+        <h2 className="text-muted-foreground text-xs leading-none font-semibold tracking-wider uppercase">
           {label}
         </h2>
 
@@ -41,20 +58,32 @@ export default function SearchSuggestions({
           </div>
         ) : suggestions.length > 0 ? (
           <div className="flex flex-col gap-3">
-            {suggestions.map((product) => (
+            {suggestions.map((product, index) => (
               <SuggestionRow
                 key={product.id}
+                id={`${idPrefix}-${index}`}
                 product={product}
                 query={query}
                 onSelect={onSelect}
+                active={activeIndex === index}
+                className={ROW_ENTRANCE_CLASS}
+                style={rowEntrance(index)}
               />
             ))}
 
             {/* See-all footer */}
             <button
               type="button"
+              id={`${idPrefix}-${suggestions.length}`}
+              role="option"
+              aria-selected={activeIndex === suggestions.length}
               onClick={onSearchAll}
-              className="text-primary mt-2 flex w-full items-center justify-center gap-2 rounded-lg border border-white/5 px-4 py-3 text-sm font-semibold transition-colors hover:bg-white/10 focus:outline-none md:justify-start"
+              style={rowEntrance(suggestions.length)}
+              className={cn(
+                ROW_ENTRANCE_CLASS,
+                'text-primary mt-2 flex w-full items-center justify-center gap-2 rounded-lg border border-white/5 px-4 py-3 text-sm font-semibold transition-colors hover:bg-white/10 focus:outline-none md:justify-start',
+                activeIndex === suggestions.length && ACTIVE_ROW_CLASS,
+              )}
             >
               <SearchIcon className="size-4 shrink-0" />
               <span>
