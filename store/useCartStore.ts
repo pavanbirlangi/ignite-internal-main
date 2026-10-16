@@ -144,6 +144,10 @@ const syncServiceFee = (
 // `quantity` is that variant's total in the cart (not the delta), which is
 // what a mini-cart should reflect when the same item is added twice.
 const notifyItemAdded = (cart: CartResponse, variantId: string) => {
+  // Not on phones: the bottom nav's cart (shown below md, see MobileNav)
+  // already confirms the add with its count, and product covers fly into it.
+  if (window.matchMedia('(max-width: 767px)').matches) return
+
   const line = cart.items.find((item) => item.variantId === variantId)
   if (!line) {
     toast.success('Added to cart')
