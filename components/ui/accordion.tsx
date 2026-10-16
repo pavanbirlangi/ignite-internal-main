@@ -28,8 +28,12 @@ function AccordionItem({
 function AccordionTrigger({
   className,
   children,
+  icon,
   ...props
-}: React.ComponentProps<typeof AccordionPrimitive.Trigger>) {
+}: React.ComponentProps<typeof AccordionPrimitive.Trigger> & {
+  // Replaces the default chevron.
+  icon?: React.ReactNode
+}) {
   return (
     <AccordionPrimitive.Header className="flex">
       <AccordionPrimitive.Trigger
@@ -41,7 +45,9 @@ function AccordionTrigger({
         {...props}
       >
         {children}
-        <ChevronDownIcon className="text-muted-foreground pointer-events-none size-4 shrink-0 transition-transform duration-200" />
+        {icon ?? (
+          <ChevronDownIcon className="text-muted-foreground pointer-events-none size-4 shrink-0 transition-transform duration-200" />
+        )}
       </AccordionPrimitive.Trigger>
     </AccordionPrimitive.Header>
   )

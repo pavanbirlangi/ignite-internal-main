@@ -28,7 +28,7 @@ export default function GameCarouselSection({
     <section id={id} className="container flex flex-col gap-8">
       {/* Section Header */}
       <div className="flex items-center justify-between">
-        <h2 className="trim text-lg font-semibold md:text-[20px] lg:text-2xl">
+        <h2 className="trim text-xl font-semibold md:text-2xl lg:text-[28px]">
           {title}
         </h2>
         {seeAllHref && (

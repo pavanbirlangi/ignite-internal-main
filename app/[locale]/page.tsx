@@ -246,17 +246,19 @@ export default async function HomePage({
           }
         })}
 
-        {faqItems.length > 0 && (
-          <div className="container">
-            <FaqSection title="Frequently Asked Questions" items={faqItems} />
-          </div>
-        )}
-
         <NewsletterSection
           title={data.newsletter_title}
           description={data.newsletter_description}
           placeholder={data.newsletter_placeholder_text}
         />
+
+        {/* Last section before the footer, so it carries the usual section
+            gap below it too. */}
+        {faqItems.length > 0 && (
+          <div className="container pb-16 md:pb-20">
+            <FaqSection title="Frequently Asked Questions" items={faqItems} />
+          </div>
+        )}
       </div>
     </>
   )
