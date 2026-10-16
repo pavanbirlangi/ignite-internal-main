@@ -69,7 +69,9 @@ const ButtonFace = ({
       <span className={cn('flex motion-reduce:transform-none', ICON_HOVER[iconHover])}>
         {icon}
       </span>
-      {label}
+      {/* .trim drops the font's built-in space under the letters, so the
+          word centres against the icon instead of riding high. */}
+      <span className="trim">{label}</span>
     </span>
     <span
       className={cn(
@@ -111,7 +113,7 @@ const ButtonFace = ({
       ) : (
         <span className="size-[15px]" />
       )}
-      {doneLabel}
+      <span className="trim">{doneLabel}</span>
     </span>
   </span>
 )
