@@ -16,7 +16,7 @@ export default function FooterV2({
   if (!footerData) return null
 
   return (
-    <footer className="bg-background w-full font-sans max-md:pb-24">
+    <footer className="bg-card border-border w-full border-t font-sans max-md:pb-24">
       <div className="container [--max-width-container:1280px]">
         <div className="flex items-center justify-center gap-6 py-7 lg:justify-end">
           {footerData.payment_images?.map((image) => (

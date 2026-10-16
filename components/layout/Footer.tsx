@@ -16,7 +16,7 @@ export default function Footer({
   if (!footerData) return null
 
   return (
-    <footer className="border-foreground bg-background w-full border-t pt-12 pb-28 font-sans md:pb-10">
+    <footer className="border-foreground bg-card w-full border-t pt-12 pb-28 font-sans md:pb-10">
       <div className="container [--max-width-container:1280px]">
         {/* Top Section */}
         <div className="mb-10 flex flex-col justify-between gap-10 lg:flex-row lg:gap-16">

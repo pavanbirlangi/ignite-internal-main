@@ -42,7 +42,7 @@ const stripeAppearance: Appearance = {
   theme: 'night',
   variables: {
     colorPrimary: '#2468DF',
-    colorBackground: '#2B2B2B',
+    colorBackground: '#161616',
     colorText: '#FFFFFF',
     colorTextSecondary: '#9A9A9A',
     colorDanger: '#CD000E',
@@ -58,8 +58,8 @@ const stripeAppearance: Appearance = {
   },
   rules: {
     '.Input': {
-      border: '1px solid #3A3A3A',
-      backgroundColor: '#171717',
+      border: '1px solid #2E2E2E',
+      backgroundColor: '#0C0C0C',
       // Matches the email field directly above it (INPUT_CLASS: text-sm,
       // font-semibold), rather than Stripe's 16px/400 default. Set on the
       // input specifically instead of via fontSizeBase, which would shrink
@@ -75,8 +75,8 @@ const stripeAppearance: Appearance = {
       boxShadow: 'none',
     },
     '.Tab': {
-      border: '1px solid #3A3A3A',
-      backgroundColor: '#171717',
+      border: '1px solid #2E2E2E',
+      backgroundColor: '#0C0C0C',
     },
     '.Tab--selected': {
       border: '1px solid #2468DF',
@@ -159,8 +159,8 @@ function MethodOption({
       aria-checked={selected}
       disabled={disabled}
       onClick={onSelect}
-      className={`flex w-full items-center justify-between gap-3 rounded-[6px] border bg-[#171717] px-4 py-3.5 text-left transition-colors disabled:cursor-wait ${
-        selected ? 'border-[#2468DF]' : 'border-[#3A3A3A] hover:border-[#5A5A5A]'
+      className={`flex w-full items-center justify-between gap-3 rounded-[6px] border bg-background px-4 py-3.5 text-left transition-colors disabled:cursor-wait ${
+        selected ? 'border-[#2468DF]' : 'border-border hover:border-[#474747]'
       }`}
     >
       <span className="flex items-center gap-3">

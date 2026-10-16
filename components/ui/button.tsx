@@ -5,14 +5,16 @@ import { Slot } from 'radix-ui'
 import { cn } from '@/lib/utils'
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 cursor-pointer whitespace-nowrap rounded-md text-base md:text-lg font-semibold transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-7 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:ring-ring focus-visible:ring-4 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive select-none",
+  "inline-flex items-center justify-center gap-2 cursor-pointer whitespace-nowrap rounded-md text-base md:text-lg font-semibold transition-all duration-200 ease-out motion-reduce:transition-none disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-7 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:ring-ring focus-visible:ring-4 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive select-none",
   {
     variants: {
       variant: {
+        // Soft blue glow and a slight lift on hover, no hard ring -- the same hover language as
+        // the header's capsule and icon buttons, rather than a stark white outline.
         primary: [
           'bg-primary text-primary-foreground',
-          'hover:shadow-[0_0_24px_0_var(--primary-glow-60)] hover:ring-primary-foreground hover:ring-2 hover:ring-inset',
-          'active:shadow-none active:ring-0 active:bg-linear-to-b active:from-primary active:to-primary',
+          'hover:shadow-[0_10px_30px_-8px_var(--primary-glow-60)] hover:brightness-110 hover:-translate-y-px',
+          'active:shadow-none active:brightness-95 active:translate-y-0',
         ],
         secondary: [
           'bg-secondary text-secondary-foreground',
@@ -20,8 +22,8 @@ const buttonVariants = cva(
         ],
         outline: [
           'bg-transparent text-primary ring-primary ring-2 ring-inset',
-          'hover:shadow-[0_0_24px_0_var(--primary-glow-60)] hover:ring-primary-foreground',
-          'active:shadow-none active:ring-primary active:text-primary-foreground',
+          'hover:shadow-[0_10px_30px_-8px_var(--primary-glow-60)] hover:bg-primary/10',
+          'active:shadow-none active:bg-primary/15',
         ],
         ghost: 'hover:bg-primary hover:text-primary-foreground',
         destructive:
