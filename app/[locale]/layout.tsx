@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { Geist, Geist_Mono } from 'next/font/google'
+import { Geist, Geist_Mono, Inter } from 'next/font/google'
 import '../globals.css'
 import Navbar from '@/components/layout/Navbar'
 import GoogleAnalytics from '@/components/GoogleAnalytics'
@@ -13,6 +13,7 @@ import { FooterService } from '@/lib/services/footer.service'
 import { NavbarService } from '@/lib/services/navbar.service'
 import ScrollToTop from '@/components/layout/ScrollToTop'
 import ConditionalFooter from '@/components/layout/ConditionalFooter'
+import TypographySwitcher from '@/components/layout/TypographySwitcher'
 import {
   translateFooterData,
   getDefaultFooterTranslations,
@@ -22,6 +23,16 @@ const geistSans = Geist({
   variable: '--font-geist-sans',
   subsets: ['latin'],
   display: 'swap',
+})
+
+// Only for the Epic-style typography preview (TypographySwitcher). Not
+// preloaded, so it's fetched only when that style is switched on. latin-ext
+// carries the rupee sign.
+const inter = Inter({
+  variable: '--font-inter',
+  subsets: ['latin', 'latin-ext'],
+  display: 'swap',
+  preload: false,
 })
 
 const geistMono = Geist_Mono({
@@ -124,7 +135,7 @@ export default async function RootLayout({
         <link rel="preconnect" href="https://cdn.shopify.com" crossOrigin="anonymous" />
         <link rel="dns-prefetch" href="https://cdn.shopify.com" />
       </head>
-      <body className={cn(geistSans.variable, geistMono.variable)}>
+      <body className={cn(geistSans.variable, geistMono.variable, inter.variable)}>
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
@@ -139,6 +150,7 @@ export default async function RootLayout({
           <ConditionalFooter footerData={footerData} translations={footerTranslations} />
           <MobileNav />
           <Toaster richColors position="top-center" />
+          <TypographySwitcher />
         </QueryProvider>
         {process.env.NODE_ENV === 'production' &&
           process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID && (
