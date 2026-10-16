@@ -52,7 +52,7 @@ export default function GameCarouselSection({
               {games.map((product) => (
                 <CarouselItem
                   key={product.id}
-                  className="basis-[58%] sm:basis-[38%] md:basis-[32%] lg:basis-[19.5%]"
+                  className="basis-[58%] sm:basis-[38%] md:basis-1/3 lg:basis-1/5"
                 >
                   <StoreCard product={product} />
                 </CarouselItem>
