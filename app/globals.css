@@ -96,6 +96,30 @@
     }
   }
 
+  /* Newsletter banner: columns of covers drifting up or down forever (each
+     column holds its covers twice, so -50% lands on an identical frame).
+     Duration is set per column. */
+  --animate-cover-drift-up: cover-drift-up 40s linear infinite;
+  --animate-cover-drift-down: cover-drift-down 40s linear infinite;
+
+  @keyframes cover-drift-up {
+    from {
+      transform: translateY(0);
+    }
+    to {
+      transform: translateY(-50%);
+    }
+  }
+
+  @keyframes cover-drift-down {
+    from {
+      transform: translateY(-50%);
+    }
+    to {
+      transform: translateY(0);
+    }
+  }
+
   @keyframes icon-zap {
     0% {
       transform: scale(1);

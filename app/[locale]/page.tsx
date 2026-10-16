@@ -9,6 +9,7 @@ import {
 } from '@/lib/services/homepage.service'
 import { ProductService } from '@/lib/services/product.service'
 import type { ProductListItem } from '@/types/product'
+import { getProxyImageUrl } from '@/lib/utils'
 import { translateTextsWithLangbly } from '@/lib/services/langbly-translation.service'
 import { translateHomepageData } from '@/lib/translations/homepage'
 import { FaqService, type FaqItem } from '@/lib/services/faq.service'
@@ -168,6 +169,20 @@ export default async function HomePage({
     ),
   )
 
+  // Covers from the homepage's own collections, for the newsletter banner.
+  const newsletterCovers = Array.from(
+    new Set(
+      [...gamesBySectionId.values()]
+        .flat()
+        .map((game) =>
+          getProxyImageUrl(
+            game.featuredImageMeta?.url || game.featuredImage?.url || '',
+          ),
+        )
+        .filter(Boolean),
+    ),
+  ).slice(0, 24)
+
   return (
     <>
       <script
@@ -250,6 +265,7 @@ export default async function HomePage({
           title={data.newsletter_title}
           description={data.newsletter_description}
           placeholder={data.newsletter_placeholder_text}
+          covers={newsletterCovers}
         />
 
         {/* Last section before the footer, so it carries the usual section
