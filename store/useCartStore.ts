@@ -55,6 +55,8 @@ interface CartState {
   cartCmsData: CartCmsData | null
   recommendations: CartRecommendation[]
   isLoading: boolean
+  // Counts items the customer has added (not cart loads), so the header can react to each add.
+  itemsAdded: number
   isRecommendationsLoading: boolean
   loadingItems: string[]
   error: string | null
@@ -178,6 +180,7 @@ export const useCartStore = create<CartState>()((set, get) => ({
   cartCmsData: null,
   recommendations: [],
   isLoading: false,
+  itemsAdded: 0,
   isRecommendationsLoading: false,
   loadingItems: [],
   error: null,
@@ -324,6 +327,7 @@ export const useCartStore = create<CartState>()((set, get) => ({
       set({ cart: updatedCart, isLoading: false })
       syncServiceFee(set, get, updatedCart.id)
       maybeRefreshRecommendations(get, previousCart)
+      set({ itemsAdded: get().itemsAdded + 1 })
       notifyItemAdded(updatedCart, merchandiseId)
     } catch (error: any) {
       const errorMessage = extractApiErrorMessage(
@@ -354,6 +358,7 @@ export const useCartStore = create<CartState>()((set, get) => ({
           set({ cart: retryCart, isLoading: false })
           syncServiceFee(set, get, retryCart.id)
           maybeRefreshRecommendations(get, previousCart)
+          set({ itemsAdded: get().itemsAdded + 1 })
           notifyItemAdded(retryCart, merchandiseId)
           return
         } catch (retryError) {

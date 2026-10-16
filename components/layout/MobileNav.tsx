@@ -65,7 +65,11 @@ export default function MobileNav() {
                   : 'text-muted-foreground hover:text-white',
               )}
             >
-              <div className="relative flex h-7 items-center justify-center">
+              <div
+                className="relative flex h-7 items-center justify-center"
+                // Where product covers fly to when added (lib/fly-to-cart).
+                data-cart-target={item.name === 'Cart' ? '' : undefined}
+              >
                 <Icon
                   width={item.iconSize}
                   height={item.iconSize}

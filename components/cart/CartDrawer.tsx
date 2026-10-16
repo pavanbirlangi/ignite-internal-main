@@ -13,12 +13,15 @@ import { CartProduct } from './types'
 import { CartDrawerItem } from './CartDrawerItem'
 import { RecommendationRow } from './RecommendationRow'
 import { CartFooter } from './CartFooter'
-import CartIcon from '../icons/CartIcon'
+import CartSolidIcon from '../icons/CartSolidIcon'
+import { headerIconButtonClass } from '../layout/navbar/header-icon-button'
+import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
 
 import { useCartStore } from '@/store/useCartStore'
 import { getDiscountPercent } from '@/lib/utils/discount'
 import { setCartDrawerOpen } from '@/components/cart/AddedToCartToast'
+import { isCartFlightPending } from '@/lib/fly-to-cart'
 
 const RECOMMENDATION_PLACEHOLDER_IMAGE =
   'https://placehold.co/205x262/png?text=No+Image'
@@ -91,6 +94,7 @@ export function CartDrawer() {
     cart,
     recommendations,
     isLoading,
+    itemsAdded,
     isRecommendationsLoading,
     removeItem,
     initCart,
@@ -101,6 +105,15 @@ export function CartDrawer() {
   React.useEffect(() => {
     initCart()
   }, [initCart])
+
+  // Adds from a product card fly the cover here and hop the cart when it
+  // lands (lib/fly-to-cart), so those skip the instant hop below.
+  const hopOnAdd = React.useMemo(
+    () => !isCartFlightPending(),
+    // Re-checked once per add, not on every re-render.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [itemsAdded],
+  )
 
   const cartItems = React.useMemo(() => {
     if (!cart?.items?.length) return []
@@ -200,11 +213,36 @@ export function CartDrawer() {
       <SheetTrigger asChild>
         <button
           aria-label="Open cart"
-          className="relative flex size-10 items-center justify-center rounded-full text-white transition-colors hover:bg-white/5 hover:text-white"
+          aria-busy={isLoading || undefined}
+          className={headerIconButtonClass}
         >
-          <CartIcon />
+          {/* Hops each time an item is added (keyed on the store's add counter, so not on load). */}
+          <span
+            // Prefixed: a bare number would clash with the count badge's key below
+            // whenever both happen to be equal.
+            key={`hop-${itemsAdded}`}
+            data-cart-target
+            className={cn(
+              'flex',
+              itemsAdded > 0 &&
+                hopOnAdd &&
+                'animate-cart-bump motion-reduce:animate-none',
+            )}
+          >
+            <CartSolidIcon />
+          </span>
+          {/* Spinning ring while the cart is being updated */}
+          {isLoading && (
+            <span
+              aria-hidden
+              className="border-t-primary pointer-events-none absolute -inset-px animate-spin rounded-full border-2 border-transparent motion-reduce:animate-none"
+            />
+          )}
           {cartCount > 0 && (
-            <span className="bg-primary text-primary-foreground absolute -top-1 -right-1.5 flex size-4.5 items-center justify-center rounded-full text-xs font-semibold">
+            <span
+              key={`count-${cartCount}`}
+              className="bg-primary text-primary-foreground animate-in zoom-in-50 absolute -top-1 -right-1 flex h-5 min-w-5 items-center justify-center rounded-full px-1 text-[11px] font-semibold shadow-[0_0_0_2px_var(--background)] duration-300 motion-reduce:animate-none"
+            >
               {cartCount}
             </span>
           )}
@@ -232,7 +270,7 @@ export function CartDrawer() {
 
         {/* Scrollable Content */}
         <div
-          className={`scrollbar-hide flex flex-1 flex-col gap-8 no-scrollbar overflow-y-auto p-6 ${
+          className={`scrollbar-hide no-scrollbar flex flex-1 flex-col gap-8 overflow-y-auto p-6 ${
             // No promotion module exists yet, so a discount line never
             // renders in CartFooter -- see cart.service.ts.
             cartCount > 0 ? 'pb-64' : 'pb-6'

@@ -21,7 +21,7 @@ export function NavItem({
       aria-current={current ? 'page' : undefined}
       data-highlighted={highlighted || undefined}
       className={cn(
-        'group/nav relative flex h-12 cursor-pointer items-center justify-center gap-2 rounded-full px-4 text-lg font-medium',
+        'group/nav relative flex h-12 cursor-pointer items-center justify-center gap-2.5 rounded-full px-4 text-base font-medium',
         'text-white/70 transition-[color,transform] duration-200 ease-out focus:outline-none active:scale-95',
         'aria-[current=page]:text-white data-highlighted:text-white',
         '[&>div]:transition-transform [&>div]:duration-300 [&>div]:ease-[cubic-bezier(0.34,1.56,0.64,1)]',

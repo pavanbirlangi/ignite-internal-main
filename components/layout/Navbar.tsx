@@ -35,8 +35,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { LogoutDialog } from '../auth/LogoutDialog'
-import { useDebounce } from '@/hooks/useDebounce'
-import { useProducts } from '@/hooks/useProducts'
+import { useSearchSuggestions } from '@/hooks/useSearchSuggestions'
 import type { ProductListItem } from '@/types/product'
 import SearchSuggestions from '../home/SearchSuggestions'
 import { MobileSidebar } from './MobileSidebar'
@@ -47,17 +46,17 @@ import type { NavbarData } from '@/lib/services/navbar.service'
 
 // Used when the CMS navbar has no items. Each icon sits in a div so it lifts like the CMS icons.
 const DEFAULT_PLATFORM_ITEMS: PlatformNavItem[] = [
-  { name: 'PC', href: '/store?platform=pc', icon: <div><PCIcon /></div> },
-  { name: 'Xbox', href: '/store?platform=xbox', icon: <div><XboxIcon /></div> },
+  { name: 'PC', href: '/store?platform=pc', icon: <div className="[&>svg]:size-6"><PCIcon /></div> },
+  { name: 'Xbox', href: '/store?platform=xbox', icon: <div className="[&>svg]:size-6"><XboxIcon /></div> },
   {
     name: 'PlayStation',
     href: '/store?platform=playstation',
-    icon: <div><PlayStationIcon /></div>,
+    icon: <div className="[&>svg]:size-6"><PlayStationIcon /></div>,
   },
   {
     name: 'Nintendo',
     href: '/store?platform=nintendo',
-    icon: <div><NintendoIcon /></div>,
+    icon: <div className="[&>svg]:size-6"><NintendoIcon /></div>,
   },
 ]
 
@@ -71,9 +70,6 @@ export default function Navbar({
   const [searchOpen, setSearchOpen] = useState(false)
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false)
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false)
-  const [inputValue, setInputValue] = useState('')
-  // Suggestion picked with the arrow keys (suggestions.length = "See all results"), -1 for none.
-  const [activeIndex, setActiveIndex] = useState(-1)
   const searchRef = useRef<HTMLInputElement>(null)
   const searchContainerRef = useRef<HTMLDivElement>(null)
   const [isClient, setIsClient] = useState(false)
@@ -81,30 +77,44 @@ export default function Navbar({
   const [logoutDialogOpen, setLogoutDialogOpen] = useState(false)
   const [isScrolled, setIsScrolled] = useState(false)
 
-  const debouncedQuery = useDebounce(inputValue.trim(), 300)
-  const shouldFetch = debouncedQuery.length >= 2
-
-  const { data, isLoading } = useProducts(
-    { query: debouncedQuery, first: 5 },
-    shouldFetch,
+  // Closing the search clears its text (the effect on searchOpen below).
+  const navigateToStore = useCallback(
+    (q: string) => {
+      setSearchOpen(false)
+      router.push(buildStoreSearchRoute(q))
+    },
+    [router],
   )
 
-  const suggestions = data?.products ?? []
-  const suggestionsOpen = searchOpen && shouldFetch
-  // Rows the arrow keys can move through: every suggestion plus "See all results".
-  const optionCount =
-    suggestionsOpen && !isLoading && suggestions.length > 0
-      ? suggestions.length + 1
-      : 0
+  const handleSelectProduct = (product: ProductListItem) => {
+    setSearchOpen(false)
+    router.push(buildProductRoute(product))
+  }
+
+  const {
+    inputValue,
+    setInputValue,
+    activeIndex,
+    resetActive,
+    debouncedQuery,
+    suggestions,
+    suggestionsOpen,
+    isLoading,
+    handleKeyDown: handleSuggestionKeys,
+  } = useSearchSuggestions({
+    open: searchOpen,
+    onSelectProduct: handleSelectProduct,
+    onSearchAll: navigateToStore,
+  })
 
   // The cart and checkout pages render their own navbar, so this one is hidden there.
   const navHidden =
     pathname?.includes('/cart') || pathname?.includes('/checkout')
 
   const openSearch = useCallback(() => {
-    setActiveIndex(-1)
+    resetActive()
     setSearchOpen(true)
-  }, [])
+  }, [resetActive])
 
   // "/" (when not typing) or Ctrl/Cmd+K opens the search from anywhere.
   useEffect(() => {
@@ -172,7 +182,7 @@ export default function Navbar({
     return () => {
       document.body.style.overflow = 'unset'
     }
-  }, [searchOpen])
+  }, [searchOpen, setInputValue])
 
   // Close suggestions on outside click
   useEffect(() => {
@@ -188,43 +198,9 @@ export default function Navbar({
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
-  const navigateToStore = useCallback(
-    (q: string) => {
-      setSearchOpen(false)
-      setInputValue('')
-      router.push(buildStoreSearchRoute(q))
-    },
-    [router],
-  )
-
   const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
-    if ((e.key === 'ArrowDown' || e.key === 'ArrowUp') && optionCount > 0) {
-      e.preventDefault()
-      // Wraps around at both ends.
-      setActiveIndex((index) =>
-        e.key === 'ArrowDown'
-          ? index >= optionCount - 1
-            ? 0
-            : index + 1
-          : index <= 0
-            ? optionCount - 1
-            : index - 1,
-      )
-    }
-    if (e.key === 'Enter') {
-      if (activeIndex >= 0 && activeIndex < suggestions.length) {
-        handleSelectProduct(suggestions[activeIndex])
-      } else {
-        navigateToStore(inputValue)
-      }
-    }
+    handleSuggestionKeys(e)
     if (e.key === 'Escape') setSearchOpen(false)
-  }
-
-  const handleSelectProduct = (product: ProductListItem) => {
-    setSearchOpen(false)
-    setInputValue('')
-    router.push(buildProductRoute(product))
   }
 
   // CartNavbar (Cart -> Checkout -> Redeem step flow) renders its own
@@ -296,7 +272,7 @@ export default function Navbar({
                       href: item.to,
                       icon: (
                         <div
-                          className="flex items-center justify-center [&>svg]:h-7 [&>svg]:w-7"
+                          className="flex items-center justify-center [&>svg]:h-6 [&>svg]:w-6"
                           dangerouslySetInnerHTML={{ __html: item.icon }}
                         />
                       ),
@@ -343,10 +319,7 @@ export default function Navbar({
                 ref={searchRef}
                 type="text"
                 value={inputValue}
-                onChange={(e) => {
-                  setInputValue(e.target.value)
-                  setActiveIndex(-1)
-                }}
+                onChange={(e) => setInputValue(e.target.value)}
                 onKeyDown={handleKeyDown}
                 autoComplete="off"
                 role="combobox"
@@ -407,7 +380,7 @@ export default function Navbar({
               >
                 <SearchSuggestions
                   suggestions={suggestions}
-                  isLoading={isLoading && shouldFetch}
+                  isLoading={isLoading}
                   query={debouncedQuery}
                   onSelect={handleSelectProduct}
                   onSearchAll={() => navigateToStore(inputValue)}
@@ -419,7 +392,7 @@ export default function Navbar({
           </div>
 
           {/* User Actions */}
-          <div className="flex items-center gap-5">
+          <div className="flex items-center gap-3">
             {/* Mobile Search Icon */}
             <button
               aria-label="Open mobile search"

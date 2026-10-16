@@ -124,7 +124,7 @@ function PlatformNavItems({
 
   return (
     <div
-      className="relative flex items-center gap-6"
+      className="relative flex items-center gap-2"
       onMouseLeave={() => setHoveredIndex(null)}
     >
       {/* Gliding capsule: slides between items with a slight spring, brighter while hovering,
@@ -182,7 +182,11 @@ function PlatformNavItems({
           onBlur={() => setHoveredIndex(null)}
         >
           {item.icon}
-          <span className="trim font-medium">{item.name}</span>
+          {/* Trimmed to cap height, then 1px up so mixed-case labels sit on the icon's optical
+              centre. Browsers without text-box trimming already sit about that high. */}
+          <span className="trim leading-none font-medium supports-[text-box:trim-both_cap_alphabetic]:-translate-y-px">
+            {item.name}
+          </span>
         </NavItem>
       ))}
     </div>

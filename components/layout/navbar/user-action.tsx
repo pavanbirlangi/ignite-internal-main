@@ -1,6 +1,7 @@
 import { forwardRef } from 'react'
 import { cn } from '@/lib/utils'
 import type { UserActionProps } from '@/types/NavbarTypes'
+import { headerIconButtonClass } from './header-icon-button'
 
 export const UserAction = forwardRef<HTMLButtonElement, UserActionProps>(
   ({ className, ...props }, ref) => {
@@ -8,10 +9,7 @@ export const UserAction = forwardRef<HTMLButtonElement, UserActionProps>(
       <button
         ref={ref}
         aria-label="User menu"
-        className={cn(
-          'text-muted-foreground relative size-8 transition-colors hover:bg-white/10 rounded-full focus:ring-0 focus:outline-none',
-          className,
-        )}
+        className={cn(headerIconButtonClass, className)}
         {...props}
       />
     )
