@@ -41,10 +41,12 @@
   --font-weight-bold: 711;
   --font-weight-medium: 707;
 
+  /* Product-card discount and stock badges: a brighter crimson than --red,
+     which reads muddy on dark cover art. */
+  --color-deal: #E5193F;
+
   /* Header cart: a quick hop when something is added. */
   --animate-cart-bump: cart-bump 600ms cubic-bezier(0.34, 1.56, 0.64, 1);
-  /* Hero background: settles in from a slight zoom on load. */
-  --animate-hero-zoom: hero-zoom 2.4s cubic-bezier(0.22, 1, 0.36, 1) both;
   /* Button loading spinner: the ring turns while its arc grows and shrinks. */
   --animate-spinner-rotate: spinner-rotate 1.4s linear infinite;
   --animate-spinner-dash: spinner-dash 1.4s ease-in-out infinite;
@@ -131,14 +133,6 @@
     }
   }
 
-  @keyframes hero-zoom {
-    from {
-      transform: scale(1.08);
-    }
-    to {
-      transform: scale(1);
-    }
-  }
 }
 
 @theme inline {

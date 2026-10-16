@@ -304,15 +304,18 @@ const StoreCard: React.FC<ProductCardProps> = ({ product, wishlisted }) => {
           {/* Top-Left Badges (Out of Stock) */}
           {!isInStock && (
             <div className="absolute top-3 left-3 z-10">
-              <div className="bg-red/90 flex items-center rounded-lg border border-white/10 px-2 py-1 shadow-lg backdrop-blur-md">
-                <span className="text-[10px] leading-none font-bold tracking-wider text-white uppercase">
+              {/* Same size and shape as the discount badge. .trim drops the
+                  font's built-in space under the letters so they sit centred. */}
+              <div className="bg-deal flex h-[22px] items-center rounded-[6px] px-[9px]">
+                <span className="trim block text-[11px] font-bold tracking-[0.06em] text-white uppercase">
                   Out of Stock
                 </span>
               </div>
             </div>
           )}
 
-          <div className="absolute bottom-3 z-10 flex h-8 w-full items-end justify-between px-3">
+          {/* Centred so the discount lines up with the platform icon. */}
+          <div className="absolute bottom-3 z-10 flex h-8 w-full items-center justify-between px-3">
             {/* Icons & Discount Badge */}
             <div className="flex items-end justify-between">
               {gameLogoIcon ? (
@@ -337,8 +340,8 @@ const StoreCard: React.FC<ProductCardProps> = ({ product, wishlisted }) => {
                     ? product.compareAtPrice.amount
                     : 0,
                 ) > 0 && (
-                  <div className="bg-red shadow-red/20 flex h-[18px] items-center rounded-sm px-2.5 shadow-xl">
-                    <span className="text-xs leading-none font-medium text-white">
+                  <div className="bg-deal flex h-[22px] items-center rounded-[6px] px-2">
+                    <span className="trim block text-[13px] font-bold tracking-[0.01em] text-white">
                       -{product.discount?.percentage}%
                     </span>
                   </div>
