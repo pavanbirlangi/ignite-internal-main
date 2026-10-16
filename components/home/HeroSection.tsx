@@ -24,15 +24,6 @@ interface HeroSectionProps {
   btnUrl: string
   heroBanner: string
 }
-
-// Each block of the hero fades up a moment after the previous one on load.
-const ENTRANCE_CLASS =
-  'animate-in fade-in-0 slide-in-from-bottom-3 duration-700 ease-out motion-reduce:animate-none'
-const entrance = (step: number) => ({
-  animationDelay: `${120 + step * 90}ms`,
-  animationFillMode: 'both' as const,
-})
-
 export default function HeroSection({
   smallText,
   heading,
@@ -108,7 +99,7 @@ export default function HeroSection({
           fill
           priority
           fetchPriority="high"
-          className="animate-hero-zoom object-cover object-top motion-reduce:animate-none"
+          className="object-cover object-top"
         />
         {/* The same single top-to-bottom fade the site already used -- an added left-to-right
             darkening looked like an improvement in isolation but actually washed out the art
@@ -122,14 +113,12 @@ export default function HeroSection({
           {/* No decorative line before this: it read as a dash-like accent, which looks
               AI-generated to the client, so the label stands on its own. */}
           <p
-            className={`${ENTRANCE_CLASS} mb-3 text-sm font-bold text-white/80 uppercase sm:text-base`}
-            style={entrance(0)}
+            className="mb-3 text-sm font-bold text-white/80 uppercase sm:text-base"
           >
             {smallText}
           </p>
           <h1
-            className={`${ENTRANCE_CLASS} text-3xl font-semibold md:text-[36px] lg:text-[44px]`}
-            style={entrance(1)}
+            className="text-3xl font-semibold md:text-[36px] lg:text-[44px]"
           >
             {/* The last word in a solid accent colour, not a gradient: with this font, a
                 gradient clipped to the text (bg-clip-text) cut the top off "?" and other
@@ -145,8 +134,7 @@ export default function HeroSection({
           {/* Search Bar, with live suggestions like the header search */}
           <div
             ref={containerRef}
-            className={`${ENTRANCE_CLASS} relative z-20`}
-            style={entrance(2)}
+            className="relative z-20"
           >
             <button
               type="button"
@@ -196,8 +184,7 @@ export default function HeroSection({
 
           {/* Feature Badges */}
           <div
-            className={`${ENTRANCE_CLASS} flex flex-wrap gap-2.5`}
-            style={entrance(3)}
+            className="flex flex-wrap gap-2.5"
           >
             {keyPoints
               .filter((point) => point.text?.trim())
@@ -217,8 +204,7 @@ export default function HeroSection({
         <Button
           variant="primary"
           size="lg"
-          className={`${ENTRANCE_CLASS} group/cta relative w-fit min-w-48 overflow-hidden rounded-[12px] px-6 py-5 font-semibold`}
-          style={entrance(4)}
+          className="group/cta relative w-fit min-w-48 overflow-hidden rounded-[12px] px-6 py-5 font-semibold"
           asChild
         >
           <Link href={btnUrl}>
