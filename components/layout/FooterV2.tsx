@@ -16,7 +16,7 @@ export default function FooterV2({
   if (!footerData) return null
 
   return (
-    <footer className="bg-card border-border w-full border-t font-sans max-md:pb-24">
+    <footer className="bg-secondary w-full font-sans max-md:pb-24">
       <div className="container [--max-width-container:1280px]">
         <div className="flex items-center justify-center gap-6 py-7 lg:justify-end">
           {footerData.payment_images?.map((image) => (
@@ -34,7 +34,7 @@ export default function FooterV2({
         </div>
       </div>
 
-      <div className="bg-muted-foreground h-px w-full" />
+      <div className="h-px w-full bg-white/10" />
 
       <div className="container [--max-width-container:1280px]">
         <div className="grid gap-10 py-12 lg:grid-cols-[1.3fr_1fr_1fr_1fr_1.2fr] lg:gap-12">
@@ -132,7 +132,7 @@ export default function FooterV2({
         </div>
       </div>
 
-      <div className="bg-muted-foreground h-px w-full" />
+      <div className="h-px w-full bg-white/10" />
 
       <div className="container [--max-width-container:1280px]">
         <div className="flex flex-col items-center justify-between gap-5 py-10 pb-12 lg:flex-row">
@@ -152,10 +152,11 @@ export default function FooterV2({
             {footerData.bottom_text}
           </span>
 
-          <div className="flex items-center gap-3">
+          {/* The currency pill uses the same grey as the footer, so it gets a lighter fill here. */}
+          <div className="flex items-center gap-3 [&_.bg-secondary]:bg-white/5">
             <RegionToggle />
             {/* <button
-              className="bg-secondary border-border text-foreground hover:bg-secondary/60 flex h-14 w-14 items-center justify-center rounded-full border transition-colors"
+              className="border-border text-foreground flex h-14 w-14 items-center justify-center rounded-full border bg-white/5 transition-colors hover:bg-white/10"
               aria-label="Toggle theme"
             >
               <Sun size={32} />

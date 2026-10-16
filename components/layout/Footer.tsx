@@ -16,17 +16,18 @@ export default function Footer({
   if (!footerData) return null
 
   return (
-    <footer className="border-foreground bg-card w-full border-t pt-12 pb-28 font-sans md:pb-10">
+    <footer className="bg-secondary w-full pt-12 pb-28 font-sans md:pb-10">
       <div className="container [--max-width-container:1280px]">
         {/* Top Section */}
         <div className="mb-10 flex flex-col justify-between gap-10 lg:flex-row lg:gap-16">
           {/* Left: Region + Theme + Socials */}
           <div className="flex flex-col justify-between gap-8">
             {/* Region Selector + Theme Toggle */}
-            <div className="flex items-center gap-3">
+            {/* The currency pill uses the same grey as the footer, so it gets a lighter fill here. */}
+            <div className="flex items-center gap-3 [&_.bg-secondary]:bg-white/5">
               <RegionToggle />
               {/* <button
-                className="bg-secondary border-border text-foreground hover:bg-secondary/60 flex h-[56px] w-[56px] items-center justify-center rounded-full border transition-colors"
+                className="border-border text-foreground flex h-[56px] w-[56px] items-center justify-center rounded-full border bg-white/5 transition-colors hover:bg-white/10"
                 aria-label="Toggle theme"
               >
                 <Sun size={32} />
@@ -119,7 +120,7 @@ export default function Footer({
       </div>
 
       {/* Bottom Divider */}
-      <div className="bg-muted-foreground h-px w-full" />
+      <div className="h-px w-full bg-white/10" />
 
       <div className="container pt-5 [--max-width-container:1280px]">
         {/* Bottom Bar */}
