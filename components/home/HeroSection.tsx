@@ -10,8 +10,19 @@ import { Input } from '../ui/input'
 import SearchIcon from '../icons/SearchIcon'
 import SearchSuggestions from './SearchSuggestions'
 import { useSearchSuggestions } from '@/hooks/useSearchSuggestions'
+import { useTypewriter } from '@/hooks/useTypewriter'
 import { buildProductRoute } from '@/lib/search/search-utils'
 import type { ProductListItem } from '@/types/product'
+
+// Typed into the search placeholder one after another; all things we sell.
+const SEARCH_WORDS = [
+  'Steam keys',
+  'Xbox games',
+  'PlayStation games',
+  'Nintendo games',
+  'gift cards',
+  'software',
+]
 
 interface HeroSectionProps {
   smallText: string
@@ -33,6 +44,11 @@ export default function HeroSection({
   heroBanner,
 }: HeroSectionProps) {
   const router = useRouter()
+  const searchPlaceholder = useTypewriter(
+    'Search for ',
+    SEARCH_WORDS,
+    'Search for games, software & more',
+  )
   const [isOpen, setIsOpen] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
 
@@ -163,7 +179,7 @@ export default function HeroSection({
                   : undefined
               }
               className="focus-visible:border-primary/70 border-white/20 pl-13.5 font-medium transition-[border-color,box-shadow] duration-200 placeholder:font-medium hover:border-white/35 focus-visible:shadow-[0_0_0_1px_rgba(36,104,223,0.5),0_0_36px_-6px_rgba(36,104,223,0.85)] focus-visible:ring-0"
-              placeholder="Search for games, software & more"
+              placeholder={searchPlaceholder}
               aria-label="Search products"
               autoComplete="off"
             />
