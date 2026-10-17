@@ -1,14 +1,10 @@
 'use client'
 
 import * as React from 'react'
-import { Check, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Check, Copy } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import {
-  Pagination,
-  PaginationContent,
-  PaginationItem,
-} from '@/components/ui/pagination'
-import CopyIcon from '@/components/icons/CopyIcon'
+import Pagination from '@/components/store/Pagination'
+import { ACCOUNT_SECTION_LABEL_CLASS } from '@/components/library/account-ui'
 import { parseCredentialKey } from '@/lib/orders/parse-credential-key'
 
 interface KeyListProps {
@@ -30,18 +26,34 @@ export const KeyList = ({ keys }: KeyListProps) => {
     setTimeout(() => setCopiedId(null), 2000)
   }
 
-  const renderCopyButton = (value: string, id: string, title: string) => (
-    <button
-      onClick={() => handleCopy(value, id)}
-      className="text-white/65 hover:bg-secondaryborder-secondary rounded-md p-2 transition-colors hover:text-white"
-      title={title}
-    >
-      {copiedId === id ? (
-        <Check className="text-destructive size-6" />
-      ) : (
-        <CopyIcon />
-      )}
-    </button>
+  const renderCopyButton = (value: string, id: string, title: string) => {
+    const copied = copiedId === id
+    return (
+      <button
+        type="button"
+        onClick={() => handleCopy(value, id)}
+        aria-label={title}
+        className={cn(
+          'inline-flex h-10 shrink-0 cursor-pointer items-center gap-1.5 rounded-lg px-3 text-sm font-medium transition-colors outline-none focus-visible:ring-2 focus-visible:ring-white/40',
+          copied ? 'bg-[#22C55E]/12 text-[#4ADE80]' : 'bg-secondary text-white/95 hover:bg-white/10',
+        )}
+      >
+        {copied ? <Check className="size-4" /> : <Copy className="size-4" />}
+        {copied ? 'Copied' : 'Copy'}
+      </button>
+    )
+  }
+
+  const renderField = (label: string | null, value: string, id: string, title: string) => (
+    <div className="flex flex-col gap-2">
+      {label && <span className={ACCOUNT_SECTION_LABEL_CLASS}>{label}</span>}
+      <div className="bg-background border-border flex h-13 items-center gap-3 rounded-[10px] border py-1.5 pr-1.5 pl-4">
+        <span className="min-w-0 flex-1 truncate font-mono text-base font-medium tracking-[0.6px] text-white/95">
+          {value}
+        </span>
+        {renderCopyButton(value, id, title)}
+      </div>
+    </div>
   )
 
   return (
@@ -52,118 +64,33 @@ export const KeyList = ({ keys }: KeyListProps) => {
 
         if (credential) {
           return (
-            <div key={globalIndex} className="flex flex-col gap-3">
-              {/* Email field */}
-              <div className="flex flex-col gap-1.5">
-                <label className="text-sm font-bold text-white/95">
-                  Email
-                </label>
-                <div className="bg-secondary hover:border-secondary group flex h-12 items-center justify-between rounded-xl border border-transparent p-4 px-5 transition-colors md:h-13.5">
-                  <span className="mr-4 truncate font-mono text-xl font-bold text-white/95">
-                    {credential.email}
-                  </span>
-                  {renderCopyButton(
-                    credential.email,
-                    `${globalIndex}-email`,
-                    'Copy email',
-                  )}
-                </div>
-              </div>
-
-              {/* Password field */}
-              <div className="flex flex-col gap-1.5">
-                <label className="text-sm font-bold text-white/95">
-                  Password
-                </label>
-                <div className="bg-secondary hover:border-secondary group flex h-12 items-center justify-between rounded-xl border border-transparent p-4 px-5 transition-colors md:h-13.5">
-                  <span className="mr-4 truncate font-mono text-xl font-bold text-white/95">
-                    {credential.password}
-                  </span>
-                  {renderCopyButton(
-                    credential.password,
-                    `${globalIndex}-password`,
-                    'Copy password',
-                  )}
-                </div>
-              </div>
+            <div key={globalIndex} className="flex flex-col gap-3.5">
+              {renderField('Email', credential.email, `${globalIndex}-email`, 'Copy email')}
+              {renderField('Password', credential.password, `${globalIndex}-password`, 'Copy password')}
             </div>
           )
         }
 
-        // Default: plain key display
+        // Plain key: only the first one carries the label.
         return (
-          <div
-            key={globalIndex}
-            className="bg-secondary hover:border-secondary group flex h-12 items-center justify-between rounded-xl border border-transparent p-4 px-5 transition-colors md:h-13.5"
-          >
-            <span className="mr-4 truncate font-mono text-xl font-bold text-white/95">
-              {key}
-            </span>
-            {renderCopyButton(key, `${globalIndex}-key`, 'Copy key')}
+          <div key={globalIndex}>
+            {renderField(
+              globalIndex === 0 ? (keys.length > 1 ? 'Product keys' : 'Product key') : null,
+              key,
+              `${globalIndex}-key`,
+              'Copy key',
+            )}
           </div>
         )
       })}
 
       {totalPages > 1 && (
-        <div className="mt-8 flex justify-center">
-          <Pagination>
-            <PaginationContent className="items-center gap-2">
-              <PaginationItem>
-                <button
-                  onClick={(e) => {
-                    e.preventDefault()
-                    if (currentPage > 1) setCurrentPage((p) => p - 1)
-                  }}
-                  disabled={currentPage === 1}
-                  className={cn(
-                    'text-white/65 flex h-10 w-10 items-center justify-center rounded-[6px] transition-colors',
-                    currentPage === 1
-                      ? 'cursor-not-allowed'
-                      : 'hover:bg-secondaryborder-secondary hover:text-white',
-                  )}
-                >
-                  <ChevronLeft className="h-5 w-5" />
-                </button>
-              </PaginationItem>
-
-              {Array.from({ length: totalPages }).map((_, i) => (
-                <PaginationItem key={i}>
-                  <button
-                    onClick={(e) => {
-                      e.preventDefault()
-                      setCurrentPage(i + 1)
-                    }}
-                    className={cn(
-                      'flex h-10 w-10 items-center justify-center rounded-[6px] text-sm font-bold transition-colors',
-                      currentPage === i + 1
-                        ? 'bg-background border-primary text-white/95 border-2'
-                        : 'bg-secondary text-white/65 hover:bg-secondary hover:text-white',
-                    )}
-                  >
-                    {i + 1}
-                  </button>
-                </PaginationItem>
-              ))}
-
-              <PaginationItem>
-                <button
-                  onClick={(e) => {
-                    e.preventDefault()
-                    if (currentPage < totalPages) setCurrentPage((p) => p + 1)
-                  }}
-                  disabled={currentPage === totalPages}
-                  className={cn(
-                    'text-white/65 flex h-10 w-10 items-center justify-center rounded-[6px] transition-colors',
-                    currentPage === totalPages
-                      ? 'cursor-not-allowed'
-                      : 'hover:bg-secondaryborder-secondary hover:text-white',
-                  )}
-                >
-                  <ChevronRight className="h-5 w-5" />
-                </button>
-              </PaginationItem>
-            </PaginationContent>
-          </Pagination>
+        <div className="mt-2">
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={setCurrentPage}
+          />
         </div>
       )}
     </div>

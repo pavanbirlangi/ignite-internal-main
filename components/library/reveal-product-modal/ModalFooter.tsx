@@ -1,5 +1,5 @@
-import { ExternalLink } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { ListChecks } from 'lucide-react'
+import { ACCOUNT_SECONDARY_BUTTON_CLASS } from '@/components/library/account-ui'
 import Link from 'next/link'
 import { useState } from 'react'
 import { ActivationGuideModal } from '@/components/shared/ActivationGuideModal'
@@ -17,28 +17,27 @@ interface ModalFooterProps {
 
 /**
  * Formats an ISO date string in the viewer's own timezone, matching the order dates shown
- * elsewhere on the page.
- * Example: "April 13, 2026 at 03:42 PM GMT+5:30"
+ * elsewhere on the account pages.
+ * Example: "13 Oct 2026, 4:11 PM"
  */
 function formatRevealDate(iso: string): string {
   try {
     const date = new Date(iso)
     if (isNaN(date.getTime())) return iso
 
-    const datePart = new Intl.DateTimeFormat('en-US', {
+    const datePart = new Intl.DateTimeFormat('en-GB', {
       year: 'numeric',
-      month: 'long',
+      month: 'short',
       day: 'numeric',
     }).format(date)
 
     const timePart = new Intl.DateTimeFormat('en-US', {
-      hour: '2-digit',
+      hour: 'numeric',
       minute: '2-digit',
       hour12: true,
-      timeZoneName: 'short',
     }).format(date)
 
-    return `${datePart} at ${timePart}`
+    return `${datePart}, ${timePart}`
   } catch {
     return iso
   }
@@ -51,63 +50,49 @@ export const ModalFooter = ({
 }: ModalFooterProps) => {
   const [guideOpen, setGuideOpen] = useState(false)
 
-  return (
-    <div className="flex flex-col gap-6 pt-6">
-      <div className="flex flex-col items-center justify-between gap-4 md:flex-row">
-        <div className="flex flex-col gap-4 md:flex-row">
-          {guideLoading ? (
-            <div className="bg-card border-muted-foreground/30 h-10 w-36 animate-pulse rounded-md border" />
-          ) : activationGuide ? (
-            <>
-              <ActivationGuideModal
-                open={guideOpen}
-                onOpenChange={setGuideOpen}
-                title={activationGuide.name}
-                guideHtml={activationGuide.guide}
-                guideLink={activationGuide.link}
-              />
-              <Button
-                variant="ghost"
-                onClick={() => setGuideOpen(true)}
-                className="border-muted-foreground! bg-card h-10 border px-6 py-4 text-sm font-bold text-white/95 hover:bg-white/5"
-              >
-                Activation Guide
-              </Button>
-            </>
-          ) : null}
-          {/* <Button
-            asChild
-            className="bg-primary hover:bg-primary/90 h-10 text-sm font-bold text-white/95"
-          >
-            <a
-              href="https://store.steampowered.com/account/registerkey"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Redeem on Steam{' '}
-              <ExternalLink className="size-4 text-white/95 hover:text-white/80" />
-            </a>
-          </Button> */}
-        </div>
-        {revealDate && (
-          <div className="text-right">
-            <p className="text-white/65 text-xs font-bold">
-              Key revealed on
-            </p>
-            <p className="text-sm font-medium text-white/95">
-              {formatRevealDate(revealDate)}
-            </p>
-          </div>
-        )}
-      </div>
+  if (!guideLoading && !activationGuide && !revealDate) return null
 
-      <p className="text-white/65 border-card border-t-[0.5px] border-b-[0.5px] py-4 text-center text-xs font-medium md:text-left">
-        Facing issues with the key? You can raise a ticket{' '}
-        <Link href="/help" className="font-bold text-white/95 underline">
-          here
-        </Link>
-        . (Our support will get in touch with you within 48 hours)
-      </p>
+  return (
+    <div className="flex flex-col items-stretch justify-between gap-3 sm:flex-row sm:items-center">
+      {guideLoading ? (
+        <div className="bg-secondary h-10 w-44 animate-pulse rounded-lg" />
+      ) : activationGuide ? (
+        <>
+          <ActivationGuideModal
+            open={guideOpen}
+            onOpenChange={setGuideOpen}
+            title={activationGuide.name}
+            guideHtml={activationGuide.guide}
+            guideLink={activationGuide.link}
+          />
+          <button
+            type="button"
+            onClick={() => setGuideOpen(true)}
+            className={ACCOUNT_SECONDARY_BUTTON_CLASS}
+          >
+            <ListChecks />
+            Activation guide
+          </button>
+        </>
+      ) : (
+        <span />
+      )}
+      {revealDate && (
+        <p className="text-xs! leading-4! text-white/65 max-sm:text-center">
+          Revealed on {formatRevealDate(revealDate)}
+        </p>
+      )}
     </div>
   )
 }
+
+// Bottom strip of the key modal: where to go when a key doesn't work.
+export const KeyHelpLine = () => (
+  <p className="text-center text-xs! leading-4! text-white/65">
+    Key not working?{' '}
+    <Link href="/help" className="font-medium text-white/95 underline-offset-2 hover:underline">
+      Raise a ticket
+    </Link>
+    , our support gets back to you within 48 hours.
+  </p>
+)

@@ -1,7 +1,7 @@
 'use client'
 
 import * as React from 'react'
-import { X } from 'lucide-react'
+import { Clock, X } from 'lucide-react'
 import {
   Dialog,
   DialogContent,
@@ -11,7 +11,7 @@ import {
 } from '@/components/ui/dialog'
 import { ProductHeader } from './reveal-product-modal/ProductHeader'
 import { KeyList } from './reveal-product-modal/KeyList'
-import { ModalFooter } from './reveal-product-modal/ModalFooter'
+import { KeyHelpLine, ModalFooter } from './reveal-product-modal/ModalFooter'
 import { ProductDetails } from './reveal-product-modal/types'
 import { keysService, KeyAssignment } from '@/lib/services/keys.service'
 import { ProductService } from '@/lib/services/product.service'
@@ -127,78 +127,69 @@ export function RevealProductModal({
     fetchActivationGuide()
   }, [isOpen, product.handle])
 
+  const noticeClass = 'bg-background border-border flex items-center gap-3 rounded-xl border p-4'
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent
         showCloseButton={false}
-        className="bg-secondary/40 border-secondary max-h-[95vh] w-full gap-0 overflow-hidden border p-0 text-white/95 shadow-2xl backdrop-blur-xl outline-none sm:max-w-200 sm:rounded-[30px]"
+        aria-describedby={undefined}
+        className="bg-card border-border max-h-[92vh] w-full gap-0 overflow-hidden rounded-2xl border p-0 text-white/95 shadow-2xl outline-none sm:max-w-150"
       >
-        <div className="flex max-h-[calc(95vh-2px)] flex-col gap-8 overflow-y-auto p-4 [-ms-overflow-style:'none'] [scrollbar-width:'none'] sm:p-10 [&::-webkit-scrollbar]:hidden">
-          <DialogHeader className="border-secondary flex flex-row items-center justify-between space-y-0 border-b pb-6 text-left">
-            <DialogTitle className="text-xl font-bold md:text-2xl">
-              Reveal Product
-            </DialogTitle>
-            <DialogClose className="rounded-full p-2 transition-colors hover:bg-white/10">
-              <X className="text-white/65 h-6 w-6" />
+        <div className="flex max-h-[calc(92vh-2px)] flex-col overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          <DialogHeader className="border-border flex flex-row items-center justify-between space-y-0 border-b px-6 py-4 text-left">
+            <DialogTitle className="text-xl font-bold">Your key</DialogTitle>
+            <DialogClose
+              aria-label="Close"
+              className="grid size-9 cursor-pointer place-items-center rounded-full bg-white/5 text-white/65 transition-colors outline-none hover:bg-white/10 hover:text-white focus-visible:ring-2 focus-visible:ring-white/40"
+            >
+              <X className="size-4.5" />
             </DialogClose>
           </DialogHeader>
 
-          <div className="flex flex-col gap-8">
+          <div className="flex flex-col gap-6 p-6">
             <ProductHeader
               product={product}
               activationGuide={activationGuide}
               guideLoading={guideLoading}
             />
 
-            <div className="flex flex-col gap-3">
-              <h4 className="text-xl font-bold">Reveal Product</h4>
-              <div>
-                {loading ? (
-                  <div className="flex flex-col gap-4">
-                    {[...Array(2)].map((_, i) => (
-                      <div
-                        key={i}
-                        className="bg-secondary h-12 animate-pulse rounded-xl md:h-13.5"
-                      />
-                    ))}
-                  </div>
-                ) : error ? (
-                  <div className="flex items-center justify-center rounded-xl bg-red-500/10 p-4">
-                    <p className="text-sm text-red-400">{error}</p>
-                  </div>
-                ) : isRevoked ? (
-                  <div className="bg-secondary flex items-center justify-center rounded-xl p-4">
-                    <p className="text-white/65 text-sm">
-                      This key was revoked because the order was refunded.
-                    </p>
-                  </div>
-                ) : isPending ? (
-                  <div className="bg-secondary flex items-center justify-center rounded-xl p-4">
-                    <p className="text-white/65 text-sm">
-                      Your key is being prepared -- check back soon.
-                    </p>
-                  </div>
-                ) : keys.length > 0 ? (
-                  <div className="flex flex-col gap-4">
-                    <KeyList keys={keys} />
-                    {pendingCount > 0 && (
-                      <div className="bg-secondary flex items-center justify-center rounded-xl p-4">
-                        <p className="text-white/65 text-sm">
-                          {pendingCount === 1
-                            ? '1 more key is being prepared -- check back soon.'
-                            : `${pendingCount} more keys are being prepared -- check back soon.`}
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                ) : (
-                  <div className="bg-secondary flex items-center justify-center rounded-xl p-4">
-                    <p className="text-white/65 text-sm">
-                      No keys available for this product.
-                    </p>
-                  </div>
-                )}
-              </div>
+            <div>
+              {loading ? (
+                <div className="flex flex-col gap-2">
+                  <div className="bg-secondary h-4 w-24 animate-pulse rounded" />
+                  <div className="bg-secondary h-13 animate-pulse rounded-[10px]" />
+                </div>
+              ) : error ? (
+                <div className="border-red/30 bg-red/10 rounded-xl border p-4">
+                  <p className="text-sm text-[#FF6B76]">{error}</p>
+                </div>
+              ) : isRevoked ? (
+                <div className={noticeClass}>
+                  <p className="text-sm text-white/65">
+                    This key was revoked because the order was refunded.
+                  </p>
+                </div>
+              ) : isPending ? (
+                <PendingNotice title="Your key is being prepared" />
+              ) : keys.length > 0 ? (
+                <div className="flex flex-col gap-4">
+                  <KeyList keys={keys} />
+                  {pendingCount > 0 && (
+                    <PendingNotice
+                      title={
+                        pendingCount === 1
+                          ? '1 more key is being prepared'
+                          : `${pendingCount} more keys are being prepared`
+                      }
+                    />
+                  )}
+                </div>
+              ) : (
+                <div className={noticeClass}>
+                  <p className="text-sm text-white/65">No keys available for this product.</p>
+                </div>
+              )}
             </div>
 
             <ModalFooter
@@ -207,8 +198,27 @@ export function RevealProductModal({
               guideLoading={guideLoading || loading}
             />
           </div>
+
+          <div className="border-border border-t px-6 py-4">
+            <KeyHelpLine />
+          </div>
         </div>
       </DialogContent>
     </Dialog>
+  )
+}
+
+// Amber clock notice for keys our team still has to hand out.
+function PendingNotice({ title }: { title: string }) {
+  return (
+    <div className="bg-background border-border flex items-center gap-3 rounded-xl border p-4">
+      <Clock className="size-5.5 shrink-0 text-[#F5A524]" />
+      <div>
+        <p className="text-sm font-bold text-white/95">{title}</p>
+        <p className="text-sm! leading-5! text-white/65">
+          It appears here as soon as it&apos;s ready. Check back soon.
+        </p>
+      </div>
+    </div>
   )
 }
