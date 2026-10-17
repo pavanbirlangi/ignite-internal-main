@@ -57,11 +57,11 @@ const FilterAccordion: React.FC<FilterAccordionProps> = ({
       >
         <div className="flex h-5 w-full flex-none grow-0 flex-row items-center justify-between">
           <div className="flex h-2.75 flex-none grow-0 flex-row items-center justify-between">
-            <span className="flex h-2.75 flex-none grow-0 items-center self-stretch text-[14px] leading-4.5 font-semibold text-white">
+            <span className="flex h-2.75 flex-none grow-0 items-center self-stretch text-sm font-bold text-white/95">
               {title}
             </span>
             {selectedIds.length > 0 && (
-              <div className="bg-primary ml-2 inline-flex h-4 w-4 flex-none grow-0 items-center justify-center rounded-full text-center text-[11px] leading-none font-semibold text-white tabular-nums">
+              <div className="bg-primary ml-2 inline-flex h-4 w-4 flex-none grow-0 items-center justify-center rounded-full text-center text-xs font-bold text-white/95 tabular-nums">
                 <span className="inline-flex items-center justify-center leading-none">
                   {selectedIds.length}
                 </span>
@@ -69,7 +69,7 @@ const FilterAccordion: React.FC<FilterAccordionProps> = ({
             )}
           </div>
           <ChevronDown
-            className={`size-5 flex-none grow-0 text-white transition-transform ${isOpen ? 'rotate-180' : ''}`}
+            className={`size-5 flex-none grow-0 text-white/95 transition-transform ${isOpen ? 'rotate-180' : ''}`}
           />
         </div>
       </button>
@@ -85,7 +85,7 @@ const FilterAccordion: React.FC<FilterAccordionProps> = ({
                     placeholder="Search..."
                     onChange={handleSearchChange}
                     aria-label={`Search within ${title}`}
-                    className="text-muted-foregreound placeholder-muted-foregreound h-3.25 w-full border-none bg-transparent text-[10px] leading-3.25 font-medium outline-none"
+                    className="text-muted-foregreound placeholder-muted-foregreound h-3.25 w-full border-none bg-transparent text-xs font-medium outline-none"
                   />
                 </div>
               </div>
@@ -111,7 +111,7 @@ const FilterAccordion: React.FC<FilterAccordionProps> = ({
                     className={`flex size-4 items-center justify-center rounded-[2px] ${isSelected ? 'bg-primary' : 'bg-secondary group-hover:bg-border'}`}
                   >
                     {isSelected && (
-                      <Check className="size-3 text-white" strokeWidth={3} />
+                      <Check className="size-3 text-white/95" strokeWidth={3} />
                     )}
                   </div>
                   <input
@@ -121,12 +121,12 @@ const FilterAccordion: React.FC<FilterAccordionProps> = ({
                     onChange={() => onToggle(idString)}
                   />
                   <span
-                    className={`text-[12px] leading-4 font-medium capitalize ${isSelected ? 'text-white' : 'text-muted-foreground'}`}
+                    className={`text-xs font-medium capitalize ${isSelected ? 'text-white/95' : 'text-white/65'}`}
                   >
                     {labelString}
                   </span>
                   <span
-                    className={`inline-flex items-center text-[10px] leading-none font-medium tabular-nums ${isSelected ? 'text-white' : 'text-muted-foreground'} `}
+                    className={`inline-flex items-center text-xs font-medium tabular-nums ${isSelected ? 'text-white/95' : 'text-white/65'} `}
                   >
                     ({getCount(option)})
                   </span>

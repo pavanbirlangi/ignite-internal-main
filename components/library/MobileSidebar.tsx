@@ -36,7 +36,7 @@ export function MobileSidebar() {
       {/* Dropdown Trigger */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex h-[50px] w-full items-center justify-between rounded-[12px] bg-secondary px-5 text-[14px] font-semibold text-foreground transition-colors"
+        className="flex h-[50px] w-full items-center justify-between rounded-[12px] bg-secondary px-5 text-sm font-bold text-white/95 transition-colors"
       >
         <span className="flex items-center gap-2">
           <ActiveIcon className="size-5" />
@@ -65,14 +65,14 @@ export function MobileSidebar() {
                     href={item.href}
                     onClick={() => setIsOpen(false)}
                     className={cn(
-                      "flex items-center gap-3 px-5 py-4 text-sm font-semibold transition-colors",
+                      "flex items-center gap-3 px-5 py-4 text-sm font-bold transition-colors",
                       isActive
-                        ? "bg-primary text-white"
-                        : "text-muted-foreground hover:bg-secondary/50"
+                        ? "bg-primary text-white/95"
+                        : "text-white/65 hover:bg-secondary/50"
                     )}
                   >
-                    <Icon className={cn("size-5", isActive ? "text-white" : "")} />
-                    <span className="text-[14px]">{item.label}</span>
+                    <Icon className={cn("size-5", isActive ? "text-white/95" : "")} />
+                    <span className="text-sm">{item.label}</span>
                   </Link>
                 )
               })}
@@ -84,11 +84,11 @@ export function MobileSidebar() {
                   setLogoutDialogOpen(true)
                 }}
                 className={cn(
-                  "flex items-center gap-3 px-5 py-4 text-sm font-semibold transition-colors text-red cursor-pointer"
+                  "flex items-center gap-3 px-5 py-4 text-sm font-bold transition-colors text-red cursor-pointer"
                 )}
               >
                 <LogOut className="size-5" />
-                <span className="text-[14px]">Logout</span>
+                <span className="text-sm">Logout</span>
               </button>
             </nav>
           </div>

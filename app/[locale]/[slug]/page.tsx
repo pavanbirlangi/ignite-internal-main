@@ -441,7 +441,7 @@ export default async function ProductPage({ params }: PageProps) {
       />
       {faqItems.length > 0 && (
         <div className="max-w-container mx-auto mt-8 mb-16 w-full px-4 md:mt-12 md:mb-20 md:px-0">
-          <FaqSection title="Frequently Asked Questions" items={faqItems} />
+          <FaqSection headline title="Frequently Asked Questions" items={faqItems} />
         </div>
       )}
     </main>

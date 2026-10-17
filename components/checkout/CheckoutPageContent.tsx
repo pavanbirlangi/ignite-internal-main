@@ -174,7 +174,7 @@ export function CheckoutPageContent() {
       <div className="bg-background min-h-screen font-sans">
         <CartNavbar currentStep={2} />
         <div className="flex min-h-100 items-center justify-center px-6 py-16">
-          <p className="text-muted-foreground text-base">
+          <p className="text-white/65 text-base">
             Preparing checkout...
           </p>
         </div>
@@ -187,12 +187,12 @@ export function CheckoutPageContent() {
       <div className="bg-background min-h-screen font-sans">
         <CartNavbar currentStep={2} />
         <div className="flex min-h-100 flex-col items-center justify-center gap-3 px-6 py-16 text-center">
-          <p className="text-red text-base font-semibold">
+          <p className="text-red text-base font-bold">
             {sessionError ?? 'Could not start checkout.'}
           </p>
           <button
             onClick={() => router.push('/cart')}
-            className="text-primary text-sm font-semibold underline"
+            className="text-primary text-sm font-bold underline"
           >
             Back to cart
           </button>

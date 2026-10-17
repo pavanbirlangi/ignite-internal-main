@@ -66,8 +66,8 @@ export default function MyTicketsPage() {
     <div className="bg-secondary/40 flex flex-col gap-8 rounded-[20px] p-4 sm:p-10">
       {/* Header */}
       <div className="space-y-1">
-        <h1 className="text-xl md:text-[28px] font-semibold">Track Tickets</h1>
-        <p className="text-muted-foreground text-sm font-medium">
+        <h1 className="text-xl md:text-3xl font-bold">Track Tickets</h1>
+        <p className="text-white/65 text-sm font-medium">
           Track your opened &amp; closed tickets
         </p>
       </div>
@@ -90,7 +90,7 @@ export default function MyTicketsPage() {
                   .finally(() => setIsLoading(false))
               }
             }}
-            className="bg-secondary hover:bg-border mt-4 cursor-pointer rounded-md px-4 py-2 text-sm font-semibold text-white transition-colors"
+            className="bg-secondary hover:bg-border mt-4 cursor-pointer rounded-md px-4 py-2 text-sm font-bold text-white/95 transition-colors"
           >
             Retry
           </button>
@@ -99,7 +99,7 @@ export default function MyTicketsPage() {
 
       {/* No user */}
       {!isLoading && !error && !user?.email && (
-        <p className="text-muted-foreground text-sm">
+        <p className="text-white/65 text-sm">
           Please log in to view your tickets.
         </p>
       )}
@@ -107,7 +107,7 @@ export default function MyTicketsPage() {
       {/* Empty */}
       {!isLoading && !error && user?.email && tickets.length === 0 && (
         <div className="py-16 text-center">
-          <p className="text-muted-foreground text-sm">
+          <p className="text-white/65 text-sm">
             You haven&apos;t raised any support tickets yet.
           </p>
         </div>

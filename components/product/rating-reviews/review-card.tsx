@@ -22,14 +22,14 @@ export function ReviewCard({ review }: ReviewCardProps) {
             </div>
           ) : (
             <div className="bg-primary flex h-10 w-10 shrink-0 items-center justify-center rounded-full">
-              <User className="text-white" size={24} />
+              <User className="text-white/95" size={24} />
             </div>
           )}
           <div className="flex flex-col gap-1">
-            <span className="text-[16px] font-medium text-white">
+            <span className="text-base font-medium text-white/95">
               {review.name}
             </span>
-            <span className="text-muted-foreground text-xs font-medium">
+            <span className="text-white/65 text-xs font-medium">
               {formatReviewDate(review.createdAt)}
             </span>
           </div>
@@ -38,8 +38,8 @@ export function ReviewCard({ review }: ReviewCardProps) {
       </div>
 
       <div className="flex flex-1 flex-col gap-3">
-        {/* <h3 className="text-sm font-semibold text-white">{review.title}</h3> */}
-        <p className="text-muted-foreground text-sm leading-relaxed whitespace-pre-line">
+        {/* <h3 className="text-sm font-bold text-white/95">{review.title}</h3> */}
+        <p className="text-white/65 text-sm whitespace-pre-line">
           {review.body}
         </p>
         {review.verified === 'verified-purchase' ? (

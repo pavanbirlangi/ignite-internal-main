@@ -151,7 +151,7 @@ export function ReviewModal({
           <div className="border-secondary flex w-full flex-col items-center justify-center gap-3 border-b pb-4 sm:gap-4 sm:pb-5">
             <div className="relative flex h-20 w-full items-center justify-center">
               {/* Avatar */}
-              <div className="bg-primary relative flex h-18 w-18 items-center justify-center overflow-hidden rounded-full text-[32px] font-semibold text-white shadow-lg">
+              <div className="bg-primary relative flex h-18 w-18 items-center justify-center overflow-hidden rounded-full text-3xl font-bold text-white/95 shadow-lg">
                 {profilePhoto ? (
                   <Image
                     src={getProxyImageUrl(profilePhoto)}
@@ -166,19 +166,19 @@ export function ReviewModal({
               </div>
 
               {/* Close Button */}
-              <DialogClose className="absolute top-0 right-0 flex h-7 w-7 items-center justify-center text-white transition-colors hover:border-white hover:bg-white/10">
+              <DialogClose className="absolute top-0 right-0 flex h-7 w-7 items-center justify-center text-white/95 transition-colors hover:border-white hover:bg-white/10">
                 <XIcon
-                  className="text-muted-foreground size-5"
+                  className="text-white/65 size-5"
                   strokeWidth={2.5}
                 />
               </DialogClose>
             </div>
 
             <div className="flex flex-col items-center justify-center gap-3">
-              <h2 className="text-[22px] leading-7 font-semibold text-white">
+              <h2 className="text-2xl font-bold text-white/95">
                 Rate & Review
               </h2>
-              <p className="text-muted-foreground max-w-150 text-center text-[15px] leading-5 font-medium">
+              <p className="text-white/65 max-w-150 text-center text-base font-medium">
                 Help your fellow gamers & guide them to the true treasure by
                 sharing your truest experience & opinions.
               </p>
@@ -210,26 +210,26 @@ export function ReviewModal({
 
           {!isAuthenticated ? (
             <div className="bg-secondary flex flex-col items-center gap-3 rounded-[12px] p-6 text-center">
-              <p className="text-white">
+              <p className="text-white/95">
                 Please log in to write a review for this product.
               </p>
               <button
                 onClick={() => openAuthModal('login')}
-                className="bg-primary hover:bg-primary rounded-[6px] px-6 py-2.5 text-[15px] font-semibold text-white transition-transform active:scale-[0.98]"
+                className="bg-primary hover:bg-primary rounded-[6px] px-6 py-2.5 text-base font-bold text-white/95 transition-transform active:scale-[0.98]"
               >
                 Log In
               </button>
             </div>
           ) : isLoadingOrders ? (
-            <div className="bg-secondary rounded-[12px] p-6 text-center text-sm text-white">
+            <div className="bg-secondary rounded-[12px] p-6 text-center text-sm text-white/95">
               Checking your orders...
             </div>
           ) : !hasAnyOrders ? (
-            <div className="bg-secondary rounded-[12px] p-6 text-center text-white">
+            <div className="bg-secondary rounded-[12px] p-6 text-center text-white/95">
               You need to have purchased this product to leave a review.
             </div>
           ) : !hasReviewableOrders ? (
-            <div className="bg-secondary rounded-[12px] p-6 text-center text-white">
+            <div className="bg-secondary rounded-[12px] p-6 text-center text-white/95">
               You&apos;ve already reviewed this product for every eligible
               order.
             </div>
@@ -237,7 +237,7 @@ export function ReviewModal({
             <>
               {eligibleOrders && eligibleOrders.length > 1 && (
                 <div className="flex w-full flex-col gap-2">
-                  <span className="text-muted-foreground text-sm font-medium">
+                  <span className="text-white/65 text-sm font-medium">
                     Which order is this review for?
                   </span>
                   <Select
@@ -271,7 +271,7 @@ export function ReviewModal({
                     value={reviewText}
                     onChange={(e) => setReviewText(e.target.value)}
                     placeholder="Write your review in details here"
-                    className="placeholder:text-muted-foreground h-full w-full resize-none bg-transparent text-[16px] leading-5.5 font-medium text-white outline-none"
+                    className="placeholder:text-muted-foreground h-full w-full resize-none bg-transparent text-base font-medium text-white/95 outline-none"
                   />
                 </div>
               </div>
@@ -284,7 +284,7 @@ export function ReviewModal({
               <button
                 onClick={handleSubmit}
                 disabled={isSubmitting}
-                className="bg-primary hover:bg-primary flex h-12 flex-1 items-center justify-center rounded-[6px] text-[16px] leading-6 font-semibold text-white transition-transform active:scale-[0.98] disabled:opacity-50 sm:h-13 sm:px-9 sm:py-4 sm:text-[18px]"
+                className="bg-primary hover:bg-primary flex h-12 flex-1 items-center justify-center rounded-[6px] text-base font-bold text-white/95 transition-transform active:scale-[0.98] disabled:opacity-50 sm:h-13 sm:px-9 sm:py-4 sm:text-xl"
               >
                 {isSubmitting ? 'Posting...' : 'Post Review'}
               </button>
@@ -292,7 +292,7 @@ export function ReviewModal({
             <button
               onClick={handleCancel}
               disabled={isSubmitting}
-              className="border-muted-foreground flex h-12 flex-1 items-center justify-center rounded-[6px] border bg-transparent text-[16px] leading-6 font-semibold text-white transition-transform hover:bg-white/5 active:scale-[0.98] sm:h-13 sm:p-4 sm:text-[18px]"
+              className="border-muted-foreground flex h-12 flex-1 items-center justify-center rounded-[6px] border bg-transparent text-base font-bold text-white/95 transition-transform hover:bg-white/5 active:scale-[0.98] sm:h-13 sm:p-4 sm:text-xl"
             >
               {canWriteReview ? 'Cancel' : 'Close'}
             </button>

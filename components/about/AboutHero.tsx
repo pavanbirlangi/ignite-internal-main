@@ -31,12 +31,12 @@ export default function AboutHero({
       />
       <div className="relative inset-0 z-30 mt-32 flex h-full w-full flex-col items-center justify-center px-4 md:mt-50">
         <div className="flex flex-col items-center justify-center gap-6 text-center md:gap-10">
-          <h1 className="text-primary max-w-201.25 text-3xl leading-tight font-semibold md:text-7xl md:leading-22">
+          <h1 className="text-primary max-w-201.25 text-3xl font-bold md:text-3xl">
             {titleWords.map((word, index) => (
               <span
                 key={`${word}-${index}`}
                 className={
-                  index === 1 || index === 2 ? 'text-white' : undefined
+                  index === 1 || index === 2 ? 'text-white/95' : undefined
                 }
               >
                 {index > 0 ? ' ' : ''}
@@ -44,7 +44,7 @@ export default function AboutHero({
               </span>
             ))}
           </h1>
-          <p className="text-muted-foreground max-w-148.25 text-base tracking-tight md:text-lg">
+          <p className="text-white/65 max-w-148.25 text-base md:text-xl">
             {description}
           </p>
           <Button asChild variant="primary" size="md">

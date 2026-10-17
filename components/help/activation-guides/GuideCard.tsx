@@ -27,10 +27,10 @@ export default function GuideCard({
 
       {/* Content */}
       <div className="flex flex-col gap-1.5 px-0.5">
-        <h3 className="group-hover:underline line-clamp-2 text-[20px] leading-tight font-semibold text-white transition-colors">
+        <h3 className="group-hover:underline line-clamp-2 text-xl font-bold text-white/95 transition-colors">
           {title}
         </h3>
-        <span className="text-primary text-[14px] font-semibold">{date}</span>
+        <span className="text-primary text-sm font-bold">{date}</span>
       </div>
     </Link>
   )

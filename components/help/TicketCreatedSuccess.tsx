@@ -13,10 +13,10 @@ export function TicketCreatedSuccess({
   return (
     <div className="mx-auto w-full max-w-[780px]">
       <div className="border-border bg-secondary/40 rounded-[20px] border p-6 md:p-10">
-        <h1 className="mb-2 text-xl font-semibold text-white md:text-[28px]">
+        <h1 className="mb-2 text-xl font-bold text-white/95 md:text-3xl">
           Ticket Created for Order Below
         </h1>
-        <p className="text-muted-foreground font-medium mb-6 max-w-2xl text-sm">
+        <p className="text-white/65 font-medium mb-6 max-w-2xl text-sm">
           You can check your mail or open tickets for further resolution &amp;
           follow-ups. Please keep checking your email for future updates while
           our team gets back to you.
@@ -30,7 +30,7 @@ export function TicketCreatedSuccess({
               <p className="text-xs font-medium text-green-300/80">
                 Your ticket reference
               </p>
-              <p className="text-base font-bold tracking-widest text-green-300">
+              <p className="text-base font-bold text-green-300">
                 #{shortId}
               </p>
             </div>
@@ -52,14 +52,14 @@ export function TicketCreatedSuccess({
             ) : (
               <div className="bg-secondary h-[79px] w-[62px] shrink-0 rounded-md" />
             )}
-            <span className="truncate text-[16px] font-semibold text-white md:text-[18px]">
+            <span className="truncate text-base font-bold text-white/95 md:text-xl">
               {order.id}
             </span>
           </div>
 
           <button
             onClick={onViewDetails}
-            className="border-muted-foreground/50 w-full cursor-pointer rounded-[6px] border bg-transparent px-6 py-3 text-center text-sm font-semibold text-white transition-colors hover:bg-white/5 sm:w-auto"
+            className="border-muted-foreground/50 w-full cursor-pointer rounded-[6px] border bg-transparent px-6 py-3 text-center text-sm font-bold text-white/95 transition-colors hover:bg-white/5 sm:w-auto"
           >
             View Details
           </button>

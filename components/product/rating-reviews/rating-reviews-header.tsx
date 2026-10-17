@@ -48,10 +48,10 @@ export function RatingReviewsHeader({
         </div>
 
         <div className="flex flex-col">
-          <span className="text-lg font-medium text-white md:text-[24px]">
+          <span className="text-xl font-medium text-white/95 md:text-2xl">
             {labels?.outOf5 ?? 'Out of 5'}
           </span>
-          <span className="text-muted-foreground text-base font-medium md:text-[20px]">
+          <span className="text-white/65 text-base font-medium md:text-xl">
             {(labels?.basedOnReviews ?? 'based on {count} reviews').replace(
               '{count}',
               formatReviewCount(totalReviews),

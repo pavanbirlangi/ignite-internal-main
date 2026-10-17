@@ -16,10 +16,10 @@ export function GlobalTicketCreatedSuccess({
   return (
     <div className="mx-auto w-full max-w-[780px]">
       <div className="border-border bg-secondary/40 rounded-[20px] border p-6 md:p-10">
-        <h1 className="mb-2 text-xl font-semibold text-white md:text-[28px]">
+        <h1 className="mb-2 text-xl font-bold text-white/95 md:text-3xl">
           Ticket Created Successfully
         </h1>
-        <p className="text-muted-foreground font-medium mb-6 max-w-2xl text-sm">
+        <p className="text-white/65 font-medium mb-6 max-w-2xl text-sm">
           You can check your mail for further resolution &amp; follow-ups. Please
           keep checking your email for future updates while our team gets back to
           you.
@@ -33,7 +33,7 @@ export function GlobalTicketCreatedSuccess({
               <p className="text-xs font-medium text-green-300/80">
                 Your ticket reference
               </p>
-              <p className="text-base font-bold tracking-widest text-green-300">
+              <p className="text-base font-bold text-green-300">
                 #{shortId}
               </p>
             </div>
@@ -44,10 +44,10 @@ export function GlobalTicketCreatedSuccess({
         {orderId && (
           <div className="bg-secondary/30 border-border/50 mb-8 flex flex-col items-start justify-between gap-4 rounded-[12px] border py-4 px-5 sm:flex-row sm:items-center">
             <div className="flex flex-col">
-              <span className="text-muted-foreground text-xs font-medium">
+              <span className="text-white/65 text-xs font-medium">
                 Related Order ID
               </span>
-              <span className="text-[16px] font-semibold text-white md:text-[18px]">
+              <span className="text-base font-bold text-white/95 md:text-xl">
                 {orderId}
               </span>
             </div>
@@ -56,7 +56,7 @@ export function GlobalTicketCreatedSuccess({
 
         <button
           onClick={onClose}
-          className="bg-primary hover:bg-primary/90 w-full cursor-pointer rounded-[6px] px-8 py-3 text-center text-sm font-semibold text-white transition-colors sm:w-auto"
+          className="bg-primary hover:bg-primary/90 w-full cursor-pointer rounded-[6px] px-8 py-3 text-center text-sm font-bold text-white/95 transition-colors sm:w-auto"
         >
           Close
         </button>

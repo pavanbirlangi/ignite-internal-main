@@ -22,7 +22,7 @@ export function UserAvatar({
     <span
       className={cn(
         'relative flex shrink-0 items-center justify-center overflow-hidden rounded-full',
-        'from-primary bg-linear-to-br to-[#1D4ED8] font-semibold text-white',
+        'from-primary bg-linear-to-br to-[#1D4ED8] font-bold text-white/95',
         className,
       )}
     >

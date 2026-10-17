@@ -33,19 +33,19 @@ export function MagicLinkSignIn({ token }: { token: string }) {
   }, [token, router])
 
   if (!failed) {
-    return <p className="text-muted-foreground text-sm">Signing you in...</p>
+    return <p className="text-white/65 text-sm">Signing you in...</p>
   }
 
   return (
     <div className="flex flex-col gap-4">
-      <p className="text-red text-sm font-semibold">
+      <p className="text-red text-sm font-bold">
         This sign-in link is invalid or has expired. Links work once and for 10 minutes. You can
         still use the 6-digit code from the same email, or get a new one.
       </p>
       <button
         type="button"
         onClick={() => openModal('email-code')}
-        className="bg-primary hover:bg-primary/90 h-[48px] w-full cursor-pointer rounded-[6px] text-base font-semibold text-white transition-colors"
+        className="bg-primary hover:bg-primary/90 h-[48px] w-full cursor-pointer rounded-[6px] text-base font-bold text-white/95 transition-colors"
       >
         Get a New Code
       </button>

@@ -12,7 +12,7 @@ export default function WarningBox({ warningText, labels }: WarningBoxProps) {
   return (
     <div className="flex items-start gap-3 rounded-xl border border-[var(--warning-border)] bg-[var(--warning-bg)]/80 px-4 py-2.5">
       <AlertCircle className="text-accent mt-0.5 shrink-0" size={20} />
-      <p className="text-accent text-sm leading-relaxed">
+      <p className="text-accent text-sm">
         <span className="font-bold">
           {labels?.importantNotice ?? 'Important Notice:'}
         </span>{' '}

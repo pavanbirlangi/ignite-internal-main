@@ -38,14 +38,14 @@ export default function HelpTopicsListWrapper({
 
   if (isLoading) {
     return (
-      <div className="py-20 text-center font-medium text-white">Loading...</div>
+      <div className="py-20 text-center font-medium text-white/95">Loading...</div>
     )
   }
 
   if (topics.length === 0) {
     return (
       <div className="mx-auto flex w-full max-w-[780px] flex-col items-center gap-4 py-20 text-center">
-        <p className="text-muted-foreground text-sm font-medium">
+        <p className="text-white/65 text-sm font-medium">
           No topics found for this category.
         </p>
         <button

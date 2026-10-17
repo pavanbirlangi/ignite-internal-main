@@ -79,7 +79,7 @@ export function GlobalTicketForm({
           <button
             onClick={onBack}
             disabled={isSubmitting}
-            className="hover:text-muted-foreground cursor-pointer text-white transition-colors disabled:opacity-50"
+            className="hover:text-muted-foreground cursor-pointer text-white/95 transition-colors disabled:opacity-50"
             aria-label="Go back"
           >
             <svg
@@ -98,18 +98,18 @@ export function GlobalTicketForm({
               />
             </svg>
           </button>
-          <h1 className="text-xl font-semibold text-white md:text-[28px]">
+          <h1 className="text-xl font-bold text-white/95 md:text-3xl">
             Create ticket
           </h1>
         </div>
-        <p className="text-muted-foreground mb-8 ml-9 text-sm font-medium">
+        <p className="text-white/65 mb-8 ml-9 text-sm font-medium">
           Please provide details about the issue you are facing
         </p>
 
         <div className="space-y-6">
           {/* Order ID */}
           <div>
-            <label className="mb-2 block text-sm font-semibold text-white">
+            <label className="mb-2 block text-sm font-bold text-white/95">
               Order ID
             </label>
             <input
@@ -118,13 +118,13 @@ export function GlobalTicketForm({
               onChange={(e) => setOrderId(e.target.value)}
               disabled={isSubmitting}
               placeholder="Enter the order id you are facing an issue with. Ex: F74h178"
-              className="bg-secondary placeholder:text-muted-foreground focus:ring-primary w-full rounded-lg px-4 py-3.5 text-sm text-white focus:ring-1 focus:outline-none disabled:opacity-60"
+              className="bg-secondary placeholder:text-muted-foreground focus:ring-primary w-full rounded-lg px-4 py-3.5 text-sm text-white/95 focus:ring-1 focus:outline-none disabled:opacity-60"
             />
           </div>
 
           {/* Description */}
           <div>
-            <label className="mb-2 block text-sm font-semibold text-white">
+            <label className="mb-2 block text-sm font-bold text-white/95">
               Please describe the issue you are facing
               <span className="text-red ml-0.5">*</span>
             </label>
@@ -137,13 +137,13 @@ export function GlobalTicketForm({
               disabled={isSubmitting}
               placeholder="Please describe the issue in detail here"
               rows={4}
-              className="bg-secondary placeholder:text-muted-foreground focus:ring-primary w-full resize-none rounded-lg px-4 py-3.5 text-sm text-white focus:ring-1 focus:outline-none disabled:opacity-60"
+              className="bg-secondary placeholder:text-muted-foreground focus:ring-primary w-full resize-none rounded-lg px-4 py-3.5 text-sm text-white/95 focus:ring-1 focus:outline-none disabled:opacity-60"
             />
           </div>
 
           {/* Email Address */}
           <div>
-            <label className="mb-2 block text-sm font-semibold text-white">
+            <label className="mb-2 block text-sm font-bold text-white/95">
               Enter an email address where we can contact you
               <span className="text-red ml-0.5">*</span>
             </label>
@@ -153,13 +153,13 @@ export function GlobalTicketForm({
               onChange={(e) => setEmail(e.target.value)}
               disabled={isSubmitting}
               placeholder="Enter your email address"
-              className="bg-secondary placeholder:text-muted-foreground focus:ring-primary w-full rounded-lg px-4 py-3.5 text-sm text-white focus:ring-1 focus:outline-none disabled:opacity-60"
+              className="bg-secondary placeholder:text-muted-foreground focus:ring-primary w-full rounded-lg px-4 py-3.5 text-sm text-white/95 focus:ring-1 focus:outline-none disabled:opacity-60"
             />
           </div>
 
           {/* File Upload */}
           <div>
-            <label className="mb-2 block text-sm font-semibold text-white">
+            <label className="mb-2 block text-sm font-bold text-white/95">
               Provide any relevant attachments to explain your issue (upto 5
               files).
             </label>
@@ -168,8 +168,8 @@ export function GlobalTicketForm({
               className="bg-secondary hover:bg-border flex cursor-pointer items-center justify-center gap-2 rounded-lg py-4 transition-colors aria-disabled:cursor-not-allowed aria-disabled:opacity-60"
               aria-disabled={isSubmitting}
             >
-              <Upload className="size-5 text-white" />
-              <span className="text-muted-foreground text-sm">
+              <Upload className="size-5 text-white/95" />
+              <span className="text-white/65 text-sm">
                 Upload Files (max. 2MB file)
               </span>
             </div>
@@ -189,7 +189,7 @@ export function GlobalTicketForm({
                 {attachments.map((file, i) => (
                   <div
                     key={`${file.name}-${i}`}
-                    className="border-border bg-secondary flex items-center gap-2 rounded-md border px-3 py-1.5 text-xs text-white"
+                    className="border-border bg-secondary flex items-center gap-2 rounded-md border px-3 py-1.5 text-xs text-white/95"
                   >
                     <span className="max-w-[150px] truncate">{file.name}</span>
                     <button
@@ -219,7 +219,7 @@ export function GlobalTicketForm({
           <button
             onClick={handleSubmit}
             disabled={isSubmitting}
-            className="bg-primary hover:bg-primary/90 inline-flex cursor-pointer items-center gap-2 rounded-[6px] px-8 py-3 text-sm font-semibold text-white transition-colors disabled:cursor-not-allowed disabled:opacity-70"
+            className="bg-primary hover:bg-primary/90 inline-flex cursor-pointer items-center gap-2 rounded-[6px] px-8 py-3 text-sm font-bold text-white/95 transition-colors disabled:cursor-not-allowed disabled:opacity-70"
           >
             {isSubmitting ? (
               <>
@@ -233,7 +233,7 @@ export function GlobalTicketForm({
           <button
             onClick={onCancel}
             disabled={isSubmitting}
-            className="bg-secondary hover:bg-border cursor-pointer rounded-[6px] px-8 py-3.5 text-sm font-semibold text-white transition-colors disabled:cursor-not-allowed disabled:opacity-70"
+            className="bg-secondary hover:bg-border cursor-pointer rounded-[6px] px-8 py-3.5 text-sm font-bold text-white/95 transition-colors disabled:cursor-not-allowed disabled:opacity-70"
           >
             Cancel
           </button>

@@ -167,12 +167,12 @@ export default function OrderDetailsClient({
       <div className="mb-6 flex min-w-0 flex-wrap items-center gap-2 md:mb-8 md:gap-3">
         <Link
           href="/dashboard/my-orders"
-          className="text-muted-foreground text-lg leading-tight font-semibold transition-colors hover:text-white sm:text-2xl md:text-[34px]"
+          className="text-white/65 text-xl font-bold transition-colors hover:text-white sm:text-2xl md:text-3xl"
         >
           My Orders
         </Link>
-        <ChevronRight className="text-muted-foreground size-5 shrink-0 sm:size-6 md:size-7" />
-        <h1 className="text-lg leading-tight font-semibold text-white sm:text-2xl md:text-[34px]">
+        <ChevronRight className="text-white/65 size-5 shrink-0 sm:size-6 md:size-7" />
+        <h1 className="text-xl font-bold text-white/95 sm:text-2xl md:text-3xl">
           Order Details
         </h1>
       </div>
@@ -182,18 +182,18 @@ export default function OrderDetailsClient({
         <div className="flex flex-col justify-between gap-6 md:flex-row md:items-center">
           <div className="flex flex-wrap gap-8 md:gap-16">
             <div className="flex flex-col gap-1">
-              <span className="text-muted-foreground text-sm">
+              <span className="text-white/65 text-sm">
                 Purchased on
               </span>
-              <span className="font-semibold text-white">
+              <span className="font-bold text-white/95">
                 {order?.processedAt ? formatOrderDate(order.processedAt) : '-'}
               </span>
             </div>
             <div className="flex flex-col gap-1">
-              <span className="text-muted-foreground text-sm">
+              <span className="text-white/65 text-sm">
                 Order Amount
               </span>
-              <span className="font-semibold text-white">
+              <span className="font-bold text-white/95">
                 {formatOrderPrice(
                   order?.totalPrice?.amount,
                   order?.totalPrice?.currencyCode,
@@ -201,8 +201,8 @@ export default function OrderDetailsClient({
               </span>
             </div>
             <div className="flex flex-col gap-1">
-              <span className="text-muted-foreground text-sm">Order ID</span>
-              <span className="font-semibold text-white uppercase">
+              <span className="text-white/65 text-sm">Order ID</span>
+              <span className="font-bold text-white/95 uppercase">
                 #{order?.orderNumber ?? '-'}
               </span>
             </div>
@@ -217,7 +217,7 @@ export default function OrderDetailsClient({
                   ? 'A receipt is available once payment is confirmed'
                   : undefined
               }
-              className="border-muted-foreground flex h-10 cursor-pointer items-center justify-center gap-2 rounded-[6px] border px-6 text-sm font-medium text-white transition-colors hover:bg-white/5 disabled:cursor-not-allowed disabled:opacity-50"
+              className="border-muted-foreground flex h-10 cursor-pointer items-center justify-center gap-2 rounded-[6px] border px-6 text-sm font-medium text-white/95 transition-colors hover:bg-white/5 disabled:cursor-not-allowed disabled:opacity-50"
             >
               <Download className="h-4 w-4" />
               Download Receipt
@@ -225,7 +225,7 @@ export default function OrderDetailsClient({
             <button
               onClick={handleDownloadAllKeys}
               disabled={!order || keysLoading}
-              className="bg-primary hover:bg-primary/90 flex h-10 cursor-pointer items-center justify-center gap-2 rounded-[6px] px-6 text-sm font-semibold text-white transition-colors disabled:cursor-not-allowed disabled:opacity-50"
+              className="bg-primary hover:bg-primary/90 flex h-10 cursor-pointer items-center justify-center gap-2 rounded-[6px] px-6 text-sm font-bold text-white/95 transition-colors disabled:cursor-not-allowed disabled:opacity-50"
             >
               <Download className="h-4 w-4" />
               Download All Keys
@@ -247,7 +247,7 @@ export default function OrderDetailsClient({
 
       {!isLoading && error && (
         <div className="border-secondary bg-secondary/20 mt-8 flex flex-col items-center justify-center gap-4 rounded-xl border p-12 text-center">
-          <p className="text-muted-foreground">{error}</p>
+          <p className="text-white/65">{error}</p>
         </div>
       )}
 
@@ -282,7 +282,7 @@ export default function OrderDetailsClient({
 
       {!isLoading && !error && lineItems.length === 0 && (
         <div className="border-secondary bg-secondary/20 mt-8 flex flex-col items-center justify-center gap-2 rounded-xl border p-12 text-center">
-          <p className="text-lg font-semibold text-white">
+          <p className="text-xl font-bold text-white/95">
             No items found in this order
           </p>
         </div>

@@ -118,25 +118,25 @@ export function CheckoutCompleteContent() {
       <CartNavbar currentStep={2} />
       <div className="flex min-h-100 flex-col items-center justify-center gap-3 px-6 py-16 text-center">
         {status === 'checking' ? (
-          <p className="text-muted-foreground text-base">
+          <p className="text-white/65 text-base">
             Finishing up your order...
           </p>
         ) : status === 'waiting' ? (
           <>
-            <p className="text-base font-semibold text-white">
+            <p className="text-base font-bold text-white/95">
               Waiting for your payment to be confirmed...
             </p>
-            <p className="text-muted-foreground max-w-md text-sm">
+            <p className="text-white/65 max-w-md text-sm">
               If your bank asked you to approve the payment in its app, please do that now. Keep
               this page open; your order is placed as soon as the payment is confirmed.
             </p>
           </>
         ) : (
           <>
-            <p className="text-red text-base font-semibold">{errorMessage}</p>
+            <p className="text-red text-base font-bold">{errorMessage}</p>
             <button
               onClick={() => router.push('/cart')}
-              className="text-primary text-sm font-semibold underline"
+              className="text-primary text-sm font-bold underline"
             >
               Back to cart
             </button>

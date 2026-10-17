@@ -56,7 +56,7 @@ export default function RatingReviews({ product, labels }: RatingReviewsProps) {
 
   return (
     <div className="max-w-container mx-auto mt-8 mb-10 w-full px-4 md:mt-12 md:mb-20 md:px-0">
-      <h2 className="text-muted-foreground mb-6 text-lg font-semibold md:text-[24px]">
+      <h2 className="text-white/65 mb-6 text-xl font-bold md:text-2xl">
         {labels?.heading ?? 'Rating & Reviews'}
       </h2>
 
@@ -76,11 +76,11 @@ export default function RatingReviews({ product, labels }: RatingReviewsProps) {
           />
 
           {isError ? (
-            <div className="bg-secondary rounded-2xl border border-white/5 p-6 text-sm text-white">
+            <div className="bg-secondary rounded-2xl border border-white/5 p-6 text-sm text-white/95">
               {labels?.failedToLoad ?? 'Failed to load reviews.'}
             </div>
           ) : reviews.length === 0 ? (
-            <div className="bg-secondary rounded-2xl border border-white/5 p-6 text-sm text-white">
+            <div className="bg-secondary rounded-2xl border border-white/5 p-6 text-sm text-white/95">
               {labels?.noReviews ?? 'No reviews yet for this product.'}
             </div>
           ) : (
@@ -121,7 +121,7 @@ export default function RatingReviews({ product, labels }: RatingReviewsProps) {
                   <button
                     onClick={() => fetchNextPage()}
                     disabled={isFetchingNextPage}
-                    className="hover:text-muted-foreground flex cursor-pointer items-center gap-2 text-sm font-semibold text-white transition-colors disabled:opacity-50"
+                    className="hover:text-muted-foreground flex cursor-pointer items-center gap-2 text-sm font-bold text-white/95 transition-colors disabled:opacity-50"
                   >
                     {isFetchingNextPage
                       ? (labels?.loading ?? 'Loading...')

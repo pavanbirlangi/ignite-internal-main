@@ -97,7 +97,7 @@ export function ResetPasswordForm({ token }: { token: string }) {
             </button>
           </div>
           {errors.password && (
-            <span className="text-red mt-1 block text-xs font-semibold">
+            <span className="text-red mt-1 block text-xs font-bold">
               {errors.password.message}
             </span>
           )}
@@ -120,7 +120,7 @@ export function ResetPasswordForm({ token }: { token: string }) {
             </button>
           </div>
           {errors.confirmPassword && (
-            <span className="text-red mt-1 block text-xs font-semibold">
+            <span className="text-red mt-1 block text-xs font-bold">
               {errors.confirmPassword.message}
             </span>
           )}
@@ -130,7 +130,7 @@ export function ResetPasswordForm({ token }: { token: string }) {
       <button
         type="submit"
         disabled={isLoading}
-        className="bg-primary hover:bg-primary/90 h-12 w-full cursor-pointer rounded-[6px] text-base font-semibold text-white transition-colors disabled:cursor-not-allowed disabled:opacity-50"
+        className="bg-primary hover:bg-primary/90 h-12 w-full cursor-pointer rounded-[6px] text-base font-bold text-white/95 transition-colors disabled:cursor-not-allowed disabled:opacity-50"
       >
         {isLoading ? 'Resetting Password...' : 'Reset Password'}
       </button>

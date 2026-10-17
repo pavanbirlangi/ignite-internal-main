@@ -136,7 +136,7 @@ export function RegisterForm({
                 {...register('firstName')}
               />
               {errors.firstName && (
-                <span className="text-red mt-1 block text-xs font-semibold">
+                <span className="text-red mt-1 block text-xs font-bold">
                   {errors.firstName.message}
                 </span>
               )}
@@ -153,7 +153,7 @@ export function RegisterForm({
                 {...register('lastName')}
               />
               {errors.lastName && (
-                <span className="text-red mt-1 block text-xs font-semibold">
+                <span className="text-red mt-1 block text-xs font-bold">
                   {errors.lastName.message}
                 </span>
               )}
@@ -172,7 +172,7 @@ export function RegisterForm({
               {...register('email')}
             />
             {errors.email && (
-              <span className="text-red mt-1 block text-xs font-semibold">
+              <span className="text-red mt-1 block text-xs font-bold">
                 {errors.email.message}
               </span>
             )}
@@ -194,13 +194,13 @@ export function RegisterForm({
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="text-muted-foreground absolute top-1/2 right-3 flex -translate-y-1/2 items-center justify-center p-1 transition-colors hover:text-white"
+                className="text-white/65 absolute top-1/2 right-3 flex -translate-y-1/2 items-center justify-center p-1 transition-colors hover:text-white"
               >
                 {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
               </button>
             </div>
             {errors.password && (
-              <span className="text-red mt-1 block text-xs font-semibold">
+              <span className="text-red mt-1 block text-xs font-bold">
                 {errors.password.message}
               </span>
             )}
@@ -217,13 +217,13 @@ export function RegisterForm({
               <button
                 type="button"
                 onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                className="text-muted-foreground absolute top-1/2 right-3 flex -translate-y-1/2 items-center justify-center p-1 transition-colors hover:text-white"
+                className="text-white/65 absolute top-1/2 right-3 flex -translate-y-1/2 items-center justify-center p-1 transition-colors hover:text-white"
               >
                 {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
               </button>
             </div>
             {errors.confirmPassword && (
-              <span className="text-red mt-1 block text-xs font-semibold">
+              <span className="text-red mt-1 block text-xs font-bold">
                 {errors.confirmPassword.message}
               </span>
             )}
@@ -239,7 +239,7 @@ export function RegisterForm({
           <button
             type="submit"
             disabled={isLoading || (turnstileRequired && !turnstileToken)}
-            className="bg-primary hover:bg-primary/90 mb-3 h-[48px] w-full cursor-pointer rounded-[6px] text-base font-semibold text-white transition-colors disabled:cursor-not-allowed disabled:opacity-50"
+            className="bg-primary hover:bg-primary/90 mb-3 h-[48px] w-full cursor-pointer rounded-[6px] text-base font-bold text-white/95 transition-colors disabled:cursor-not-allowed disabled:opacity-50"
           >
             {isLoading ? 'Registering...' : 'Register'}
           </button>
@@ -251,7 +251,7 @@ export function RegisterForm({
 
       <button
         onClick={onSwitchToLogin}
-        className="border-muted-foreground h-[48px] w-full cursor-pointer rounded-[6px] border-[0.78px] bg-transparent text-base font-semibold text-white transition-all hover:bg-white/5"
+        className="border-muted-foreground h-[48px] w-full cursor-pointer rounded-[6px] border-[0.78px] bg-transparent text-base font-bold text-white/95 transition-all hover:bg-white/5"
       >
         Login Existing Account
       </button>

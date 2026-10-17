@@ -30,15 +30,15 @@ function TransactionItem({
 }: TransactionItemProps) {
   return (
     <div
-      className={`flex items-center font-semibold justify-between py-4 ${!isTotal ? 'border-secondary border-b' : 'pt-6'}`}
+      className={`flex items-center font-bold justify-between py-4 ${!isTotal ? 'border-secondary border-b' : 'pt-6'}`}
     >
       <span
-        className={`text-[14px] font-semibold ${isTotal ? 'text-muted-foreground font-semibold' : 'text-muted-foreground'}`}
+        className={`text-sm font-bold ${isTotal ? 'text-white/65 font-bold' : 'text-white/65'}`}
       >
         {label}
       </span>
       <span
-        className={`text-[14px] font-semibold ${isTotal ? 'font-bold text-white' : 'font-semibold text-white'}`}
+        className={`text-sm font-bold ${isTotal ? 'font-bold text-white/95' : 'font-bold text-white/95'}`}
       >
         {value}
       </span>
@@ -61,7 +61,7 @@ export function TransactionDetails({
 }: TransactionDetailsProps) {
   return (
     <div className="mt-8 flex w-full flex-col gap-3">
-      <h3 className="text-[18px] font-semibold text-white md:text-[20px]">
+      <h3 className="text-xl font-bold text-white/95 md:text-xl">
         Transaction Details
       </h3>
       <div className="border-secondary bg-secondary/20 rounded-xl border py-4 px-5 backdrop-blur-[50px]">

@@ -328,7 +328,7 @@ const StoreListing = ({ translations }: StoreListingProps) => {
             </div>
           ) : isError ? (
             <div className="flex flex-col items-center justify-center gap-4 py-20">
-              <h3 className="text-red font-['Cooper_Hewitt'] text-[24px] font-bold">
+              <h3 className="text-red text-2xl font-bold">
                 {failedLabel}
               </h3>
             </div>
@@ -340,15 +340,15 @@ const StoreListing = ({ translations }: StoreListingProps) => {
             </div>
           ) : (
             <div className="flex flex-col items-center justify-center gap-4 py-20">
-              <h3 className="font-['Cooper_Hewitt'] text-[24px] font-bold text-white">
+              <h3 className="text-2xl font-bold text-white/95">
                 {noProductsLabel}
               </h3>
-              <p className="text-muted-foreground font-['Cooper_Hewitt'] text-[16px] font-medium">
+              <p className="text-white/65 text-base font-medium">
                 {noProductsDesc}
               </p>
               <button
                 onClick={handleClearAll}
-                className="bg-primary hover:bg-primary cursor-pointer rounded-lg px-6 py-2 font-['Cooper_Hewitt'] font-bold text-white transition-colors"
+                className="bg-primary hover:bg-primary cursor-pointer rounded-lg px-6 py-2 font-bold text-white/95 transition-colors"
               >
                 {clearAllLabel}
               </button>

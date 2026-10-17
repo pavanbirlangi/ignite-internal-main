@@ -16,9 +16,9 @@ interface FeaturesProps {
 }
 
 const defaultIcons: ReactNode[] = [
-  <Zap key="speed" className="h-5 w-5 text-white" />,
-  <ShieldCheck key="trust" className="h-5 w-5 text-white" />,
-  <CheckCircle2 key="clarity" className="h-5 w-5 text-white" />,
+  <Zap key="speed" className="h-5 w-5 text-white/95" />,
+  <ShieldCheck key="trust" className="h-5 w-5 text-white/95" />,
+  <CheckCircle2 key="clarity" className="h-5 w-5 text-white/95" />,
 ]
 
 export default function Features({
@@ -51,10 +51,10 @@ export default function Features({
       <div className="container mx-auto max-w-6xl px-4">
         {/* Header content matching Figma */}
         <div className="mb-10 flex flex-col items-center gap-4 text-center md:mb-14 md:items-start md:text-left">
-          <h2 className="max-w-111.75 text-2xl leading-12.25 font-semibold text-white capitalize md:text-[40px]">
+          <h2 data-display className="max-w-111.75 text-3xl font-bold text-white/95 capitalize">
             {title}
           </h2>
-          <p className="text-muted-foreground max-w-148.25 text-base leading-[1.4] md:text-[18px]">
+          <p className="text-white/65 max-w-148.25 text-base md:text-xl">
             {description}
           </p>
         </div>
@@ -77,12 +77,12 @@ export default function Features({
                     (defaultIcons[index] ?? defaultIcons[0])
                   )}
                 </div>
-                <h3 className="text-[20px] font-semibold text-white md:text-[24px]">
+                <h3 className="text-xl font-bold text-white/95 md:text-2xl">
                   {feature.title}
                 </h3>
               </div>
 
-              <p className="text-muted-foreground text-[15px] leading-[1.4] md:text-[16px] md:leading-5">
+              <p className="text-white/65 text-base md:text-base">
                 {feature.description}
               </p>
             </div>

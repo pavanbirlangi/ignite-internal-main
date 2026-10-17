@@ -8,7 +8,7 @@ export function RecoverEmailSent() {
                <Mailsent/>
             </div>
 
-            <p className="text-muted-foreground text-[15px] font-medium leading-relaxed">
+            <p className="text-white/65 text-base font-medium">
                 If you have an account with us, we have sent a password reset link to your email.
                 <br />
                 Please check your inbox and follow the instructions to reset your password.

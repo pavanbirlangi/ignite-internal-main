@@ -2,9 +2,9 @@ import { cn } from '@/lib/utils'
 import type { TicketCardProps, TicketStatus } from '@/types/TicketTypes'
 
 const statusStyles: Record<TicketStatus, string> = {
-  'UNDER PROCESS': 'bg-accent text-white',
-  REJECTED: 'bg-red text-white',
-  RESOLVED: 'bg-destructive text-white',
+  'UNDER PROCESS': 'bg-accent text-white/95',
+  REJECTED: 'bg-red text-white/95',
+  RESOLVED: 'bg-destructive text-white/95',
 }
 
 export function TicketCard({ ticket, onViewDetails }: TicketCardProps) {
@@ -14,40 +14,40 @@ export function TicketCard({ ticket, onViewDetails }: TicketCardProps) {
         <div className="flex items-start justify-between sm:items-center">
           <div className="flex flex-wrap items-center gap-x-8 gap-y-4 md:gap-x-12">
             <div>
-              <p className="text-muted-foreground text-xs font-medium">
+              <p className="text-white/65 text-xs font-medium">
                 Opened On
               </p>
-              <p className="mt-1 text-sm font-semibold text-white">
+              <p className="mt-1 text-sm font-bold text-white/95">
                 {ticket.openedOn}
               </p>
             </div>
 
             {ticket.closedOn && (
               <div>
-                <p className="text-muted-foreground text-xs font-medium">
+                <p className="text-white/65 text-xs font-medium">
                   Closed On
                 </p>
-                <p className="mt-1 text-sm font-semibold text-white">
+                <p className="mt-1 text-sm font-bold text-white/95">
                   {ticket.closedOn}
                 </p>
               </div>
             )}
 
             <div>
-              <p className="text-muted-foreground text-xs font-medium">
+              <p className="text-white/65 text-xs font-medium">
                 Order ID
               </p>
-              <p className="mt-1 text-sm font-semibold text-white">
+              <p className="mt-1 text-sm font-bold text-white/95">
                 {ticket.orderId}
               </p>
             </div>
 
             {ticket.shortId && (
               <div>
-                <p className="text-muted-foreground text-xs font-medium">
+                <p className="text-white/65 text-xs font-medium">
                   Ticket ID
                 </p>
-                <p className="mt-1 text-sm font-semibold text-white">
+                <p className="mt-1 text-sm font-bold text-white/95">
                   #{ticket.shortId}
                 </p>
               </div>
@@ -55,7 +55,7 @@ export function TicketCard({ ticket, onViewDetails }: TicketCardProps) {
           </div>
           <div
             className={cn(
-              'rounded-lg px-3 py-2 text-sm text-[12px] font-semibold tracking-wide text-nowrap uppercase',
+              'rounded-lg px-3 py-2 text-sm text-xs font-bold text-nowrap uppercase',
               statusStyles[ticket.status],
             )}
           >
@@ -68,17 +68,17 @@ export function TicketCard({ ticket, onViewDetails }: TicketCardProps) {
         {/* Content */}
         <div className="flex flex-col gap-6 md:flex-row md:items-start md:justify-between">
           <div>
-            <h3 className="text-lg font-semibold text-white">
+            <h3 className="text-xl font-bold text-white/95">
               {ticket.subject}
             </h3>
-            <p className="text-muted-foreground mt-2 line-clamp-2 max-w-63.75 text-xs font-medium">
+            <p className="text-white/65 mt-2 line-clamp-2 max-w-63.75 text-xs font-medium">
               {ticket.description}
             </p>
           </div>
           <div className="mt-4 md:mt-0 md:self-center">
             <button
               onClick={() => onViewDetails?.(ticket.id)}
-              className="border-muted-foreground cursor-pointer rounded-[7px] border bg-transparent px-6 py-3 text-sm font-semibold whitespace-nowrap text-white transition-colors hover:border-white/40 hover:bg-white/5"
+              className="border-muted-foreground cursor-pointer rounded-[7px] border bg-transparent px-6 py-3 text-sm font-bold whitespace-nowrap text-white/95 transition-colors hover:border-white/40 hover:bg-white/5"
             >
               View Details
             </button>

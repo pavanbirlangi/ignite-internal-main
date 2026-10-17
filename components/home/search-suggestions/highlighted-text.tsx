@@ -14,7 +14,7 @@ export function HighlightedText({ text, query }: HomeHighlightedTextProps) {
         index % 2 === 1 ? (
           <mark
             key={`${part}-${index}`}
-            className="text-primary bg-transparent font-semibold"
+            className="text-primary bg-transparent font-bold"
           >
             {part}
           </mark>

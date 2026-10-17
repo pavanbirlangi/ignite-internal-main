@@ -45,7 +45,7 @@ function renderStars(ratingValue?: string | null, scaleMax?: string | null) {
 
   return Array.from({ length: 5 }, (_, i) => (
     <div key={i} className="relative h-[18px] w-[18px]">
-      <Star size={18} className="text-muted-foreground absolute inset-0" />
+      <Star size={18} className="text-white/65 absolute inset-0" />
       <div
         className="absolute inset-y-0 left-0 overflow-hidden"
         style={{ width: `${Math.min(Math.max(normalized - i, 0), 1) * 100}%` }}
@@ -232,12 +232,12 @@ export default function ProductDetails({
         {/* Badges */}
         <div className="flex gap-2">
           {product.instantDelivery && (
-            <span className="bg-primary shadow-primary/20 rounded px-2 py-1.5 text-[8px] font-bold text-white shadow-lg">
+            <span className="bg-primary shadow-primary/20 rounded px-2 py-1.5 text-xs font-bold text-white/95 shadow-lg">
               {labels?.instantDeliveryBadge ?? 'INSTANT DELIVERY'}
             </span>
           )}
           {product.onSale && (
-            <span className="bg-red shadow-red/20 rounded px-2 py-1.5 text-[8px] font-bold text-white shadow-lg">
+            <span className="bg-red shadow-red/20 rounded px-2 py-1.5 text-xs font-bold text-white/95 shadow-lg">
               {labels?.onSaleBadge ?? 'ON SALE'}
             </span>
           )}
@@ -245,13 +245,13 @@ export default function ProductDetails({
             product.tags.map((tag) => (
               <span
                 key={tag}
-                className="bg-primary shadow-primary/20 rounded px-2 py-1.5 text-[8px] font-bold text-white uppercase shadow-lg"
+                className="bg-primary shadow-primary/20 rounded px-2 py-1.5 text-xs font-bold text-white/95 uppercase shadow-lg"
               >
                 {tag}
               </span>
             ))
           ) : (
-            <span className="bg-primary shadow-primary/20 rounded px-2 py-1.5 text-[8px] font-bold text-white shadow-lg">
+            <span className="bg-primary shadow-primary/20 rounded px-2 py-1.5 text-xs font-bold text-white/95 shadow-lg">
               {labels?.digitalKeyBadge ?? 'DIGITAL KEY'}
             </span>
           )} */}
@@ -266,20 +266,20 @@ export default function ProductDetails({
       </div>
 
       {/* Title */}
-      <h1 className="mb-2 text-[18px] font-semibold text-white">
+      <h1 className="mb-2 text-xl font-bold text-white/95">
         {product.title}
       </h1>
 
       {/* Pricing */}
       <div className="mb-4 flex flex-wrap items-center gap-3">
-        <span className="text-[18px] font-bold text-white">{displayPrice}</span>
+        <span className="text-xl font-bold text-white/95">{displayPrice}</span>
         {displayCompareAtPrice && (
-          <span className="text-muted-foreground text-sm line-through">
+          <span className="text-white/65 text-sm font-medium line-through">
             {displayCompareAtPrice}
           </span>
         )}
         {displayDiscount && (
-          <span className="bg-red rounded px-2 py-0.5 text-xs font-bold text-white">
+          <span className="bg-red rounded px-2 py-0.5 text-xs font-bold text-white/95">
             -{displayDiscount.percentage}%
           </span>
         )}
@@ -307,12 +307,12 @@ export default function ProductDetails({
                     isOpen ? 'border-primary' : 'border-white/10'
                   } flex cursor-pointer items-center justify-between rounded-lg px-4 py-3 transition-all duration-200 hover:border-white/20`}
                 >
-                  <span className="text-sm font-medium text-white">
+                  <span className="text-sm font-medium text-white/95">
                     {selectedLabel}
                   </span>
                   <ChevronDown
                     size={20}
-                    className={`text-white transition-transform duration-200 ${
+                    className={`text-white/95 transition-transform duration-200 ${
                       isOpen ? 'rotate-180' : ''
                     }`}
                   />
@@ -336,7 +336,7 @@ export default function ProductDetails({
                           }
                         }}
                         onClick={() => handleCmsOptionSelect(option.slug)}
-                        className="cursor-pointer px-4 py-2.5 text-sm text-white transition-colors outline-none hover:bg-white/5 hover:text-white focus:bg-white/10"
+                        className="cursor-pointer px-4 py-2.5 text-sm text-white/95 transition-colors outline-none hover:bg-white/5 hover:text-white focus:bg-white/10"
                       >
                         {option.label}
                       </div>
@@ -368,7 +368,7 @@ export default function ProductDetails({
             )}
             <div className="flex flex-col">
               {product.activationGuide.name && (
-                <span className="mb-1 text-sm leading-none font-medium text-white">
+                <span className="mb-1 text-sm font-medium text-white/95">
                   {product.activationGuide.name}
                 </span>
               )}
@@ -377,7 +377,7 @@ export default function ProductDetails({
                 guideHtml={product.activationGuide.guide}
                 guideLink={product.activationGuide.link}
               >
-                <span className="text-primary cursor-pointer text-[10px] font-medium hover:underline">
+                <span className="text-primary cursor-pointer text-xs font-medium hover:underline">
                   {labels?.activationGuide ?? 'Activation Guide'}
                 </span>
               </ActivationGuideModal>
@@ -405,7 +405,7 @@ export default function ProductDetails({
               strokeWidth={2.5}
             />
           )}
-          <span className="text-sm font-medium text-white">
+          <span className="text-sm font-medium text-white/95">
             {isInStock
               ? (labels?.inStock ?? 'In Stock')
               : (labels?.outOfStock ?? 'Out of Stock')}

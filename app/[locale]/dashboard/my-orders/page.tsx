@@ -139,10 +139,10 @@ export default function MyOrdersPage() {
       {/* Error State */}
       {!isLoading && error && (
         <div className="border-secondary bg-secondary/20 mt-8 flex flex-col items-center justify-center gap-4 rounded-xl border p-12 text-center">
-          <p className="text-muted-foreground">{error}</p>
+          <p className="text-white/65">{error}</p>
           <button
             onClick={() => fetchOrders()}
-            className="bg-primary hover:bg-primary rounded-[6px] px-6 py-2 text-sm font-medium text-white transition-colors"
+            className="bg-primary hover:bg-primary rounded-[6px] px-6 py-2 text-sm font-medium text-white/95 transition-colors"
           >
             Try Again
           </button>
@@ -152,8 +152,8 @@ export default function MyOrdersPage() {
       {/* Empty State */}
       {!isLoading && !error && orders.length === 0 && (
         <div className="border-secondary bg-secondary/20 mt-8 flex flex-col items-center justify-center gap-2 rounded-xl border p-12 text-center">
-          <p className="text-lg font-semibold text-white">No orders found</p>
-          <p className="text-muted-foreground text-sm">
+          <p className="text-xl font-bold text-white/95">No orders found</p>
+          <p className="text-white/65 text-sm">
             {activeTab === 'All Orders'
               ? "You haven't placed any orders yet."
               : `No orders match the "${activeTab}" filter.`}

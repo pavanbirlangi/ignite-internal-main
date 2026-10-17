@@ -27,7 +27,7 @@ export default function ExplorePlatforms({
 }: ExplorePlatformsProps) {
   return (
     <section className="container flex flex-col gap-8">
-      <h2 className="trim text-xl font-bold md:text-2xl lg:text-[28px]">{title}</h2>
+      <h2 className="trim text-xl font-bold md:text-2xl lg:text-3xl">{title}</h2>
 
       <div className="relative w-full">
         <Carousel opts={{ align: 'start', loop: true }} className="w-full">

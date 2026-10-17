@@ -62,7 +62,7 @@ export default function MobileNav() {
                 'flex h-18 w-18 flex-col items-center justify-center gap-1.5 transition-colors',
                 isActive
                   ? 'text-primary'
-                  : 'text-muted-foreground hover:text-white',
+                  : 'text-white/65 hover:text-white',
               )}
             >
               <div
@@ -77,15 +77,15 @@ export default function MobileNav() {
                   className={cn(isActive && 'fill-primary/20')}
                 />
                 {item.name === 'Cart' && cartCount > 0 && (
-                  <span className="bg-primary text-primary-foreground absolute -top-1 -right-2 flex size-4 items-center justify-center rounded-full text-[10px] font-semibold">
+                  <span className="bg-primary text-primary-foreground absolute -top-1 -right-2 flex size-4 items-center justify-center rounded-full text-xs font-bold">
                     {cartCount}
                   </span>
                 )}
               </div>
               <span
                 className={cn(
-                  'text-xs leading-4',
-                  isActive ? 'font-semibold' : 'font-medium',
+                  'text-xs',
+                  isActive ? 'font-bold' : 'font-medium',
                 )}
               >
                 {item.name}

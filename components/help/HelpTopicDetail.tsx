@@ -37,7 +37,7 @@ export function HelpTopicDetail({
         <div className="mb-6 flex items-center gap-3">
           <button
             onClick={onBack}
-            className="hover:text-muted-foreground cursor-pointer text-white transition-colors"
+            className="hover:text-muted-foreground cursor-pointer text-white/95 transition-colors"
             aria-label="Go back"
           >
             <svg
@@ -57,11 +57,11 @@ export function HelpTopicDetail({
             </svg>
           </button>
           <div>
-            <h1 className="text-xl font-semibold text-white md:text-[28px]">
+            <h1 className="text-xl font-bold text-white/95 md:text-3xl">
               {title}
             </h1>
             {description && (
-              <p className="text-muted-foreground mt-1 text-sm">
+              <p className="text-white/65 mt-1 text-sm">
                 {description}
               </p>
             )}
@@ -71,7 +71,7 @@ export function HelpTopicDetail({
         {/* Article Items */}
         {articles.length === 0 ? (
           <div className="py-10 text-center">
-            <p className="text-muted-foreground text-sm font-medium">
+            <p className="text-white/65 text-sm font-medium">
               No articles found for this topic.
             </p>
           </div>
@@ -90,15 +90,15 @@ export function HelpTopicDetail({
                     className="flex w-full cursor-pointer items-center justify-between gap-4 px-5 py-4 text-left"
                   >
                     <div className="flex items-start gap-3">
-                      <span className="mt-0.5 shrink-0 text-sm font-medium text-white">
+                      <span className="mt-0.5 shrink-0 text-sm font-medium text-white/95">
                         {index + 1}.
                       </span>
-                      <h3 className="text-sm font-semibold text-white md:text-[18px]">
+                      <h3 className="text-sm font-bold text-white/95 md:text-xl">
                         {article.title}
                       </h3>
                     </div>
                     <ChevronRight
-                      className={`size-5 shrink-0 text-white transition-transform duration-200 ${isExpanded ? 'rotate-90' : ''}`}
+                      className={`size-5 shrink-0 text-white/95 transition-transform duration-200 ${isExpanded ? 'rotate-90' : ''}`}
                     />
                   </button>
 
@@ -108,13 +108,13 @@ export function HelpTopicDetail({
                       {article.body && (
                         <div
                           dangerouslySetInnerHTML={{ __html: article.body }}
-                          className="text-muted-foreground text-xs leading-relaxed font-medium [&_p]:m-0"
+                          className="text-white/65 text-xs font-medium [&_p]:m-0"
                         />
                       )}
                       {article.cta_label && article.cta_url && (
                         <Link
                           href={article.cta_url}
-                          className="border-muted-foreground bg-background text-foreground mt-3 inline-block rounded-[6px] border px-4 py-2 text-xs font-medium transition-colors hover:bg-white/5"
+                          className="border-muted-foreground bg-background text-white/95 mt-3 inline-block rounded-[6px] border px-4 py-2 text-xs font-medium transition-colors hover:bg-white/5"
                         >
                           {article.cta_label}
                         </Link>

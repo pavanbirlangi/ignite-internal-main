@@ -6,7 +6,7 @@ import { Mail, Pencil } from 'lucide-react'
 import {
   loadStripe,
   type Appearance,
-  type CustomFontSource,
+  type CssFontSource,
   type PaymentIntent,
   type StripeExpressCheckoutElementConfirmEvent,
   type StripeExpressCheckoutElementReadyEvent,
@@ -47,10 +47,7 @@ const stripeAppearance: Appearance = {
     colorTextSecondary: '#9A9A9A',
     colorDanger: '#CD000E',
     borderRadius: '6px',
-    fontFamily: 'Cooper Hewitt, system-ui, sans-serif',
-    // Stripe styles its own fields with standard CSS weights, so these have
-    // to be standard values that resolve to a real face registered below --
-    // this app's own scale (705/707/709/711) means nothing inside the iframe.
+    fontFamily: 'Inter, system-ui, sans-serif',
     fontWeightLight: '300',
     fontWeightNormal: '400',
     fontWeightMedium: '500',
@@ -61,7 +58,7 @@ const stripeAppearance: Appearance = {
       border: '1px solid #2E2E2E',
       backgroundColor: '#0C0C0C',
       // Matches the email field directly above it (INPUT_CLASS: text-sm,
-      // font-semibold), rather than Stripe's 16px/400 default. Set on the
+      // font-bold), rather than Stripe's 16px/400 default. Set on the
       // input specifically instead of via fontSizeBase, which would shrink
       // the labels too.
       fontSize: '14px',
@@ -84,37 +81,15 @@ const stripeAppearance: Appearance = {
   },
 }
 
-// `fontFamily: 'Cooper Hewitt'` above only names the font -- it doesn't make
-// the Payment Element's iframe able to render it. The iframe is a separate,
-// cross-origin document with no access to this app's own @font-face rules
-// (app/globals.css), so the faces have to be handed to Stripe explicitly.
-//
-// Registered against **standard** CSS weights, deliberately not the ones
-// globals.css uses. This app runs on Cooper Hewitt's real numeric weights
-// (body is 705, medium 707, semibold 709, bold 711), but Stripe styles its
-// own fields with ordinary 400/500/600 -- so registering only 300/707/709/711
-// left every weight Stripe asks for with no matching face, and the browser
-// fell back to the nearest one available: 300 (Light). That's what made the
-// card fields look wrong -- thin Light digits sitting next to the app's own
-// semibold email input. Mapping the same files onto the weights Stripe
-// actually requests is what fixes it.
-const FONT_WEIGHT_TO_FILE: Array<{ weight: string; file: string }> = [
-  { weight: '300', file: 'CooperHewitt-Light.woff2' },
-  { weight: '400', file: 'CooperHewitt-Medium.woff2' },
-  { weight: '500', file: 'CooperHewitt-Medium.woff2' },
-  { weight: '600', file: 'CooperHewitt-Semibold.woff2' },
-  { weight: '700', file: 'CooperHewitt-Bold.woff2' },
+// The Payment Element's iframe is a separate, cross-origin document with no
+// access to this app's fonts, so Inter is handed to Stripe explicitly (the
+// same weights the site uses: 400/500/700).
+const STRIPE_FONTS: CssFontSource[] = [
+  {
+    cssSrc:
+      'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap',
+  },
 ]
-
-function getStripeFonts(): CustomFontSource[] {
-  if (typeof window === 'undefined') return []
-  const origin = window.location.origin
-  return FONT_WEIGHT_TO_FILE.map(({ weight, file }) => ({
-    family: 'Cooper Hewitt',
-    src: `url(${origin}/fonts/cooper-hewitt/${file}) format("woff2")`,
-    weight,
-  }))
-}
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
@@ -171,9 +146,9 @@ function MethodOption({
         >
           {selected && <span className="size-2 rounded-full bg-[#2468DF]" />}
         </span>
-        <span className="text-sm font-semibold text-white">{title}</span>
+        <span className="text-sm font-bold text-white/95">{title}</span>
       </span>
-      <span className="text-muted-foreground text-xs font-medium">{detail}</span>
+      <span className="text-white/65 text-xs font-medium">{detail}</span>
     </button>
   )
 }
@@ -206,7 +181,7 @@ function EmailStep({
 
   return (
     <div>
-      <h2 className="mb-4 text-lg font-semibold text-white md:text-xl">
+      <h2 className="mb-4 text-xl font-bold text-white/95 md:text-xl">
         Email
       </h2>
       <div className="bg-secondary/20 flex items-center justify-between gap-3 rounded-lg border border-white/10 px-4 py-3">
@@ -223,7 +198,7 @@ function EmailStep({
             className="border-0 bg-transparent px-0"
           />
         ) : (
-          <span className="flex items-center gap-2 text-[15px] font-medium text-white">
+          <span className="flex items-center gap-2 text-base font-medium text-white/95">
             <Mail className="text-primary size-4 shrink-0" />
             {email}
           </span>
@@ -247,9 +222,9 @@ function EmailStep({
         </Button>
       </div>
       {error ? (
-        <p className="text-red mt-2 text-xs font-semibold">{error}</p>
+        <p className="text-red mt-2 text-xs font-bold">{error}</p>
       ) : (
-        <p className="text-muted-foreground mt-2 text-xs">
+        <p className="text-white/65 mt-2 text-xs">
           Your key and receipt are sent to this email.
         </p>
       )}
@@ -475,7 +450,7 @@ function CheckoutFormInner({
       />
 
       <div>
-        <h2 className="mb-4 text-lg font-semibold text-white md:text-xl">
+        <h2 className="mb-4 text-xl font-bold text-white/95 md:text-xl">
           Payment method
         </h2>
         {localMethods.length > 0 && (
@@ -501,7 +476,7 @@ function CheckoutFormInner({
                 onSelect={() => onSelectMethod?.(method.id)}
               />
             ))}
-            {methodError && <p className="text-red text-xs font-semibold">{methodError}</p>}
+            {methodError && <p className="text-red text-xs font-bold">{methodError}</p>}
           </div>
         )}
         {/* Wallet and Link buttons belong to the USD payment; a local method's payment can't use them. */}
@@ -526,14 +501,14 @@ function CheckoutFormInner({
           />
         </div>
         <PaymentElement />
-        <p className="text-muted-foreground mt-2 text-xs">
+        <p className="text-white/65 mt-2 text-xs">
           Some cards ask for a billing postal code here. That's Stripe
           verifying the card, not a separate address form.
         </p>
       </div>
 
       {errorMessage && (
-        <p className="text-red text-sm font-semibold">{errorMessage}</p>
+        <p className="text-red text-sm font-bold">{errorMessage}</p>
       )}
 
       <Button
@@ -573,7 +548,7 @@ export function CheckoutForm({
       options={{
         clientSecret,
         appearance: stripeAppearance,
-        fonts: getStripeFonts(),
+        fonts: STRIPE_FONTS,
       }}
     >
       <CheckoutFormInner

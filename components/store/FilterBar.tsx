@@ -23,7 +23,7 @@ const FilterBar: React.FC<FilterBarProps> = ({
     <div className="flex w-full flex-col gap-5">
       {/* Sorting Tabs (Custom Design) */}
       <div className="border-muted-foreground flex h-10 w-full items-center gap-4 overflow-hidden border-b-[0.5px] lg:gap-8">
-        <span className="shrink-0 text-[14px] leading-5.25 font-semibold text-white lg:text-[16px]">
+        <span className="shrink-0 text-sm font-bold text-white/95 lg:text-base">
           Sort by:
         </span>
 
@@ -37,9 +37,9 @@ const FilterBar: React.FC<FilterBarProps> = ({
             <button
               key={option.value}
               onClick={() => onSortChange(option.value as SortOption)}
-              className={`relative flex h-full shrink-0 cursor-pointer snap-start items-center justify-center px-2 text-[14px] font-semibold whitespace-nowrap transition-all lg:text-[16px] ${sortBy === option.value
-                  ? 'border-primary border-b-2 text-white'
-                  : 'text-muted-foreground hover:text-white'
+              className={`relative flex h-full shrink-0 cursor-pointer snap-start items-center justify-center px-2 text-sm font-bold whitespace-nowrap transition-all lg:text-base ${sortBy === option.value
+                  ? 'border-primary border-b-2 text-white/95'
+                  : 'text-white/65 hover:text-white'
                 }`}
             >
               {option.label}
@@ -56,13 +56,13 @@ const FilterBar: React.FC<FilterBarProps> = ({
               key={filter.id}
               className="bg-secondary flex h-6 shrink-0 items-center justify-center gap-0.75 rounded-[6px] px-2.5 py-1"
             >
-              <span className="capitalize text-[12px] leading-4 font-semibold text-white">
+              <span className="capitalize text-xs font-bold text-white/95">
                 {filter.label}
               </span>
               <button
                 onClick={() => onRemoveFilter(filter.id)}
                 aria-label={`Remove ${filter.label} filter`}
-                className="text-muted-foreground cursor-pointer hover:text-white"
+                className="text-white/65 cursor-pointer hover:text-white"
               >
                 <X size={'16px'} />
               </button>
@@ -73,7 +73,7 @@ const FilterBar: React.FC<FilterBarProps> = ({
         {activeFilters.length > 0 && (
           <button
             onClick={onClearAll}
-            className="text-muted-foreground cursor-pointer text-nowrap text-[12px] leading-4 font-semibold underline hover:text-white"
+            className="text-white/65 cursor-pointer text-nowrap text-xs font-bold underline hover:text-white"
           >
             clear all
           </button>

@@ -40,15 +40,15 @@ const Wishlist = () => {
     <>
       <div className="flex flex-col gap-12">
         <div className="flex flex-col justify-between gap-6 sm:flex-row sm:items-center">
-          <h1 className="text-[28px] font-semibold md:text-[40px]">Wishlist</h1>
+          <h1 className="text-3xl font-bold md:text-3xl">Wishlist</h1>
           <div className="relative w-full sm:max-w-130.5">
-            <Search className="text-muted-foreground absolute top-1/2 left-4 size-4 -translate-y-1/2" />
+            <Search className="text-white/65 absolute top-1/2 left-4 size-4 -translate-y-1/2" />
             <input
               type="text"
               placeholder="Search here"
               value={search}
               onChange={(e) => handleSearchChange(e.target.value)}
-              className="border-muted-foreground/40 text-foreground placeholder:text-muted-foreground focus:border-primary h-12.5 w-full rounded-full border bg-transparent pr-4 pl-10 text-sm transition-colors outline-none"
+              className="border-muted-foreground/40 text-white/95 placeholder:text-muted-foreground focus:border-primary h-12.5 w-full rounded-full border bg-transparent pr-4 pl-10 text-sm transition-colors outline-none"
             />
           </div>
         </div>
@@ -66,7 +66,7 @@ const Wishlist = () => {
               <StoreCard key={wp.id} product={wp} wishlisted />
             ))
           ) : (
-            <div className="text-muted-foreground col-span-full flex h-72 items-center justify-center text-center">
+            <div className="text-white/65 col-span-full flex h-72 items-center justify-center text-center">
               Your wishlist is empty.
             </div>
           )}

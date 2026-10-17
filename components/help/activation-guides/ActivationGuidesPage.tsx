@@ -105,7 +105,7 @@ export default function ActivationGuidesPage({
     <div className="container py-12 [--max-width-container:1297px] md:py-16">
       {/* Header Section */}
       <div className="mb-10 flex flex-col items-start gap-6 md:mb-12 md:flex-row md:items-center md:justify-between">
-        <h1 className="text-2xl font-semibold text-white capitalize md:text-[32px] lg:text-[40px]">
+        <h1 className="text-2xl font-bold text-white/95 capitalize md:text-3xl lg:text-3xl">
           {pageTitle}
         </h1>
 
@@ -113,17 +113,17 @@ export default function ActivationGuidesPage({
           className="relative w-full sm:max-w-130.5"
           ref={searchContainerRef}
         >
-          <Search className="text-muted-foreground absolute top-1/2 left-4 size-6 -translate-y-1/2" />
+          <Search className="text-white/65 absolute top-1/2 left-4 size-6 -translate-y-1/2" />
           <input
             type="text"
             placeholder="Search here"
             value={searchQuery}
             onChange={handleSearch}
             onFocus={() => setIsSearchFocused(true)}
-            className="border-muted-foreground/40 text-foreground placeholder:text-muted-foreground focus:border-primary bg-background h-12.5 w-full rounded-full border pr-12 pl-10 text-lg font-medium transition-colors outline-none"
+            className="border-muted-foreground/40 text-white/95 placeholder:text-muted-foreground focus:border-primary bg-background h-12.5 w-full rounded-full border pr-12 pl-10 text-xl font-medium transition-colors outline-none"
           />
           {isSearchLoading && (
-            <div className="text-muted-foreground absolute top-1/2 right-4 -translate-y-1/2">
+            <div className="text-white/65 absolute top-1/2 right-4 -translate-y-1/2">
               <Loader2 className="size-4 animate-spin" />
             </div>
           )}
@@ -132,7 +132,7 @@ export default function ActivationGuidesPage({
           {showSuggestions && (
             <div className="border-border bg-background absolute top-[calc(100%+8px)] left-0 z-50 w-full rounded-[12px] border p-2 shadow-xl">
               {isSearchLoading ? (
-                <div className="text-muted-foreground px-4 py-3 text-sm">
+                <div className="text-white/65 px-4 py-3 text-sm">
                   Loading suggestions...
                 </div>
               ) : searchResults.length > 0 ? (
@@ -141,7 +141,7 @@ export default function ActivationGuidesPage({
                     <li key={result.slug}>
                       <Link
                         href={`/activation-guides/${result.slug}`}
-                        className="text-muted-foreground block rounded-[8px] px-4 py-3 text-sm transition-colors hover:bg-white/5 hover:text-white"
+                        className="text-white/65 block rounded-[8px] px-4 py-3 text-sm transition-colors hover:bg-white/5 hover:text-white"
                       >
                         {result.title}
                       </Link>
@@ -149,7 +149,7 @@ export default function ActivationGuidesPage({
                   ))}
                 </ul>
               ) : (
-                <div className="text-muted-foreground px-4 py-3 text-sm">
+                <div className="text-white/65 px-4 py-3 text-sm">
                   No guides found for &quot;{debouncedQuery}&quot;.
                 </div>
               )}
@@ -172,7 +172,7 @@ export default function ActivationGuidesPage({
           ))}
         </div>
       ) : filteredGuides.length === 0 ? (
-        <div className="text-muted-foreground mb-16 flex min-h-[200px] items-center justify-center text-base">
+        <div className="text-white/65 mb-16 flex min-h-[200px] items-center justify-center text-base">
           No guides found{searchQuery ? ` for "${searchQuery}"` : ''}.
         </div>
       ) : (
@@ -189,7 +189,7 @@ export default function ActivationGuidesPage({
           <Button
             variant="secondary"
             onClick={() => setVisibleCount((prev) => prev + PAGE_SIZE)}
-            className="border-muted-foreground bg-secondary hover:bg-secondary/80 h-[52px] min-w-[160px] rounded-[6px] border px-12 text-[16px] font-semibold text-white"
+            className="border-muted-foreground bg-secondary hover:bg-secondary/80 h-[52px] min-w-[160px] rounded-[6px] border px-12 text-base font-bold text-white/95"
           >
             Load More
           </Button>

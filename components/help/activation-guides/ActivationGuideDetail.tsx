@@ -107,12 +107,12 @@ export default function ActivationGuideDetail({
           <div className="flex flex-col gap-12">
             <div className="flex flex-col gap-[48px]">
               {/* Title */}
-              <h1 className="text-[40px] leading-tight font-semibold text-white capitalize">
+              <h1 className="text-3xl font-bold text-white/95 capitalize">
                 {guide.title}
               </h1>
 
               {/* Description */}
-              <p className="text-[16px] leading-[24px] text-white">
+              <p className="text-base text-white/95">
                 {guide.description}
               </p>
             </div>
@@ -142,7 +142,7 @@ export default function ActivationGuideDetail({
                   {guide.tags.map((tag, idx) => (
                     <span
                       key={idx}
-                      className="bg-secondary inline-flex cursor-default items-center justify-center rounded-[6px] p-4  text-[14px] font-medium text-white"
+                      className="bg-secondary inline-flex cursor-default items-center justify-center rounded-[6px] p-4  text-sm font-medium text-white/95"
                     >
                       {tag}
                     </span>
@@ -163,20 +163,20 @@ export default function ActivationGuideDetail({
                     />
                   </div>
                 ) : (
-                  <div className="bg-secondary flex h-14 w-14 shrink-0 items-center justify-center rounded-full text-xl font-semibold text-white">
+                  <div className="bg-secondary flex h-14 w-14 shrink-0 items-center justify-center rounded-full text-xl font-bold text-white/95">
                     {(guide.author_name?.[0] ?? 'A').toUpperCase()}
                   </div>
                 )}
                 <div className="flex flex-col gap-1">
-                  <span className="text-muted-foreground text-[12px] leading-[20px] capitalize">
+                  <span className="text-white/65 text-xs capitalize">
                     written by
                   </span>
-                  <span className="text-[16px] leading-[20px] font-semibold text-white capitalize">
+                  <span className="text-base font-bold text-white/95 capitalize">
                     {guide.author_name}
                   </span>
                 </div>
               </div>
-              <span className="text-muted-foreground text-[16px] leading-[20px] font-medium capitalize">
+              <span className="text-white/65 text-base font-medium capitalize">
                 {guide.date_updated
                   ? `Last Updated ${timeAgo(guide.date_updated)}`
                   : formatDate(guide.published_date)}
@@ -189,7 +189,7 @@ export default function ActivationGuideDetail({
       {/* Read Next */}
       {relatedGuides.length > 0 && (
         <div className="container mt-20 [--max-width-container:1280px] md:mt-28">
-          <h2 className="mb-8 text-2xl md:text-[32px] font-semibold text-white capitalize">
+          <h2 className="mb-8 text-2xl md:text-3xl font-bold text-white/95 capitalize">
             Read Next
           </h2>
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">

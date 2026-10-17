@@ -125,7 +125,7 @@ export default function Gallery({ product, heading, featuredImage }: GalleryProp
 
   return (
     <div className="max-w-container mx-auto mt-8 mb-16 w-full px-4 md:mt-12 md:mb-20 md:px-0">
-      <h2 className="text-muted-foreground mb-6 text-lg font-semibold md:text-[24px]">
+      <h2 className="text-white/65 mb-6 text-xl font-bold md:text-2xl">
         {heading ?? 'Gallery'}
       </h2>
 
@@ -205,7 +205,7 @@ export default function Gallery({ product, heading, featuredImage }: GalleryProp
                 <div className="absolute inset-0 flex items-center justify-center">
                   <div className="flex h-16 w-16 items-center justify-center rounded-full border border-white/30 bg-white/20 backdrop-blur-sm transition-transform duration-300 group-hover:scale-110">
                     <Play
-                      className="ml-1 text-white"
+                      className="ml-1 text-white/95"
                       fill="currentColor"
                       size={28}
                     />
@@ -243,7 +243,7 @@ export default function Gallery({ product, heading, featuredImage }: GalleryProp
                 />
                 {isLastBox ? (
                   <div className="absolute inset-0 flex items-center justify-center bg-black/60 backdrop-blur-[1px] transition-colors group-hover:bg-black/50">
-                    <span className="text-xl font-bold text-white tracking-wider md:text-2xl transition-transform duration-300 group-hover:scale-105">
+                    <span className="text-xl font-bold text-white/95 md:text-2xl transition-transform duration-300 group-hover:scale-105">
                       +{extraCount}
                     </span>
                   </div>

@@ -8,7 +8,7 @@ export function ConfirmRegisteredMail() {
                <Mailsent/>
             </div>
 
-            <p className="text-muted-foreground text-[15px] font-medium leading-relaxed">
+            <p className="text-white/65 text-base font-medium">
                 We have sent a confirmation email to your registered email.
                 <br />
                 Please click the link in the email to verify your account.

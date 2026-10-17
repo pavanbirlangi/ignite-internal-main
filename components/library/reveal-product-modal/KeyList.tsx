@@ -33,7 +33,7 @@ export const KeyList = ({ keys }: KeyListProps) => {
   const renderCopyButton = (value: string, id: string, title: string) => (
     <button
       onClick={() => handleCopy(value, id)}
-      className="text-muted-foreground hover:bg-secondaryborder-secondary rounded-md p-2 transition-colors hover:text-white"
+      className="text-white/65 hover:bg-secondaryborder-secondary rounded-md p-2 transition-colors hover:text-white"
       title={title}
     >
       {copiedId === id ? (
@@ -55,11 +55,11 @@ export const KeyList = ({ keys }: KeyListProps) => {
             <div key={globalIndex} className="flex flex-col gap-3">
               {/* Email field */}
               <div className="flex flex-col gap-1.5">
-                <label className="text-sm font-semibold text-white">
+                <label className="text-sm font-bold text-white/95">
                   Email
                 </label>
                 <div className="bg-secondary hover:border-secondary group flex h-12 items-center justify-between rounded-xl border border-transparent p-4 px-5 transition-colors md:h-13.5">
-                  <span className="mr-4 truncate font-mono text-lg font-semibold tracking-wider text-white">
+                  <span className="mr-4 truncate font-mono text-xl font-bold text-white/95">
                     {credential.email}
                   </span>
                   {renderCopyButton(
@@ -72,11 +72,11 @@ export const KeyList = ({ keys }: KeyListProps) => {
 
               {/* Password field */}
               <div className="flex flex-col gap-1.5">
-                <label className="text-sm font-semibold text-white">
+                <label className="text-sm font-bold text-white/95">
                   Password
                 </label>
                 <div className="bg-secondary hover:border-secondary group flex h-12 items-center justify-between rounded-xl border border-transparent p-4 px-5 transition-colors md:h-13.5">
-                  <span className="mr-4 truncate font-mono text-lg font-semibold tracking-wider text-white">
+                  <span className="mr-4 truncate font-mono text-xl font-bold text-white/95">
                     {credential.password}
                   </span>
                   {renderCopyButton(
@@ -96,7 +96,7 @@ export const KeyList = ({ keys }: KeyListProps) => {
             key={globalIndex}
             className="bg-secondary hover:border-secondary group flex h-12 items-center justify-between rounded-xl border border-transparent p-4 px-5 transition-colors md:h-13.5"
           >
-            <span className="mr-4 truncate font-mono text-lg font-semibold tracking-wider text-white">
+            <span className="mr-4 truncate font-mono text-xl font-bold text-white/95">
               {key}
             </span>
             {renderCopyButton(key, `${globalIndex}-key`, 'Copy key')}
@@ -116,7 +116,7 @@ export const KeyList = ({ keys }: KeyListProps) => {
                   }}
                   disabled={currentPage === 1}
                   className={cn(
-                    'text-muted-foreground flex h-10 w-10 items-center justify-center rounded-[6px] transition-colors',
+                    'text-white/65 flex h-10 w-10 items-center justify-center rounded-[6px] transition-colors',
                     currentPage === 1
                       ? 'cursor-not-allowed'
                       : 'hover:bg-secondaryborder-secondary hover:text-white',
@@ -134,10 +134,10 @@ export const KeyList = ({ keys }: KeyListProps) => {
                       setCurrentPage(i + 1)
                     }}
                     className={cn(
-                      'flex h-10 w-10 items-center justify-center rounded-[6px] text-sm font-semibold transition-colors',
+                      'flex h-10 w-10 items-center justify-center rounded-[6px] text-sm font-bold transition-colors',
                       currentPage === i + 1
-                        ? 'bg-background border-primary text-foreground border-2'
-                        : 'bg-secondary text-muted-foreground hover:bg-secondary hover:text-white',
+                        ? 'bg-background border-primary text-white/95 border-2'
+                        : 'bg-secondary text-white/65 hover:bg-secondary hover:text-white',
                     )}
                   >
                     {i + 1}
@@ -153,7 +153,7 @@ export const KeyList = ({ keys }: KeyListProps) => {
                   }}
                   disabled={currentPage === totalPages}
                   className={cn(
-                    'text-muted-foreground flex h-10 w-10 items-center justify-center rounded-[6px] transition-colors',
+                    'text-white/65 flex h-10 w-10 items-center justify-center rounded-[6px] transition-colors',
                     currentPage === totalPages
                       ? 'cursor-not-allowed'
                       : 'hover:bg-secondaryborder-secondary hover:text-white',

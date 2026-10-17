@@ -110,11 +110,11 @@ export default async function CategoriesPage({
           __html: JSON.stringify(webPageJsonLd),
         }}
       />
-      <div className="bg-background text-foreground min-h-screen pb-24">
+      <div className="bg-background text-white/95 min-h-screen pb-24">
         <main className="flex flex-col gap-10 px-5 pt-8">
           {/* Platforms Section */}
           <section className="flex flex-col gap-5">
-            <h2 className="text-lg font-semibold tracking-wide text-white md:text-[20px]">
+            <h2 className="text-xl font-bold text-white/95 md:text-xl">
               {platformsTitle}
             </h2>
             <div className="grid grid-cols-2 gap-4">
@@ -132,7 +132,7 @@ export default async function CategoriesPage({
                       className="object-cover"
                     />
                   </div>
-                  <span className="text-sm font-medium text-white">
+                  <span className="text-sm font-medium text-white/95">
                     {platform.name}
                   </span>
                 </Link>
@@ -142,7 +142,7 @@ export default async function CategoriesPage({
 
           {/* Genres Section */}
           <section className="flex flex-col gap-5">
-            <h2 className="text-lg font-semibold tracking-wide text-white md:text-[20px]">
+            <h2 className="text-xl font-bold text-white/95 md:text-xl">
               {genreTitle}
             </h2>
             <div className="flex flex-col gap-3">
@@ -155,11 +155,11 @@ export default async function CategoriesPage({
                   >
                     {genre.iconHtml ? (
                       <div
-                        className="size-5 text-white [&>svg]:h-full [&>svg]:w-full"
+                        className="size-5 text-white/95 [&>svg]:h-full [&>svg]:w-full"
                         dangerouslySetInnerHTML={{ __html: genre.iconHtml }}
                       />
                     ) : null}
-                    <span className="text-sm font-medium text-white">
+                    <span className="text-sm font-medium text-white/95">
                       {genre.name}
                     </span>
                   </Link>

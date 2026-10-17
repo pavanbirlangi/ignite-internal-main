@@ -69,7 +69,7 @@ export const ModalFooter = ({
               <Button
                 variant="ghost"
                 onClick={() => setGuideOpen(true)}
-                className="border-muted-foreground! bg-card h-10 border px-6 py-4 text-sm font-semibold text-white hover:bg-white/5"
+                className="border-muted-foreground! bg-card h-10 border px-6 py-4 text-sm font-bold text-white/95 hover:bg-white/5"
               >
                 Activation Guide
               </Button>
@@ -77,7 +77,7 @@ export const ModalFooter = ({
           ) : null}
           {/* <Button
             asChild
-            className="bg-primary hover:bg-primary/90 h-10 text-sm font-semibold text-white"
+            className="bg-primary hover:bg-primary/90 h-10 text-sm font-bold text-white/95"
           >
             <a
               href="https://store.steampowered.com/account/registerkey"
@@ -85,25 +85,25 @@ export const ModalFooter = ({
               rel="noopener noreferrer"
             >
               Redeem on Steam{' '}
-              <ExternalLink className="size-4 text-white hover:text-white/80" />
+              <ExternalLink className="size-4 text-white/95 hover:text-white/80" />
             </a>
           </Button> */}
         </div>
         {revealDate && (
           <div className="text-right">
-            <p className="text-muted-foreground text-xs font-semibold">
+            <p className="text-white/65 text-xs font-bold">
               Key revealed on
             </p>
-            <p className="text-sm font-medium text-white">
+            <p className="text-sm font-medium text-white/95">
               {formatRevealDate(revealDate)}
             </p>
           </div>
         )}
       </div>
 
-      <p className="text-muted-foreground border-card border-t-[0.5px] border-b-[0.5px] py-4 text-center text-xs font-medium md:text-left">
+      <p className="text-white/65 border-card border-t-[0.5px] border-b-[0.5px] py-4 text-center text-xs font-medium md:text-left">
         Facing issues with the key? You can raise a ticket{' '}
-        <Link href="/help" className="font-semibold text-white underline">
+        <Link href="/help" className="font-bold text-white/95 underline">
           here
         </Link>
         . (Our support will get in touch with you within 48 hours)

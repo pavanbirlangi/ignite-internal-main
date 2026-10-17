@@ -51,10 +51,10 @@ export default function LegalSidebar({
                     <Link
                         key={page.slug}
                         href={localizedHref(locale, `/legal/${page.slug}`)}
-                        className={`flex w-full items-center h-16 px-4 text-[16px] leading-[21px] no-underline transition-colors
+                        className={`flex w-full items-center h-16 px-4 text-base no-underline transition-colors
               ${isActive
-                                ? 'font-semibold text-foreground border-b-2 border-primary'
-                                : `font-medium text-muted-foreground hover:text-foreground ${isLast ? '' : 'border-b border-secondary'}`
+                                ? 'font-bold text-white/95 border-b-2 border-primary'
+                                : `font-medium text-white/65 hover:text-foreground ${isLast ? '' : 'border-b border-secondary'}`
                             }
               ${isActive && isLast ? '' : ''}
             `}

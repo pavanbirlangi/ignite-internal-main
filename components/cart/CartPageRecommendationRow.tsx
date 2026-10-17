@@ -60,24 +60,24 @@ export function CartPageRecommendationRow({
       <div className="flex flex-1 flex-col justify-center gap-2">
         {productHref ? (
           <Link href={productHref} className="w-fit">
-            <h4 className="line-clamp-2 leading-snug font-semibold text-white hover:underline sm:text-sm">
+            <h4 className="line-clamp-2 font-bold text-white/95 hover:underline sm:text-sm">
               {product.title}
             </h4>
           </Link>
         ) : (
-          <h4 className="line-clamp-2 leading-snug font-semibold text-white sm:text-sm">
+          <h4 className="line-clamp-2 font-bold text-white/95 sm:text-sm">
             {product.title}
           </h4>
         )}
 
         <div className="flex items-center gap-1.5">
-          <span className="text-xs font-semibold text-white sm:text-sm">
+          <span className="text-xs font-bold text-white/95 sm:text-sm">
             {formatApiCurrency(product.price, product.currencyCode)}
           </span>
         </div>
 
         {product.availableForSale === false && (
-          <span className="text-red text-[10px] font-bold sm:text-xs">
+          <span className="text-red text-xs font-bold sm:text-xs">
             Out of stock
           </span>
         )}
@@ -88,7 +88,7 @@ export function CartPageRecommendationRow({
         variant="ghost"
         onClick={handleAddToCart}
         disabled={isAddDisabled || isAdding}
-        className="border-muted-foreground h-8 w-8 rounded-lg border bg-transparent text-white transition-all duration-200 hover:border-white hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-50 sm:h-9 sm:w-9"
+        className="border-muted-foreground h-8 w-8 rounded-lg border bg-transparent text-white/95 transition-all duration-200 hover:border-white hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-50 sm:h-9 sm:w-9"
       >
         <CartPlusIcon className="size-4 sm:size-5" />
       </Button>

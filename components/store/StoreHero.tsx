@@ -41,10 +41,10 @@ const StoreHero = ({
       {/* Content */}
       <div className="relative z-20 mx-auto mb-24 flex h-full max-w-360 flex-col items-start justify-end-safe gap-6 md:w-310">
         <div className="animate-fade-in-up max-w-150 max-lg:px-4">
-          <h1 className="mb-4 text-3xl leading-tight font-semibold text-white md:text-5xl">
+          <h1 className="mb-4 text-3xl font-bold text-white/95 md:text-3xl">
             {title}
           </h1>
-          <p className="text-muted-foreground max-w-100 leading-relaxed font-medium sm:max-w-136.5 sm:text-base md:text-lg">
+          <p className="text-white/65 max-w-100 font-medium sm:max-w-136.5 sm:text-base md:text-xl">
             {description}
           </p>
         </div>

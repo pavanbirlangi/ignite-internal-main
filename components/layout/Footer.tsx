@@ -27,7 +27,7 @@ export default function Footer({
             <div className="flex items-center gap-3 [&_.bg-secondary]:bg-white/5">
               <RegionToggle />
               {/* <button
-                className="border-border text-foreground flex h-[56px] w-[56px] items-center justify-center rounded-full border bg-white/5 transition-colors hover:bg-white/10"
+                className="border-border text-white/95 flex h-[56px] w-[56px] items-center justify-center rounded-full border bg-white/5 transition-colors hover:bg-white/10"
                 aria-label="Toggle theme"
               >
                 <Sun size={32} />
@@ -36,7 +36,7 @@ export default function Footer({
 
             {/* Social Icons */}
             <div className="flex flex-col gap-4">
-              <span className="text-muted-foreground text-[16px] font-semibold">
+              <span className="text-white/65 text-base font-bold">
                 {translations.getInTheGame}
               </span>
               <div className="flex items-center gap-[18px]">
@@ -57,7 +57,7 @@ export default function Footer({
           <div className="flex flex-wrap gap-16">
             {footerData.links?.map((section) => (
               <div key={section.label} className="flex flex-col gap-4">
-                <h3 className="text-muted-foreground text-[16px] leading-[150%] font-bold">
+                <h3 className="text-white/65 text-base font-bold">
                   {section.label}
                 </h3>
                 <ul className="flex flex-col gap-2">
@@ -65,7 +65,7 @@ export default function Footer({
                     <li key={link.name}>
                       <Link
                         href={link.to}
-                        className="text-foreground hover:text-foreground/70 text-[14px] leading-[150%] transition-colors"
+                        className="text-white/95 hover:text-foreground/70 text-sm transition-colors"
                       >
                         {link.name}
                       </Link>
@@ -82,7 +82,7 @@ export default function Footer({
               clearing it in the CMS had no visible effect. */}
           {footerData.review_text && (
             <div className="flex flex-col gap-4 py-1.5">
-              <span className="text-foreground text-[14px] font-medium">
+              <span className="text-white/95 text-sm font-medium">
                 {footerData.review_text}
               </span>
               {footerData.review_redirect_link ? (
@@ -139,7 +139,7 @@ export default function Footer({
           )}
 
           {/* Copyright */}
-          <span className="text-muted-foreground text-[14px] leading-[150%] font-medium">
+          <span className="text-white/65 text-sm font-medium">
             {footerData.bottom_text}
           </span>
 

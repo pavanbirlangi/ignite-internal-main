@@ -40,7 +40,7 @@ export function MobileSidebar({ isOpen, onClose, navItems = [] }: MobileSidebarP
       {/* Sidebar Panel */}
       <div
         className={cn(
-          'bg-secondary fixed inset-y-0 left-0 z-101 flex w-[85vw] max-w-[400px] flex-col text-white shadow-2xl transition-transform duration-300 ease-in-out lg:hidden',
+          'bg-secondary fixed inset-y-0 left-0 z-101 flex w-[85vw] max-w-[400px] flex-col text-white/95 shadow-2xl transition-transform duration-300 ease-in-out lg:hidden',
           isOpen ? 'translate-x-0' : '-translate-x-full',
         )}
       >
@@ -62,7 +62,7 @@ export function MobileSidebar({ isOpen, onClose, navItems = [] }: MobileSidebarP
           <button
             onClick={onClose}
             aria-label="Close menu"
-            className="text-muted-foreground flex items-center justify-center rounded-full p-2 transition-colors hover:bg-white/10 hover:text-white"
+            className="text-white/65 flex items-center justify-center rounded-full p-2 transition-colors hover:bg-white/10 hover:text-white"
           >
             <div className="h-5 w-5 [&>svg]:h-full [&>svg]:w-full">
               <XIcon />
@@ -78,10 +78,10 @@ export function MobileSidebar({ isOpen, onClose, navItems = [] }: MobileSidebarP
                 key={item.name}
                 href={item.to}
                 onClick={onClose}
-                className="text-muted-foreground flex items-center justify-between px-5 py-4 text-base font-medium transition-colors hover:bg-white/5 hover:text-white active:bg-white/10"
+                className="text-white/65 flex items-center justify-between px-5 py-4 text-base font-medium transition-colors hover:bg-white/5 hover:text-white active:bg-white/10"
               >
                 <span>{item.name}</span>
-                <ChevronRight className="text-muted-foreground h-5 w-5" />
+                <ChevronRight className="text-white/65 h-5 w-5" />
               </Link>
             ))}
           </div>

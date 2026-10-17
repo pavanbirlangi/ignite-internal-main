@@ -10,10 +10,10 @@ export function ChooseIssueType({
     <div className="mx-auto w-full max-w-[780px]">
       <div className="border-border bg-secondary/40 w-full rounded-[20px] border p-6 md:p-10">
         {/* Header */}
-        <h1 className="mb-1 text-xl font-semibold text-white md:text-[28px]">
+        <h1 className="mb-1 text-xl font-bold text-white/95 md:text-3xl">
           Choose the type of issue
         </h1>
-        <p className="text-muted-foreground font-medium text-sm">
+        <p className="text-white/65 font-medium text-sm">
           What kind of issue are you experiencing?
         </p>
 
@@ -38,10 +38,10 @@ export function ChooseIssueType({
 
               {/* Text */}
               <div>
-                <h3 className="mb-1 text-sm font-semibold text-white md:text-[18px]">
+                <h3 className="mb-1 text-sm font-bold text-white/95 md:text-xl">
                   {category.title}
                 </h3>
-                <p className="text-muted-foreground font-medium text-xs leading-relaxed">
+                <p className="text-white/65 font-medium text-xs">
                   {category.description}
                 </p>
               </div>

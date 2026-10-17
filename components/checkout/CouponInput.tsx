@@ -59,7 +59,7 @@ export function CouponInput({ onCartChanged }: CouponInputProps) {
   if (appliedCode) {
     return (
       <div className="bg-secondary/40 flex items-center justify-between rounded-md px-3 py-2.5">
-        <span className="flex items-center gap-2 text-sm font-medium text-white">
+        <span className="flex items-center gap-2 text-sm font-medium text-white/95">
           <Tag className="text-primary size-3.5" />
           {appliedCode}
         </span>
@@ -68,7 +68,7 @@ export function CouponInput({ onCartChanged }: CouponInputProps) {
           onClick={handleRemove}
           disabled={submitting}
           aria-label="Remove coupon code"
-          className="text-muted-foreground hover:text-white disabled:opacity-50"
+          className="text-white/65 hover:text-white disabled:opacity-50"
         >
           {submitting ? (
             <Loader2 className="size-4 animate-spin" />
@@ -85,7 +85,7 @@ export function CouponInput({ onCartChanged }: CouponInputProps) {
       <button
         type="button"
         onClick={() => setExpanded(true)}
-        className="text-primary flex items-center gap-1.5 text-sm font-semibold"
+        className="text-primary flex items-center gap-1.5 text-sm font-bold"
       >
         <Tag className="size-3.5" />
         Have a coupon?
@@ -97,7 +97,7 @@ export function CouponInput({ onCartChanged }: CouponInputProps) {
   return (
     <div className="flex flex-col gap-2">
       <div className="bg-background/40 focus-within:border-primary/60 flex items-center gap-2 rounded-md border border-white/10 px-3 py-2.5 transition-colors">
-        <Tag className="text-muted-foreground size-3.5 shrink-0" />
+        <Tag className="text-white/65 size-3.5 shrink-0" />
         <input
           type="text"
           value={code}
@@ -109,7 +109,7 @@ export function CouponInput({ onCartChanged }: CouponInputProps) {
             }
           }}
           placeholder="Enter coupon code"
-          className="placeholder:text-muted-foreground w-full min-w-0 bg-transparent text-sm font-medium text-white outline-none"
+          className="placeholder:text-muted-foreground w-full min-w-0 bg-transparent text-sm font-medium text-white/95 outline-none"
           disabled={submitting}
           autoFocus
         />
@@ -117,7 +117,7 @@ export function CouponInput({ onCartChanged }: CouponInputProps) {
           type="button"
           onClick={handleApply}
           disabled={submitting || !code.trim()}
-          className="text-primary shrink-0 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-50"
+          className="text-primary shrink-0 text-sm font-bold disabled:cursor-not-allowed disabled:opacity-50"
         >
           {submitting ? <Loader2 className="size-4 animate-spin" /> : 'Apply'}
         </button>
@@ -126,7 +126,7 @@ export function CouponInput({ onCartChanged }: CouponInputProps) {
           onClick={handleCollapse}
           disabled={submitting}
           aria-label="Cancel"
-          className="text-muted-foreground hover:text-white shrink-0 disabled:opacity-50"
+          className="text-white/65 hover:text-white shrink-0 disabled:opacity-50"
         >
           <X className="size-3.5" />
         </button>

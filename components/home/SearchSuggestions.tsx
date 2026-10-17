@@ -36,7 +36,7 @@ export default function SearchSuggestions({
     >
       <div className="flex flex-col gap-6 p-4 md:gap-8 md:px-5 md:pt-6 md:pb-5">
         {/* Heading */}
-        <h2 className="text-muted-foreground text-xs leading-none font-semibold tracking-wider uppercase">
+        <h2 className="text-white/65 text-xs font-bold uppercase">
           {label}
         </h2>
 
@@ -81,19 +81,19 @@ export default function SearchSuggestions({
               style={rowEntrance(suggestions.length)}
               className={cn(
                 ROW_ENTRANCE_CLASS,
-                'text-primary mt-2 flex w-full items-center justify-center gap-2 rounded-lg border border-white/5 px-4 py-3 text-sm font-semibold transition-colors hover:bg-white/10 focus:outline-none md:justify-start',
+                'text-primary mt-2 flex w-full items-center justify-center gap-2 rounded-lg border border-white/5 px-4 py-3 text-sm font-bold transition-colors hover:bg-white/10 focus:outline-none md:justify-start',
                 activeIndex === suggestions.length && ACTIVE_ROW_CLASS,
               )}
             >
               <SearchIcon className="size-4 shrink-0" />
               <span>
                 See all results for&nbsp;
-                <span className="text-white">&ldquo;{query}&rdquo;</span>
+                <span className="text-white/95">&ldquo;{query}&rdquo;</span>
               </span>
             </button>
           </div>
         ) : (
-          <p className="text-muted-foreground py-8 text-center text-sm">
+          <p className="text-white/65 py-8 text-center text-sm">
             No results for &ldquo;{query}&rdquo;
           </p>
         )}

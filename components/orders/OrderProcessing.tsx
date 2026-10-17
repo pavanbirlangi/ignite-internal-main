@@ -28,10 +28,10 @@ const OrderProcessing = () => {
   return (
     <>
       <div className="px-4 text-center sm:px-0">
-        <h1 className="text-2xl font-semibold text-white md:text-3xl">
+        <h1 className="text-2xl font-bold text-white/95 md:text-3xl">
           Processing Your Order
         </h1>
-        <p className="text-muted-foreground mt-2 max-w-74 text-center text-sm font-medium md:mt-5">
+        <p className="text-white/65 mt-2 max-w-74 text-center text-sm font-medium md:mt-5">
           We’re preparing your order. Please wait while we confirm your payment.
         </p>
       </div>
@@ -53,10 +53,10 @@ const OrderProcessing = () => {
                 )}
               </div>
               <div>
-                <h2 className="text-center text-lg font-medium text-white md:text-[20px]">
+                <h2 className="text-center text-xl font-medium text-white/95 md:text-xl">
                   {step.title}
                 </h2>
-                <p className="text-muted-foreground mt-1 w-full max-w-47 text-center text-xs">
+                <p className="text-white/65 mt-1 w-full max-w-47 text-center text-xs">
                   {step.description}
                 </p>
               </div>

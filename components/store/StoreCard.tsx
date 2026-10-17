@@ -120,7 +120,7 @@ const ButtonFace = ({
 
 // Hover also gets a soft light under the pointer (.pointer-light in globals.css).
 const BUTTON =
-  'pointer-light group/btn relative isolate grid h-9 w-full cursor-pointer place-items-center overflow-hidden rounded-lg text-[13px] font-semibold text-white transition-[transform,background-color,border-color,box-shadow,filter,opacity] duration-300 enabled:hover:-translate-y-px enabled:active:scale-[0.97] disabled:cursor-default motion-reduce:transition-none'
+  'pointer-light group/btn relative isolate grid h-9 w-full cursor-pointer place-items-center overflow-hidden rounded-lg text-sm font-medium text-white/95 transition-[transform,background-color,border-color,box-shadow,filter,opacity] duration-300 enabled:hover:-translate-y-px enabled:active:scale-[0.97] disabled:cursor-default motion-reduce:transition-none'
 
 interface ProductCardProps {
   product: ProductListItem
@@ -264,7 +264,7 @@ const StoreCard: React.FC<ProductCardProps> = ({ product, wishlisted }) => {
         >
           <HeartIcon
             filled={wishlisted}
-            className={`size-4 ${wishlisted ? 'animate-in zoom-in-50 duration-300' : 'text-white/70'}`}
+            className={`size-4 ${wishlisted ? 'animate-in zoom-in-50 duration-300' : 'text-white/65'}`}
           />
         </button>
       )}
@@ -309,7 +309,7 @@ const StoreCard: React.FC<ProductCardProps> = ({ product, wishlisted }) => {
               {/* Same size and shape as the discount badge. .trim drops the
                   font's built-in space under the letters so they sit centred. */}
               <div className="bg-deal flex h-[22px] items-center rounded-[6px] px-[9px]">
-                <span className="trim block text-[11px] font-bold tracking-[0.06em] text-white uppercase">
+                <span className="trim block text-xs font-bold text-white/95 uppercase">
                   Out of Stock
                 </span>
               </div>
@@ -343,7 +343,7 @@ const StoreCard: React.FC<ProductCardProps> = ({ product, wishlisted }) => {
                     : 0,
                 ) > 0 && (
                   <div className="bg-deal flex h-[22px] items-center rounded-[6px] px-2">
-                    <span className="trim block text-[13px] font-bold tracking-[0.01em] text-white">
+                    <span className="trim block text-xs font-medium text-white/95">
                       -{product.discount?.percentage}%
                     </span>
                   </div>
@@ -355,13 +355,13 @@ const StoreCard: React.FC<ProductCardProps> = ({ product, wishlisted }) => {
         {/* Details Section */}
         <div className="flex flex-1 flex-col p-3 transition-colors">
           <div className="flex flex-col gap-2">
-            <h3 className="line-clamp-2 min-h-10 text-sm leading-5 font-semibold text-white/90 transition-colors group-hover:text-white">
+            <h3 className="line-clamp-2 min-h-[38.4px] text-base leading-[19.2px] font-bold tracking-[-0.08px] text-white/95 transition-colors group-hover:text-white">
               {product.title}
             </h3>
 
             {/* Price */}
             <div className="mt-2 flex flex-col gap-0.5 md:flex-row md:items-center md:gap-2">
-              <span className="text-[19px] leading-none font-bold tracking-tight text-white">
+              <span className="text-sm font-medium text-white/95">
                 {product.priceRange?.minVariantPrice?.amount
                   ? formatCurrency(
                       product.priceRange.minVariantPrice.amount,
@@ -378,7 +378,7 @@ const StoreCard: React.FC<ProductCardProps> = ({ product, wishlisted }) => {
                 (typeof product.compareAtPrice === 'object' &&
                   product.compareAtPrice?.amount &&
                   Number(product.compareAtPrice.amount) > 0)) && (
-                <span className="mt-2 text-[13px] leading-none font-medium tracking-tight text-white/40 line-through decoration-white/20 md:mt-0">
+                <span className="mt-2 text-sm font-medium text-white/65 line-through decoration-white/20 md:mt-0">
                   {product.originalPrice ??
                     (typeof product.compareAtPrice === 'object' &&
                       formatCurrency(

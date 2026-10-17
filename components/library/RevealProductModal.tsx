@@ -131,15 +131,15 @@ export function RevealProductModal({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent
         showCloseButton={false}
-        className="bg-secondary/40 border-secondary max-h-[95vh] w-full gap-0 overflow-hidden border p-0 text-white shadow-2xl backdrop-blur-xl outline-none sm:max-w-200 sm:rounded-[30px]"
+        className="bg-secondary/40 border-secondary max-h-[95vh] w-full gap-0 overflow-hidden border p-0 text-white/95 shadow-2xl backdrop-blur-xl outline-none sm:max-w-200 sm:rounded-[30px]"
       >
         <div className="flex max-h-[calc(95vh-2px)] flex-col gap-8 overflow-y-auto p-4 [-ms-overflow-style:'none'] [scrollbar-width:'none'] sm:p-10 [&::-webkit-scrollbar]:hidden">
           <DialogHeader className="border-secondary flex flex-row items-center justify-between space-y-0 border-b pb-6 text-left">
-            <DialogTitle className="text-xl font-semibold md:text-2xl">
+            <DialogTitle className="text-xl font-bold md:text-2xl">
               Reveal Product
             </DialogTitle>
             <DialogClose className="rounded-full p-2 transition-colors hover:bg-white/10">
-              <X className="text-muted-foreground h-6 w-6" />
+              <X className="text-white/65 h-6 w-6" />
             </DialogClose>
           </DialogHeader>
 
@@ -151,7 +151,7 @@ export function RevealProductModal({
             />
 
             <div className="flex flex-col gap-3">
-              <h4 className="text-lg font-semibold">Reveal Product</h4>
+              <h4 className="text-xl font-bold">Reveal Product</h4>
               <div>
                 {loading ? (
                   <div className="flex flex-col gap-4">
@@ -168,13 +168,13 @@ export function RevealProductModal({
                   </div>
                 ) : isRevoked ? (
                   <div className="bg-secondary flex items-center justify-center rounded-xl p-4">
-                    <p className="text-muted-foreground text-sm">
+                    <p className="text-white/65 text-sm">
                       This key was revoked because the order was refunded.
                     </p>
                   </div>
                 ) : isPending ? (
                   <div className="bg-secondary flex items-center justify-center rounded-xl p-4">
-                    <p className="text-muted-foreground text-sm">
+                    <p className="text-white/65 text-sm">
                       Your key is being prepared -- check back soon.
                     </p>
                   </div>
@@ -183,7 +183,7 @@ export function RevealProductModal({
                     <KeyList keys={keys} />
                     {pendingCount > 0 && (
                       <div className="bg-secondary flex items-center justify-center rounded-xl p-4">
-                        <p className="text-muted-foreground text-sm">
+                        <p className="text-white/65 text-sm">
                           {pendingCount === 1
                             ? '1 more key is being prepared -- check back soon.'
                             : `${pendingCount} more keys are being prepared -- check back soon.`}
@@ -193,7 +193,7 @@ export function RevealProductModal({
                   </div>
                 ) : (
                   <div className="bg-secondary flex items-center justify-center rounded-xl p-4">
-                    <p className="text-muted-foreground text-sm">
+                    <p className="text-white/65 text-sm">
                       No keys available for this product.
                     </p>
                   </div>

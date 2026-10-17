@@ -49,8 +49,8 @@ const MobileFilter = () => {
         onClick={() => setIsOpen(true)}
         className="bg-secondary flex h-[40px] w-full cursor-pointer items-center justify-center gap-[8px] rounded-[8px] px-[16px] lg:hidden"
       >
-        <Filter className="h-[16px] w-[16px] text-white" />
-        <span className="text-[14px] font-bold text-white">
+        <Filter className="h-[16px] w-[16px] text-white/95" />
+        <span className="text-sm font-bold text-white/95">
           Filters
         </span>
       </button>
@@ -78,12 +78,12 @@ const MobileFilter = () => {
             >
               {/* Header */}
               <div className="border-secondary flex items-center justify-between border-b px-[20px] py-[16px]">
-                <span className="text-[18px] font-bold text-white">
+                <span className="text-xl font-bold text-white/95">
                   Filters
                 </span>
                 <button
                   onClick={() => setIsOpen(false)}
-                  className="cursor-pointer rounded-full p-1 text-white transition-colors hover:bg-white/10"
+                  className="cursor-pointer rounded-full p-1 text-white/95 transition-colors hover:bg-white/10"
                 >
                   <X className="h-[24px] w-[24px]" />
                 </button>
@@ -98,7 +98,7 @@ const MobileFilter = () => {
               {/* <div className="border-secondary bg-secondary border-t px-[20px] py-[16px]">
                 <button
                   onClick={() => setIsOpen(false)}
-                  className="bg-primary hover:bg-primary h-[44px] w-full cursor-pointer rounded-[8px] font-['Cooper_Hewitt'] font-bold text-white transition-colors"
+                  className="bg-primary hover:bg-primary h-[44px] w-full cursor-pointer rounded-[8px] font-bold text-white/95 transition-colors"
                 >
                   Show Results
                 </button>

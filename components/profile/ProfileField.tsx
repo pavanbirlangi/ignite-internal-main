@@ -21,7 +21,7 @@ export function ProfileField({
         className,
       )}
     >
-      <label className="text-muted-foreground text-xs font-semibold">
+      <label className="text-white/65 text-xs font-bold">
         {label}
       </label>
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center">

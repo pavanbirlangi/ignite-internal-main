@@ -284,7 +284,7 @@ export default function Navbar({
             {/* Search: a round button that grows into a search bar over the platform items. */}
             <div
               className={cn(
-                'peer/search group/search bg-primary absolute inset-y-0 right-0 -m-px flex w-16 items-center overflow-hidden rounded-full text-white',
+                'peer/search group/search bg-primary absolute inset-y-0 right-0 -m-px flex w-16 items-center overflow-hidden rounded-full text-white/95',
                 'transition-[width,scale,box-shadow,filter] duration-[420ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none',
                 searchOpen
                   ? 'w-[calc(100%+2px)] shadow-[0_0_0_1px_rgba(255,255,255,0.22),0_0_36px_-6px_rgba(36,104,223,0.9)]'
@@ -333,7 +333,7 @@ export default function Navbar({
                 }
                 tabIndex={searchOpen ? 0 : -1}
                 className={cn(
-                  'bg-primary h-full w-full rounded-full px-16 text-lg font-medium text-white placeholder:text-white/60 focus:outline-none',
+                  'bg-primary h-full w-full rounded-full px-16 text-xl font-medium text-white/95 placeholder:text-white/60 focus:outline-none',
                   'transition-[opacity,translate] duration-300 ease-out motion-reduce:transition-none',
                   searchOpen
                     ? 'translate-x-0 opacity-100 delay-200 duration-300'
@@ -363,10 +363,10 @@ export default function Navbar({
             {!searchOpen && (
               <span
                 aria-hidden
-                className="bg-secondary/95 pointer-events-none absolute top-full right-0 mt-3 flex -translate-y-1 items-center gap-2 rounded-lg border border-white/10 px-2.5 py-1.5 text-xs font-medium whitespace-nowrap text-white/80 opacity-0 shadow-lg backdrop-blur transition-[opacity,translate] duration-200 peer-hover/search:translate-y-0 peer-hover/search:opacity-100 peer-hover/search:delay-300"
+                className="bg-secondary/95 pointer-events-none absolute top-full right-0 mt-3 flex -translate-y-1 items-center gap-2 rounded-lg border border-white/10 px-2.5 py-1.5 text-xs font-medium whitespace-nowrap text-white/95 opacity-0 shadow-lg backdrop-blur transition-[opacity,translate] duration-200 peer-hover/search:translate-y-0 peer-hover/search:opacity-100 peer-hover/search:delay-300"
               >
                 Search
-                <kbd className="rounded border border-white/15 bg-white/5 px-1.5 font-sans text-[11px] text-white">
+                <kbd className="rounded border border-white/15 bg-white/5 px-1.5 font-sans text-xs text-white/95">
                   /
                 </kbd>
               </span>
@@ -399,13 +399,13 @@ export default function Navbar({
               onClick={() => setMobileSearchOpen(true)}
               className="flex items-center justify-center transition-opacity hover:opacity-80 focus:outline-none lg:hidden"
             >
-              <div className="size-6 text-white [&>svg]:h-full [&>svg]:w-full">
+              <div className="size-6 text-white/95 [&>svg]:h-full [&>svg]:w-full">
                 <SearchIcon />
               </div>
             </button>
 
             <UserMenu />
-            <div className="hidden text-white transition-colors lg:block">
+            <div className="hidden text-white/95 transition-colors lg:block">
               <CartDrawer />
             </div>
           </div>

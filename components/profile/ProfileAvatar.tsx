@@ -58,7 +58,7 @@ export function ProfileAvatar({
   return (
     <div className="border-muted-foreground flex flex-col items-start gap-4 border-b pb-6 sm:flex-row sm:items-center sm:justify-between">
       {/* Avatar */}
-      <div className="bg-primary relative flex h-20 w-20 items-center justify-center overflow-hidden rounded text-2xl md:text-3xl font-semibold text-white">
+      <div className="bg-primary relative flex h-20 w-20 items-center justify-center overflow-hidden rounded text-2xl md:text-3xl font-bold text-white/95">
         {profilePhoto ? (
           <img
             src={profilePhoto}
@@ -75,7 +75,7 @@ export function ProfileAvatar({
         {profilePhoto && (
           <Button
             variant="outline"
-            className="w-full rounded-[6px] px-6 py-4.5 text-base font-semibold sm:w-44"
+            className="w-full rounded-[6px] px-6 py-4.5 text-base font-bold sm:w-44"
             onClick={onDelete}
             disabled={isBusy}
           >
@@ -91,7 +91,7 @@ export function ProfileAvatar({
 
         <Button
           variant="secondary"
-          className="w-full rounded-[6px] px-6 py-4.5 text-base font-semibold sm:w-44"
+          className="w-full rounded-[6px] px-6 py-4.5 text-base font-bold sm:w-44"
           onClick={handleSelectFile}
           disabled={isBusy}
         >

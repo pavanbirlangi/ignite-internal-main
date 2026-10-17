@@ -75,7 +75,7 @@ const Pagination: React.FC<PaginationProps> = ({
         >
           <ChevronsLeft
             aria-hidden="true"
-            className="text-muted-foreground h-auto min-h-6 w-auto min-w-6 transition-colors group-hover:text-white"
+            className="text-white/65 h-auto min-h-6 w-auto min-w-6 transition-colors group-hover:text-white"
           />
         </button>
         <button
@@ -86,7 +86,7 @@ const Pagination: React.FC<PaginationProps> = ({
         >
           <ChevronLeft
             aria-hidden="true"
-            className="text-muted-foreground h-auto min-h-6 w-auto min-w-6 transition-colors group-hover:text-white"
+            className="text-white/65 h-auto min-h-6 w-auto min-w-6 transition-colors group-hover:text-white"
           />
         </button>
       </div>
@@ -97,7 +97,7 @@ const Pagination: React.FC<PaginationProps> = ({
           <React.Fragment key={index}>
             {page === '...' ? (
               <div className="flex h-[11px] w-[30px] items-center justify-center sm:w-[54px]">
-                <span className="text-muted-foreground truncate text-center font-['Cooper_Hewitt'] text-[14px] leading-[18px] font-bold tracking-[0.2em]">
+                <span className="text-white/65 truncate text-center text-sm font-bold">
                   ...
                 </span>
               </div>
@@ -105,9 +105,9 @@ const Pagination: React.FC<PaginationProps> = ({
               <button
                 onClick={() => typeof page === 'number' && onPageChange(page)}
                 aria-current={currentPage === page ? 'page' : undefined}
-                className={`flex h-[32px] w-[32px] cursor-pointer items-center justify-center rounded-[6px] text-center font-['Cooper_Hewitt'] text-[14px] leading-[18px] font-bold transition-all sm:h-[37px] sm:w-[37px] ${currentPage === page
-                    ? 'bg-background border-primary text-foreground border-2'
-                    : 'bg-secondary text-muted-foreground hover:bg-secondary border-none hover:text-white'
+                className={`flex h-[32px] w-[32px] cursor-pointer items-center justify-center rounded-[6px] text-center text-sm font-bold transition-all sm:h-[37px] sm:w-[37px] ${currentPage === page
+                    ? 'bg-background border-primary text-white/95 border-2'
+                    : 'bg-secondary text-white/65 hover:bg-secondary border-none hover:text-white'
                   }`}
               >
                 {page}
@@ -127,7 +127,7 @@ const Pagination: React.FC<PaginationProps> = ({
         >
           <ChevronRight
             aria-hidden="true"
-            className="text-muted-foreground h-auto min-h-6 w-auto min-w-6 transition-colors group-hover:text-white"
+            className="text-white/65 h-auto min-h-6 w-auto min-w-6 transition-colors group-hover:text-white"
           />
         </button>
         <button
@@ -138,7 +138,7 @@ const Pagination: React.FC<PaginationProps> = ({
         >
           <ChevronsRight
             aria-hidden="true"
-            className="text-muted-foreground h-auto min-h-6 w-auto min-w-6 transition-colors group-hover:text-white"
+            className="text-white/65 h-auto min-h-6 w-auto min-w-6 transition-colors group-hover:text-white"
           />
         </button>
       </div>

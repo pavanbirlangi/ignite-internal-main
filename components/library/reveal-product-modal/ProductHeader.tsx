@@ -49,7 +49,7 @@ export const ProductHeader = ({
         <div>
           <div className="flex items-start justify-between">
             <div className="flex max-w-96.5 flex-col gap-1">
-              <h3 className="text-sm leading-tight font-semibold text-white sm:text-lg">
+              <h3 className="text-sm font-bold text-white/95 sm:text-xl">
                 {product.title}
               </h3>
 
@@ -60,7 +60,7 @@ export const ProductHeader = ({
                   <div className="bg-secondary h-3 w-20 animate-pulse rounded" />
                 </div>
               ) : activationGuide ? (
-                <div className="text-muted-foreground mt-1 flex items-center gap-1.5">
+                <div className="text-white/65 mt-1 flex items-center gap-1.5">
                   {/* Guarded: the icon is an independently-filled admin field,
                       and getProxyImageUrl returns '' for a missing one, which
                       next/image rejects at runtime with an empty-src error. */}
@@ -88,7 +88,7 @@ export const ProductHeader = ({
                       return (
                         <div
                           key={key}
-                          className="text-muted-foreground flex items-center gap-1.5"
+                          className="text-white/65 flex items-center gap-1.5"
                         >
                           <IconComponent className="h-4 w-4 fill-current" />
                           <span className="text-xs font-medium">
@@ -101,7 +101,7 @@ export const ProductHeader = ({
                     return (
                       <div
                         key={key}
-                        className="text-muted-foreground flex items-center gap-1.5"
+                        className="text-white/65 flex items-center gap-1.5"
                       >
                         <span className="text-xs font-medium capitalize">
                           {platform}
@@ -114,7 +114,7 @@ export const ProductHeader = ({
             </div>
 
             <Link href={`/${product.handle}`} className="shrink-0">
-              <ExternalLink className="size-4 text-white hover:text-white/80" />
+              <ExternalLink className="size-4 text-white/95 hover:text-white/80" />
             </Link>
           </div>
 
@@ -124,7 +124,7 @@ export const ProductHeader = ({
               {allBadges.map((badge) => (
                 <Badge
                   key={badge}
-                  className="bg-primary hover:bg-primary/90 rounded-[6px] border-none px-2 py-1.5 text-[10px] font-semibold tracking-wider text-white uppercase"
+                  className="bg-primary hover:bg-primary/90 rounded-[6px] border-none px-2 py-1.5 text-xs font-bold text-white/95 uppercase"
                 >
                   {badge}
                 </Badge>

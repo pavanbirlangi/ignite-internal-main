@@ -9,25 +9,22 @@
 .content h5,
 .content h6 {
   color: #ffffff;
-  font-weight: 711;
-  line-height: 1.25;
+  font-weight: 700;
+  line-height: normal;
   margin-top: 1.5em;
   margin-bottom: 0.5em;
 }
 
 .content h1 {
-  font-size: 2.25rem; /* text-4xl */
-  line-height: 2.5rem;
+  font-size: 32px; /* text-3xl */
 }
 
 .content h2 {
-  font-size: 1.875rem; /* text-3xl */
-  line-height: 2.25rem;
+  font-size: 32px; /* text-3xl */
 }
 
 .content h3 {
-  font-size: 1.5rem; /* text-2xl */
-  line-height: 2rem;
+  font-size: 24px; /* text-2xl */
 }
 
 .content p {
@@ -58,6 +55,15 @@
   margin-bottom: 0.5em;
 }
 
+/* Guides written in Directus carry inline point sizes. 14pt (18.67px) is off
+   the type scale, so it snaps to the nearest step (20px); the other sizes
+   used (14px, 18pt, 24pt) are already on it. */
+.content [style*='font-size: 14pt'] {
+  font-size: 20px !important;
+  line-height: 24px;
+  letter-spacing: -0.3px;
+}
+
 .content li::marker {
   color: #ffffff;
 }
@@ -65,7 +71,7 @@
 .content strong,
 .content b {
   color: #ffffff;
-  font-weight: 709; /* font-semibold */
+  font-weight: 700; /* font-bold */
 }
 
 .content a {

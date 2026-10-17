@@ -50,13 +50,13 @@ function AddedToCartToast({
           <span className="flex h-5 w-5 items-center justify-center rounded-full bg-green-500/15">
             <Check className="h-3.5 w-3.5 text-green-500" strokeWidth={3} />
           </span>
-          <span className="text-sm font-semibold text-white">Added to cart</span>
+          <span className="text-sm font-bold text-white/95">Added to cart</span>
         </div>
         <button
           type="button"
           onClick={onDismiss}
           aria-label="Dismiss"
-          className="text-muted-foreground cursor-pointer rounded p-0.5 transition-colors hover:text-white"
+          className="text-white/65 cursor-pointer rounded p-0.5 transition-colors hover:text-white"
         >
           <X className="h-4 w-4" />
         </button>
@@ -74,15 +74,15 @@ function AddedToCartToast({
           ) : null}
         </div>
         <div className="flex min-w-0 flex-1 flex-col justify-center gap-1">
-          <p className="line-clamp-2 text-sm leading-snug font-semibold text-white">
+          <p className="line-clamp-2 text-sm font-bold text-white/95">
             {title}
           </p>
           <div className="flex items-center gap-2">
-            <span className="text-sm font-bold text-white">
+            <span className="text-sm font-bold text-white/95">
               {formatMedusaAmount(unitPrice, currencyCode)}
             </span>
             {quantity > 1 && (
-              <span className="text-muted-foreground text-xs font-medium">
+              <span className="text-white/65 text-xs font-medium">
                 x{quantity}
               </span>
             )}
@@ -94,14 +94,14 @@ function AddedToCartToast({
         <button
           type="button"
           onClick={goToCart}
-          className="border-border flex-1 cursor-pointer rounded-[6px] border bg-transparent py-2.5 text-sm font-semibold text-white transition-colors hover:bg-white/5"
+          className="border-border flex-1 cursor-pointer rounded-[6px] border bg-transparent py-2.5 text-sm font-bold text-white/95 transition-colors hover:bg-white/5"
         >
           View cart
         </button>
         <button
           type="button"
           onClick={goToCheckout}
-          className="bg-primary hover:bg-primary/90 flex-1 cursor-pointer rounded-[6px] py-2.5 text-sm font-semibold text-white transition-colors"
+          className="bg-primary hover:bg-primary/90 flex-1 cursor-pointer rounded-[6px] py-2.5 text-sm font-bold text-white/95 transition-colors"
         >
           Checkout
         </button>

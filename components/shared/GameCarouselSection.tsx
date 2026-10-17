@@ -28,13 +28,13 @@ export default function GameCarouselSection({
     <section id={id} className="container flex flex-col gap-8">
       {/* Section Header */}
       <div className="flex items-center justify-between">
-        <h2 className="trim text-xl font-semibold md:text-2xl lg:text-[28px]">
+        <h2 className="trim text-xl font-bold md:text-2xl lg:text-3xl">
           {title}
         </h2>
         {seeAllHref && (
           <Link
             href={seeAllHref}
-            className="trim text-muted-foreground hover:text-foreground font-medium underline transition-colors"
+            className="trim text-white/65 hover:text-foreground font-medium underline transition-colors"
           >
             see all
           </Link>
@@ -66,7 +66,7 @@ export default function GameCarouselSection({
             </div>
           </Carousel>
         ) : (
-          <div className="flex h-40 w-full items-center justify-center rounded-lg border border-dashed border-white/10 bg-white/5 text-sm text-white/50">
+          <div className="flex h-40 w-full items-center justify-center rounded-lg border border-dashed border-white/10 bg-white/5 text-sm text-white/65">
             No products available at the moment.
           </div>
         )}

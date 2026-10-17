@@ -31,7 +31,7 @@ const stateContent: Record<
       'Your purchase was successful. Your activation key is now available below. Please reveal it to view for usage.',
     buttonLabel: 'View Keys',
     buttonClassName:
-      'border-muted-foreground bg-transparent hover:bg-white/5 text-white',
+      'border-muted-foreground bg-transparent hover:bg-white/5 text-white/95',
     iconWrapperClassName: 'bg-[#0B5028]/70',
     iconClassName: 'bg-[#00C950] text-[#05331A]',
     showOrderCard: true,
@@ -42,7 +42,7 @@ const stateContent: Record<
       'Your payment has been successfully processed. Your activation key will be available shortly.',
     buttonLabel: 'Order History',
     buttonClassName:
-      'border-muted-foreground bg-transparent hover:bg-white/5 text-white',
+      'border-muted-foreground bg-transparent hover:bg-white/5 text-white/95',
     iconWrapperClassName: 'bg-[#0B5028]/70',
     iconClassName: 'bg-[#00C950] text-[#05331A]',
     showOrderCard: true,
@@ -53,7 +53,7 @@ const stateContent: Record<
       'This order was refunded to your original payment method. Depending on your bank, it can take a few business days to appear.',
     buttonLabel: 'Order History',
     buttonClassName:
-      'border-muted-foreground bg-transparent hover:bg-white/5 text-white',
+      'border-muted-foreground bg-transparent hover:bg-white/5 text-white/95',
     iconWrapperClassName: 'bg-[#0B5028]/70',
     iconClassName: 'bg-[#00C950] text-[#05331A]',
     showOrderCard: true,
@@ -64,7 +64,7 @@ const stateContent: Record<
       "Your order could not be completed. If any amount was deducted, it will be refunded according to your payment provider's timelines.",
     buttonLabel: 'Contact Support',
     buttonClassName:
-      'bg-[#3169D0] hover:bg-[#2758BA] text-white border-transparent',
+      'bg-[#3169D0] hover:bg-[#2758BA] text-white/95 border-transparent',
     iconWrapperClassName: 'bg-[#5A111C]/70',
     iconClassName: 'bg-[#E7000B] text-[#4D0003]',
     showOrderCard: false,
@@ -104,10 +104,10 @@ export default function OrderConfirmationStatus({
           </div>
         </div>
 
-        <h1 className="text-2xl font-semibold text-white md:text-[28px]">
+        <h1 className="text-2xl font-bold text-white/95 md:text-3xl">
           {content.title}
         </h1>
-        <p className="text-muted-foreground mt-5 max-w-126 text-xs leading-[1.2] font-medium md:text-[14px]">
+        <p className="text-white/65 mt-5 max-w-126 text-xs font-medium md:text-sm">
           {content.description}
         </p>
 
@@ -125,10 +125,10 @@ export default function OrderConfirmationStatus({
                 </div>
 
                 <div className="flex min-w-0 flex-1 flex-col items-start gap-2 text-left md:w-96.5">
-                  <h2 className="text-semibold max-h-14 w-full truncate text-base leading-6 text-white sm:text-[18px] sm:leading-7">
+                  <h2 className="text-semibold max-h-14 w-full truncate text-base text-white/95 sm:text-xl">
                     {orderCode}
                   </h2>
-                  <p className="text-muted-foreground line-clamp-2 w-full text-[12px] leading-4 font-[705]">
+                  <p className="text-white/65 line-clamp-2 w-full text-xs font-bold">
                     {itemSummary}
                   </p>
                 </div>
@@ -137,7 +137,7 @@ export default function OrderConfirmationStatus({
               <div className="flex w-full items-end justify-end md:h-19.75 md:w-28">
                 <Link
                   href={href}
-                  className={`flex h-10 w-full items-center justify-center rounded-[6px] border px-3 text-[14px] leading-4.5 font-semibold transition-colors md:w-28 ${content.buttonClassName}`}
+                  className={`flex h-10 w-full items-center justify-center rounded-[6px] border px-3 text-sm font-bold transition-colors md:w-28 ${content.buttonClassName}`}
                 >
                   {content.buttonLabel}
                 </Link>
@@ -147,7 +147,7 @@ export default function OrderConfirmationStatus({
         ) : (
           <Link
             href={href}
-            className={`mt-10 flex h-10 w-full items-center justify-center rounded-[6px] border px-6 text-sm font-semibold transition-colors sm:text-base md:w-auto md:min-w-28 md:text-[14px] ${content.buttonClassName}`}
+            className={`mt-10 flex h-10 w-full items-center justify-center rounded-[6px] border px-6 text-sm font-bold transition-colors sm:text-base md:w-auto md:min-w-28 md:text-sm ${content.buttonClassName}`}
           >
             {content.buttonLabel}
           </Link>

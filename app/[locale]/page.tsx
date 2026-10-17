@@ -272,7 +272,7 @@ export default async function HomePage({
             gap below it too. */}
         {faqItems.length > 0 && (
           <div className="container pb-16 md:pb-20">
-            <FaqSection title="Frequently Asked Questions" items={faqItems} />
+            <FaqSection headline title="Frequently Asked Questions" items={faqItems} />
           </div>
         )}
       </div>

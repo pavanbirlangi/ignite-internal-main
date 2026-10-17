@@ -46,7 +46,7 @@ export default function HowItWorks({
     <section className="bg-background relative z-10 w-full py-16 md:py-24 lg:py-32">
       <div className="container mx-auto max-w-6xl px-4">
         <div className="mb-10 flex flex-col items-center justify-center text-center md:mb-14">
-          <h2 className="text-2xl leading-none font-semibold text-white capitalize md:text-[40px]">
+          <h2 data-display className="text-3xl font-bold text-white/95 capitalize">
             {title}
           </h2>
         </div>
@@ -58,14 +58,14 @@ export default function HowItWorks({
               className="bg-secondary/20 hover:bg-secondary/30 flex flex-col gap-4 rounded-[20px] border border-white/5 px-5 pb-5 pt-6 transition-colors"
             >
               <div className="flex flex-col">
-                <h3 className="mb-1 text-[20px] font-semibold text-white md:text-[24px]">
+                <h3 className="mb-1 text-xl font-bold text-white/95 md:text-2xl">
                   {index + 1}. {step.title}
                 </h3>
-                <span className="text-primary text-[14px] font-semibold md:text-[16px]">
+                <span className="text-primary text-sm font-bold md:text-base">
                   {step.subtitle}
                 </span>
               </div>
-              <p className="text-muted-foreground text-[15px] leading-[1.4]  md:text-[16px] md:leading-5">
+              <p className="text-white/65 text-base md:text-base">
                 {step.description}
               </p>
             </div>

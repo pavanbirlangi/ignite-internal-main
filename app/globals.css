@@ -4,42 +4,29 @@
 
 @custom-variant dark (&:is(.dark *));
 
-@font-face {
-  font-family: 'Cooper Hewitt';
-  src: url('/fonts/cooper-hewitt/CooperHewitt-Light.woff2') format('woff2');
-  font-weight: 300;
-  font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: 'Cooper Hewitt';
-  src: url('/fonts/cooper-hewitt/CooperHewitt-Medium.woff2') format('woff2');
-  font-weight: 707;
-  font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: 'Cooper Hewitt';
-  src: url('/fonts/cooper-hewitt/CooperHewitt-Semibold.woff2') format('woff2');
-  font-weight: 709;
-  font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: 'Cooper Hewitt';
-  src: url('/fonts/cooper-hewitt/CooperHewitt-Bold.woff2') format('woff2');
-  font-weight: 711;
-  font-style: normal;
-  font-display: swap;
-}
-
 @theme {
-  --font-weight-semibold: 709;
-  --font-weight-bold: 711;
-  --font-weight-medium: 707;
+  /* Type scale measured on store.epicgames.com (Inter, weights 400/500/700).
+     Only these six sizes exist; each carries its own line height and
+     letter spacing. */
+  --text-*: initial;
+  --text-xs: 12px;
+  --text-xs--line-height: 15.6px;
+  --text-xs--letter-spacing: 0.36px;
+  --text-sm: 14px;
+  --text-sm--line-height: 19.6px;
+  --text-sm--letter-spacing: 0.28px;
+  --text-base: 16px;
+  --text-base--line-height: 24px;
+  --text-base--letter-spacing: 0.16px;
+  --text-xl: 20px;
+  --text-xl--line-height: 24px;
+  --text-xl--letter-spacing: -0.3px;
+  --text-2xl: 24px;
+  --text-2xl--line-height: normal;
+  --text-2xl--letter-spacing: normal;
+  --text-3xl: 32px;
+  --text-3xl--line-height: normal;
+  --text-3xl--letter-spacing: normal;
 
   /* Product-card discount and stock badges: a brighter crimson than --red,
      which reads muddy on dark cover art. */
@@ -193,7 +180,7 @@
   --color-popover: var(--popover);
   --color-popover-foreground: var(--popover-foreground);
 
-  --font-sans: 'Cooper Hewitt', system-ui, sans-serif;
+  --font-sans: var(--font-inter), system-ui, sans-serif;
   --font-mono: var(--font-geist-mono);
 
   --radius-sm: calc(var(--radius) - 4px);
@@ -366,8 +353,9 @@
   }
 
   body {
-    @apply bg-background text-foreground antialiased font-sans;
-    font-weight: 705;
+    @apply bg-background text-base antialiased font-sans;
+    color: rgb(255 255 255 / 0.95);
+    font-weight: 400;
   }
 
   button:not(:disabled),
@@ -377,12 +365,14 @@
 }
 
 @layer utilities {
+  /* Inter reports its cap height correctly, so trimming to the caps centres
+     text vertically in chips, badges and buttons. */
   .trim {
-    text-box: trim-both text alphabetic;
+    text-box: trim-both cap alphabetic;
   }
 
   .dynamicText {
-    @apply prose prose-invert text-white prose-h1:text-[28px] prose-h1:font-semibold prose-h1:leading-tight prose-h1:text-white prose-h1:mb-4 md:prose-h1:text-[40px] prose-h2:text-[24px] md:prose-h2:text-[28px] prose-h2:text-white prose-h2:font-semibold prose-h2:mt-10 prose-h2:mb-4 prose-h3:text-[18px] md:prose-h3:text-[32px] prose-h3:font-semibold prose-h3:text-white prose-h3:mt-8 prose-h3:mb-3 prose-p:text-[14px] md:prose-p:text-[16px] prose-p:leading-[1.8] prose-p:text-white prose-p:mb-4 prose-ul:text-[14px] md:prose-ul:text-[16px] prose-ul:text-white prose-ul:leading-[1.8] prose-ul:my-4 prose-ul:pl-5 prose-ol:text-[14px] md:prose-ol:text-[16px] prose-ol:text-white prose-ol:leading-[1.8] prose-ol:my-4 prose-ol:pl-5 prose-li:text-white prose-li:marker:text-white prose-li:mb-1 prose-strong:text-white prose-strong:font-semibold prose-a:text-primary hover:prose-a:underline prose-hr:border-secondary prose-hr:my-8
+    @apply prose prose-invert text-white prose-h1:text-3xl prose-h1:font-bold prose-h1:text-white prose-h1:mb-4 md:prose-h1:text-3xl prose-h2:text-2xl md:prose-h2:text-3xl prose-h2:text-white prose-h2:font-bold prose-h2:mt-10 prose-h2:mb-4 prose-h3:text-xl md:prose-h3:text-3xl prose-h3:font-bold prose-h3:text-white prose-h3:mt-8 prose-h3:mb-3 prose-p:text-sm md:prose-p:text-base prose-p:text-white prose-p:mb-4 prose-ul:text-sm md:prose-ul:text-base prose-ul:text-white prose-ul:my-4 prose-ul:pl-5 prose-ol:text-sm md:prose-ol:text-base prose-ol:text-white prose-ol:my-4 prose-ol:pl-5 prose-li:text-white prose-li:marker:text-white prose-li:mb-1 prose-strong:text-white prose-strong:font-bold prose-a:text-primary hover:prose-a:underline prose-hr:border-secondary prose-hr:my-8
   }
 
   .container {
@@ -627,70 +617,35 @@
   .phone-input-themed
     .react-international-phone-country-selector-dropdown__search {
     font-size: 16px !important;
+    line-height: 24px !important;
+    letter-spacing: 0.16px !important;
   }
 }
 
 /* ---------------------------------------------------------------------------
-   Epic Games Store typography preview (see components/layout/TypographySwitcher).
-   Inter with the sizes and weights measured on store.epicgames.com, mapped onto
-   our elements. Only active when the switcher sets data-typography="epic".
-   !important because it overrides component utility classes for a preview.
+   Typography roles (Epic Games Store scale). Unlayered on purpose, like
+   .glassmorphism: these beat component utility classes so every page follows
+   the same roles.
    --------------------------------------------------------------------------- */
-html[data-typography='epic'] body,
-html[data-typography='epic'] body *:not(svg):not(path) {
-  font-family: var(--font-inter), system-ui, sans-serif !important;
+main h1[class] { font-size: 32px; font-weight: 700; line-height: 1.2; letter-spacing: normal; }
+/* Section titles: 20px on phones, 24px from tablet up. data-display marks the
+   bigger titles that size themselves (newsletter, FAQ, About page). */
+main h2[class]:not([data-display]) { font-size: 20px; font-weight: 700; line-height: 24px; letter-spacing: -0.3px; }
+@media (min-width: 768px) {
+  main h2[class]:not([data-display]) { font-size: 24px; line-height: normal; letter-spacing: normal; }
 }
-html[data-typography='epic'] .font-medium { font-weight: 500 !important; }
-html[data-typography='epic'] .font-semibold { font-weight: 700 !important; } /* Epic uses 400/500/700 only */
-html[data-typography='epic'] .font-bold { font-weight: 700 !important; }
-/* Inter reports its cap height correctly, so trim to the caps for true centring */
-html[data-typography='epic'] .trim { text-box: trim-both cap alphabetic !important; }
-/* Page-level headline: Epic's largest (32/700); kicker 12/700 spaced caps */
-html[data-typography='epic'] main h1[class] { font-size: 32px !important; font-weight: 700 !important; line-height: 1.2 !important; letter-spacing: normal !important; }
-html[data-typography='epic'] main :has(> h1) > .uppercase { font-size: 12px !important; font-weight: 700 !important; letter-spacing: 1.2px !important; line-height: 12px !important; }
-/* Section titles 24/700; the newsletter headline uses the page-title size */
-html[data-typography='epic'] main h2[class] { font-size: 24px !important; font-weight: 700 !important; letter-spacing: normal !important; }
-html[data-typography='epic'] main h2[class].md\:text-\[40px\] { font-size: 32px !important; }
-html[data-typography='epic'] main h2 + a { font-size: 14px !important; font-weight: 500 !important; }
-/* Product cards: titles 16/700, prices 14/500, buttons 14/500, badges 12/500 */
-html[data-typography='epic'] main .rounded-2xl h3[class] { font-size: 16px !important; font-weight: 700 !important; line-height: 19.2px !important; letter-spacing: -0.08px !important; min-height: 38.4px !important; }
-html[data-typography='epic'] .text-\[19px\] { font-size: 14px !important; font-weight: 500 !important; letter-spacing: 0.28px !important; line-height: 19.6px !important; }
-html[data-typography='epic'] .line-through { font-size: 14px !important; font-weight: 500 !important; letter-spacing: 0.28px !important; line-height: 19.6px !important; color: rgb(255 255 255 / 0.65) !important; }
-html[data-typography='epic'] button[aria-label^='Add '],
-html[data-typography='epic'] button[aria-label^='Buy '] { font-size: 14px !important; font-weight: 500 !important; letter-spacing: 0.28px !important; line-height: 19.6px !important; }
-html[data-typography='epic'] button[aria-label^='Add '] *,
-html[data-typography='epic'] button[aria-label^='Buy '] * { font-weight: 500 !important; }
-html[data-typography='epic'] main a.bg-primary,
-html[data-typography='epic'] main button.bg-primary { font-weight: 500 !important; letter-spacing: 0.28px !important; }
-html[data-typography='epic'] .bg-deal span { font-size: 12px !important; font-weight: 500 !important; letter-spacing: 0.36px !important; line-height: 15.6px !important; }
-html[data-typography='epic'] .bg-deal span.uppercase { font-weight: 700 !important; }
-/* Header nav 14/400 */
-html[data-typography='epic'] nav a[href],
-html[data-typography='epic'] nav a[href] *,
-html[data-typography='epic'] nav button[class] { font-size: 14px !important; font-weight: 400 !important; letter-spacing: 0.28px !important; line-height: 19.6px !important; }
-/* FAQ: questions 16/400, answers 16/400 at 26.4px */
-html[data-typography='epic'] [data-slot='accordion-trigger'] { font-size: 16px !important; font-weight: 400 !important; letter-spacing: 0.16px !important; line-height: 24px !important; }
-html[data-typography='epic'] [data-slot='accordion-content'] p,
-html[data-typography='epic'] [data-slot='accordion-content'] .prose { font-size: 16px !important; font-weight: 400 !important; line-height: 26.4px !important; letter-spacing: 0.16px !important; }
-html[data-typography='epic'] main p { letter-spacing: 0.16px !important; line-height: 24px !important; }
-/* Footer links 14/400 */
-html[data-typography='epic'] footer a,
-html[data-typography='epic'] footer li,
-html[data-typography='epic'] footer p { font-size: 14px !important; font-weight: 400 !important; letter-spacing: 0.28px !important; line-height: 19.6px !important; }
-
-/* Epic's text colours: primary text white at 95%, secondary at 65%. In the
-   utilities layer with :where() so it beats the base colour classes but hover
-   and open-state colours (e.g. FAQ questions turning white) still win. */
-@layer utilities {
-  :where(html[data-typography='epic']) body { color: rgb(255 255 255 / 0.95); }
-  :where(html[data-typography='epic']) .text-white,
-  :where(html[data-typography='epic']) .text-foreground,
-  :where(html[data-typography='epic']) .text-white\/90,
-  :where(html[data-typography='epic']) .text-white\/85,
-  :where(html[data-typography='epic']) .text-white\/80 { color: rgb(255 255 255 / 0.95); }
-  :where(html[data-typography='epic']) .text-muted-foreground,
-  :where(html[data-typography='epic']) .text-white\/70,
-  :where(html[data-typography='epic']) .text-white\/60,
-  :where(html[data-typography='epic']) .text-white\/50,
-  :where(html[data-typography='epic']) .text-white\/40 { color: rgb(255 255 255 / 0.65); }
-}
+main h2 + a { font-size: 14px; font-weight: 500; line-height: 19.6px; letter-spacing: 0.28px; }
+main a.bg-primary,
+main button.bg-primary { font-weight: 500; letter-spacing: 0.28px; }
+nav a[href],
+nav a[href] *,
+nav button[class] { font-size: 14px; font-weight: 400; letter-spacing: 0.28px; line-height: 19.6px; }
+[data-slot='accordion-trigger'] { font-size: 16px; font-weight: 400; letter-spacing: 0.16px; line-height: 24px; }
+[data-slot='accordion-content'] p,
+[data-slot='accordion-content'] .prose { font-size: 16px; font-weight: 400; line-height: 26.4px; letter-spacing: 0.16px; }
+main p { letter-spacing: 0.16px; line-height: 24px; }
+/* Sonner toasts set their own system font stack; use the site font. */
+html [data-sonner-toaster] { font-family: inherit; }
+footer a,
+footer li,
+footer p { font-size: 14px; font-weight: 400; letter-spacing: 0.28px; line-height: 19.6px; }

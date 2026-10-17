@@ -165,14 +165,14 @@ export default function CreateTicketPage() {
     return (
       <div className="bg-secondary/40 flex min-h-[400px] flex-col items-center justify-center gap-6 rounded-[20px] p-10 text-center">
         <div className="space-y-2">
-          <h2 className="text-xl font-semibold text-white">Login Required</h2>
-          <p className="text-muted-foreground max-w-xs text-sm">
+          <h2 className="text-xl font-bold text-white/95">Login Required</h2>
+          <p className="text-white/65 max-w-xs text-sm">
             You need to be logged in to raise a support ticket.
           </p>
         </div>
         <button
           onClick={() => openModal('login')}
-          className="bg-primary hover:bg-primary/90 rounded-[8px] px-8 py-3 text-sm font-semibold text-white transition-colors"
+          className="bg-primary hover:bg-primary/90 rounded-[8px] px-8 py-3 text-sm font-bold text-white/95 transition-colors"
         >
           Log In
         </button>

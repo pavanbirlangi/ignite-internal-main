@@ -18,7 +18,7 @@ export default function FeatureRow({ product, features, labels }: FeatureRowProp
   const rating = Number.isFinite(parsedRating) ? parsedRating.toFixed(1) : '0'
 
   return (
-    <div className="grid w-full grid-cols-3 gap-4 text-white">
+    <div className="grid w-full grid-cols-3 gap-4 text-white/95">
       <div className="bg-secondary/80 flex items-center justify-center gap-2 rounded-[12px] border border-white/5 p-4">
         <Zap size={18} className="text-primary" fill="currentColor" />
         <span className="text-sm font-medium">

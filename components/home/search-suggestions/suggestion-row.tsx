@@ -56,15 +56,15 @@ export const SuggestionRow = memo(function SuggestionRow({
       </div>
 
       <div className="flex flex-1 flex-col gap-2 md:gap-4">
-        <p className="line-clamp-2 text-sm leading-[18px] font-semibold text-white">
+        <p className="line-clamp-2 text-sm font-bold text-white/95">
           <HighlightedText text={product.title} query={query} />
         </p>
 
         {current && (
           <div className="flex items-center gap-1.5 md:gap-2">
-            <span className="text-sm font-semibold text-white">{current}</span>
+            <span className="text-sm font-bold text-white/95">{current}</span>
             {original && (
-              <span className="text-muted-foreground text-sm font-medium line-through">
+              <span className="text-white/65 text-sm font-medium line-through">
                 {original}
               </span>
             )}

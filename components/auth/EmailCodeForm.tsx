@@ -13,9 +13,9 @@ const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const RESEND_COOLDOWN_SECONDS = 60
 
 const PRIMARY_BUTTON_CLASS =
-  'bg-primary hover:bg-primary/90 mb-3 h-[48px] w-full cursor-pointer rounded-[6px] text-base font-semibold text-white transition-colors disabled:cursor-not-allowed disabled:opacity-50'
+  'bg-primary hover:bg-primary/90 mb-3 h-[48px] w-full cursor-pointer rounded-[6px] text-base font-bold text-white/95 transition-colors disabled:cursor-not-allowed disabled:opacity-50'
 const LINK_BUTTON_CLASS =
-  'text-primary hover:text-primary/80 cursor-pointer text-xs font-semibold underline transition-colors focus:outline-none disabled:cursor-not-allowed disabled:no-underline disabled:opacity-50'
+  'text-primary hover:text-primary/80 cursor-pointer text-xs font-bold underline transition-colors focus:outline-none disabled:cursor-not-allowed disabled:no-underline disabled:opacity-50'
 
 // Passwordless sign-in: the customer gets one email with a 6-digit code and a magic link. Works for
 // new and existing customers alike -- an unknown email becomes a new account.
@@ -92,13 +92,13 @@ export function EmailCodeForm({
   }
 
   const errorText = error && (
-    <span className="text-red mt-1 block text-xs font-semibold">{error}</span>
+    <span className="text-red mt-1 block text-xs font-bold">{error}</span>
   )
 
   if (!codeSentTo) {
     return (
       <form onSubmit={handleEmailSubmit} noValidate>
-        <p className="text-muted-foreground mb-4 text-sm font-medium">
+        <p className="text-white/65 mb-4 text-sm font-medium">
           We&apos;ll email you a 6-digit code and a sign-in link. No password needed.
         </p>
         <div className="mb-6">
@@ -131,14 +131,14 @@ export function EmailCodeForm({
   return (
     <form onSubmit={handleCodeSubmit} noValidate>
       {isVerify ? (
-        <p className="text-muted-foreground mb-4 text-sm font-medium">
+        <p className="text-white/65 mb-4 text-sm font-medium">
           Please verify your email to finish setting up your account. We sent a 6-digit code to{' '}
-          <span className="text-white">{codeSentTo}</span>. It expires in 10 minutes. You can also
+          <span className="text-white/95">{codeSentTo}</span>. It expires in 10 minutes. You can also
           use the link in that email.
         </p>
       ) : (
-        <p className="text-muted-foreground mb-4 text-sm font-medium">
-          We sent a 6-digit code to <span className="text-white">{codeSentTo}</span>. It expires in
+        <p className="text-white/65 mb-4 text-sm font-medium">
+          We sent a 6-digit code to <span className="text-white/95">{codeSentTo}</span>. It expires in
           10 minutes. You can also use the sign-in link in that email.
         </p>
       )}

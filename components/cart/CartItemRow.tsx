@@ -67,17 +67,17 @@ export function CartItemRow({
           {productHref ? (
             <Link
               href={productHref}
-              className="line-clamp-2 max-w-full font-semibold text-white transition-colors hover:text-white/80 hover:underline sm:text-[16px] sm:leading-6"
+              className="line-clamp-2 max-w-full font-bold text-white/95 transition-colors hover:text-white/80 hover:underline sm:text-base"
             >
               {item.title}
             </Link>
           ) : (
-            <h3 className="line-clamp-2 max-w-full font-semibold text-white sm:text-[16px] sm:leading-6">
+            <h3 className="line-clamp-2 max-w-full font-bold text-white/95 sm:text-base">
               {item.title}
             </h3>
           )}
           {/* {item.platform && (
-            <p className="text-muted-foreground text-xs leading-none font-medium sm:text-[11px]">
+            <p className="text-white/65 text-xs font-medium sm:text-xs">
               {item.platform}
             </p>
           )} */}
@@ -85,7 +85,7 @@ export function CartItemRow({
           {/* Badges */}
           <div className="flex flex-wrap gap-1.5 sm:gap-2">
             {item.availableForSale === false && (
-              <Badge className="bg-red/10 text-red hover:bg-red/20 rounded-sm border-0 px-1.5 py-0.5 text-[8px] font-bold tracking-wide uppercase sm:text-[9px]">
+              <Badge className="bg-red/10 text-red hover:bg-red/20 rounded-sm border-0 px-1.5 py-0.5 text-xs font-bold uppercase sm:text-xs">
                 Out of Stock
               </Badge>
             )}
@@ -94,7 +94,7 @@ export function CartItemRow({
               item.badges.map((badge) => (
                 <Badge
                   key={badge}
-                  className="bg-primary hover:bg-primary rounded-sm border-0 px-1.5 py-0.5 text-[8px] font-bold tracking-wide text-white uppercase sm:text-[9px]"
+                  className="bg-primary hover:bg-primary rounded-sm border-0 px-1.5 py-0.5 text-xs font-bold text-white/95 uppercase sm:text-xs"
                 >
                   {badge}
                 </Badge>
@@ -104,12 +104,12 @@ export function CartItemRow({
           {/* Mobile Price */}
           <div className="mt-1 flex items-center gap-2 sm:hidden">
             {item.availableForSale === false ? (
-              <span className="text-red text-[12px] font-bold">
+              <span className="text-red text-xs font-bold">
                 Out of Stock
               </span>
             ) : (
               <>
-                <span className="text-[13px] font-bold text-white">
+                <span className="text-sm font-bold text-white/95">
                   {formatApiCurrency(item.price, item.currencyCode)}
                 </span>
               </>
@@ -152,7 +152,7 @@ export function CartItemRow({
                 <Minus className="h-3 w-3" />
               </button>
 
-              <div className="bg-background border-secondary flex h-7 w-8 items-center justify-center rounded-md border text-center text-[12px] font-semibold text-white sm:w-9 sm:text-[13px]">
+              <div className="bg-background border-secondary flex h-7 w-8 items-center justify-center rounded-md border text-center text-xs font-bold text-white/95 sm:w-9 sm:text-sm">
                 {quantity}
               </div>
 
@@ -171,11 +171,11 @@ export function CartItemRow({
           {/* Right: Price (Desktop Only) */}
           <div className="hidden flex-col items-end gap-0.5 sm:flex">
             {item.availableForSale === false ? (
-              <span className="text-red text-[13px] font-bold sm:text-[15px]">
+              <span className="text-red text-sm font-bold sm:text-base">
                 Out of Stock
               </span>
             ) : (
-              <span className="text-[13px] font-bold text-white sm:text-[16px]">
+              <span className="text-sm font-bold text-white/95 sm:text-base">
                 {formatApiCurrency(item.price, item.currencyCode)}
               </span>
             )}

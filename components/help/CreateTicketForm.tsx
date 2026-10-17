@@ -97,7 +97,7 @@ export function CreateTicketForm({
           <button
             onClick={onBack}
             disabled={isSubmitting}
-            className="hover:text-muted-foreground cursor-pointer text-white transition-colors disabled:opacity-50"
+            className="hover:text-muted-foreground cursor-pointer text-white/95 transition-colors disabled:opacity-50"
             aria-label="Go back"
           >
             <svg
@@ -116,11 +116,11 @@ export function CreateTicketForm({
               />
             </svg>
           </button>
-          <h1 className="text-xl font-semibold text-white md:text-[28px]">
+          <h1 className="text-xl font-bold text-white/95 md:text-3xl">
             Create Ticket
           </h1>
         </div>
-        <p className="text-muted-foreground mb-8 ml-9 text-sm font-medium">
+        <p className="text-white/65 mb-8 ml-9 text-sm font-medium">
           Please enter the fields to describe the issue facing regarding the
           selected order.
         </p>
@@ -142,12 +142,12 @@ export function CreateTicketForm({
             )}
             <div className="flex flex-col gap-1 overflow-hidden">
               <span
-                className="text-[16px] font-semibold line-clamp-2 text-white md:text-[18px]"
+                className="text-base font-bold line-clamp-2 text-white/95 md:text-xl"
                 title={order.products}
               >
                 {order.products || 'Product Name Not Available'}
               </span>
-              <span className="text-muted-foreground text-xs font-medium tracking-wider uppercase">
+              <span className="text-white/65 text-xs font-medium uppercase">
                 Order #{order.id}
               </span>
             </div>
@@ -155,7 +155,7 @@ export function CreateTicketForm({
           <button
             type="button"
             onClick={() => router.push(`/dashboard/my-orders/${order.id}`)}
-            className="border-muted-foreground/30 w-full shrink-0 cursor-pointer rounded-[6px] border bg-transparent px-6 py-3 text-center text-sm font-semibold text-white transition-colors hover:bg-white/5 sm:w-auto"
+            className="border-muted-foreground/30 w-full shrink-0 cursor-pointer rounded-[6px] border bg-transparent px-6 py-3 text-center text-sm font-bold text-white/95 transition-colors hover:bg-white/5 sm:w-auto"
           >
             View Details
           </button>
@@ -163,7 +163,7 @@ export function CreateTicketForm({
 
         {/* Select Issue */}
         <div className="mb-6">
-          <label className="mb-2 block text-sm font-semibold text-white">
+          <label className="mb-2 block text-sm font-bold text-white/95">
             Select Issue<span className="text-red ml-0.5">*</span>
           </label>
           <div className="relative">
@@ -176,11 +176,11 @@ export function CreateTicketForm({
               }}
               className="bg-secondary hover:bg-border flex w-full cursor-pointer items-center justify-between rounded-lg p-4 text-left text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-60"
             >
-              <span className={issue ? 'text-white' : 'text-muted-foreground'}>
+              <span className={issue ? 'text-white/95' : 'text-white/65'}>
                 {issue || 'Please select your issues'}
               </span>
               <ChevronDown
-                className={`text-muted-foreground size-4 transition-transform ${issueOpen ? 'rotate-180' : ''}`}
+                className={`text-white/65 size-4 transition-transform ${issueOpen ? 'rotate-180' : ''}`}
               />
             </button>
             {issueOpen && (
@@ -193,7 +193,7 @@ export function CreateTicketForm({
                       setIssueOpen(false)
                       setValidationError('')
                     }}
-                    className="hover:bg-border block w-full cursor-pointer px-4 py-3 text-left text-sm text-white transition-colors"
+                    className="hover:bg-border block w-full cursor-pointer px-4 py-3 text-left text-sm text-white/95 transition-colors"
                   >
                     {opt}
                   </button>
@@ -205,7 +205,7 @@ export function CreateTicketForm({
 
         {/* Description */}
         <div className="mb-6">
-          <label className="mb-2 block text-sm font-semibold text-white">
+          <label className="mb-2 block text-sm font-bold text-white/95">
             Please describe the issue you are facing
             <span className="text-red ml-0.5">*</span>
           </label>
@@ -218,13 +218,13 @@ export function CreateTicketForm({
             disabled={isSubmitting}
             placeholder="Please describe the issue you are facing"
             rows={4}
-            className="bg-secondary placeholder:text-muted-foreground focus:ring-primary w-full resize-none rounded-lg px-4 py-3.5 text-sm text-white focus:ring-1 focus:outline-none disabled:opacity-60"
+            className="bg-secondary placeholder:text-muted-foreground focus:ring-primary w-full resize-none rounded-lg px-4 py-3.5 text-sm text-white/95 focus:ring-1 focus:outline-none disabled:opacity-60"
           />
         </div>
 
         {/* Resolution Type */}
         <div className="mb-6">
-          <label className="mb-2 block text-sm font-semibold text-white">
+          <label className="mb-2 block text-sm font-bold text-white/95">
             Resolution Type
           </label>
           <div className="relative">
@@ -239,14 +239,14 @@ export function CreateTicketForm({
             >
               <span
                 className={
-                  resolutionType ? 'text-white' : 'text-muted-foreground'
+                  resolutionType ? 'text-white/95' : 'text-white/65'
                 }
               >
                 {resolutionType ||
                   'Select the type of resolution you would want'}
               </span>
               <ChevronDown
-                className={`text-muted-foreground size-4 transition-transform ${resolutionOpen ? 'rotate-180' : ''}`}
+                className={`text-white/65 size-4 transition-transform ${resolutionOpen ? 'rotate-180' : ''}`}
               />
             </button>
             {resolutionOpen && (
@@ -258,7 +258,7 @@ export function CreateTicketForm({
                       setResolutionType(opt)
                       setResolutionOpen(false)
                     }}
-                    className="hover:bg-border block w-full cursor-pointer px-4 py-3 text-left text-sm text-white transition-colors"
+                    className="hover:bg-border block w-full cursor-pointer px-4 py-3 text-left text-sm text-white/95 transition-colors"
                   >
                     {opt}
                   </button>
@@ -270,7 +270,7 @@ export function CreateTicketForm({
 
         {/* File Upload */}
         <div className="mb-8">
-          <label className="mb-2 block text-sm font-semibold text-white">
+          <label className="mb-2 block text-sm font-bold text-white/95">
             Provide any relevant attachments to explain your issue (upto 5
             files)
           </label>
@@ -279,8 +279,8 @@ export function CreateTicketForm({
             className="bg-secondary hover:bg-border flex cursor-pointer items-center justify-center gap-2 rounded-lg py-4 transition-colors aria-disabled:cursor-not-allowed aria-disabled:opacity-60"
             aria-disabled={isSubmitting}
           >
-            <Upload className="size-5 text-white" />
-            <span className="text-muted-foreground text-sm">
+            <Upload className="size-5 text-white/95" />
+            <span className="text-white/65 text-sm">
               Upload Files (max 2MB)
             </span>
           </div>
@@ -300,7 +300,7 @@ export function CreateTicketForm({
               {attachments.map((file, i) => (
                 <div
                   key={`${file.name}-${i}`}
-                  className="border-border bg-secondary flex items-center gap-2 rounded-md border px-3 py-1.5 text-xs text-white"
+                  className="border-border bg-secondary flex items-center gap-2 rounded-md border px-3 py-1.5 text-xs text-white/95"
                 >
                   <span className="max-w-[150px] truncate">{file.name}</span>
                   <button
@@ -329,7 +329,7 @@ export function CreateTicketForm({
           <button
             onClick={handleSubmit}
             disabled={isSubmitting}
-            className="bg-primary hover:bg-primary/90 inline-flex cursor-pointer items-center gap-2 rounded-[6px] px-6 py-3 text-sm font-semibold text-white transition-colors disabled:cursor-not-allowed disabled:opacity-70"
+            className="bg-primary hover:bg-primary/90 inline-flex cursor-pointer items-center gap-2 rounded-[6px] px-6 py-3 text-sm font-bold text-white/95 transition-colors disabled:cursor-not-allowed disabled:opacity-70"
           >
             {isSubmitting ? (
               <>
@@ -343,7 +343,7 @@ export function CreateTicketForm({
           <button
             onClick={onCancel}
             disabled={isSubmitting}
-            className="bg-secondary hover:bg-border cursor-pointer rounded-[6px] px-6 py-3.5 text-sm font-semibold text-white transition-colors disabled:cursor-not-allowed disabled:opacity-70"
+            className="bg-secondary hover:bg-border cursor-pointer rounded-[6px] px-6 py-3.5 text-sm font-bold text-white/95 transition-colors disabled:cursor-not-allowed disabled:opacity-70"
           >
             Cancel
           </button>

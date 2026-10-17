@@ -35,7 +35,7 @@ const ACCOUNT_LINKS = [
 ]
 
 const MENU_ITEM_CLASS =
-  'cursor-pointer gap-3 rounded-lg px-2.5 py-2 text-sm font-medium text-white/85 transition-colors focus:bg-white/10 focus:text-white [&_svg]:size-4 [&_svg]:text-white/55 focus:[&_svg]:text-primary'
+  'cursor-pointer gap-3 rounded-lg px-2.5 py-2 text-sm font-medium text-white/95 transition-colors focus:bg-white/10 focus:text-white [&_svg]:size-4 [&_svg]:text-white/55 focus:[&_svg]:text-primary'
 
 export function UserMenu() {
   const { isAuthenticated, user, isLoading, logout } = useUserStore()
@@ -84,15 +84,15 @@ export function UserMenu() {
             <DropdownMenuContent
               align="end"
               sideOffset={10}
-              className="bg-secondary/95 z-100 w-64 rounded-xl border-white/10 p-1.5 text-white shadow-2xl shadow-black/60 backdrop-blur-xl"
+              className="bg-secondary/95 z-100 w-64 rounded-xl border-white/10 p-1.5 text-white/95 shadow-2xl shadow-black/60 backdrop-blur-xl"
             >
               <div className="flex items-center gap-3 px-2.5 py-2.5">
                 <UserAvatar user={user} className="size-10 text-sm" />
                 <div className="min-w-0">
-                  <p className="truncate text-sm font-semibold">
+                  <p className="truncate text-sm font-bold">
                     {displayName}
                   </p>
-                  <p className="text-muted-foreground truncate text-xs">
+                  <p className="text-white/65 truncate text-xs">
                     {user.email}
                   </p>
                 </div>

@@ -38,7 +38,7 @@ export function OrderTabs({ activeTab: controlledTab, onTabChange }: OrderTabsPr
       <div className="relative md:hidden">
         <button
           onClick={() => setIsOpen(!isOpen)}
-          className="flex h-[50px] w-full items-center justify-between rounded-[12px] bg-secondary px-5 text-[14px] font-semibold text-foreground transition-colors"
+          className="flex h-[50px] w-full items-center justify-between rounded-[12px] bg-secondary px-5 text-sm font-bold text-white/95 transition-colors"
         >
           {activeTab}
           <ChevronDown className={cn("h-4 w-4 transition-transform", isOpen && "rotate-180")} />
@@ -55,7 +55,7 @@ export function OrderTabs({ activeTab: controlledTab, onTabChange }: OrderTabsPr
                 }}
                 className={cn(
                   "flex h-[40px] items-center px-5 text-sm font-medium transition-colors hover:bg-secondary/50",
-                  activeTab === tab ? "bg-primary/10 text-primary" : "text-muted-foreground"
+                  activeTab === tab ? "bg-primary/10 text-primary" : "text-white/65"
                 )}
               >
                 {tab}
@@ -75,10 +75,10 @@ export function OrderTabs({ activeTab: controlledTab, onTabChange }: OrderTabsPr
                 key={tab}
                 onClick={() => handleTabChange(tab)}
                 className={cn(
-                  "h-[36px] whitespace-nowrap rounded-[12px] cursor-pointer px-5 text-[16px] font-semibold transition-colors",
+                  "h-[36px] whitespace-nowrap rounded-[12px] cursor-pointer px-5 text-base font-bold transition-colors",
                   isActive
-                    ? "bg-primary text-white"
-                    : "bg-secondary text-muted-foreground hover:bg-secondary/80"
+                    ? "bg-primary text-white/95"
+                    : "bg-secondary text-white/65 hover:bg-secondary/80"
                 )}
               >
                 {tab}

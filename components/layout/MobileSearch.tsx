@@ -73,7 +73,7 @@ export function MobileSearch({ isOpen, onClose }: MobileSearchProps) {
           <button
             onClick={onClose}
             aria-label="Go back"
-            className="-ml-1 p-1 text-white focus:outline-none"
+            className="-ml-1 p-1 text-white/95 focus:outline-none"
           >
             <LeftArrowIcon className="size-6" />
           </button>
@@ -85,7 +85,7 @@ export function MobileSearch({ isOpen, onClose }: MobileSearchProps) {
             onChange={(e) => setInputValue(e.target.value)}
             onKeyDown={handleKeyDown}
             aria-label="Search games and gift cards"
-            className="placeholder:text-muted-foreground flex-1 bg-transparent text-[14px] leading-[17px] font-medium text-white focus:outline-none"
+            className="placeholder:text-muted-foreground flex-1 bg-transparent text-sm font-medium text-white/95 focus:outline-none"
             placeholder="Search for games, gift cards and more"
           />
         </div>
@@ -94,7 +94,7 @@ export function MobileSearch({ isOpen, onClose }: MobileSearchProps) {
           <button
             onClick={() => setInputValue('')}
             aria-label="Clear search"
-            className=" ml-4 flex h-6 w-6 shrink-0 items-center justify-center  text-muted-foreground focus:outline-none"
+            className=" ml-4 flex h-6 w-6 shrink-0 items-center justify-center  text-white/65 focus:outline-none"
           >
             <XIcon className="size-6" />
           </button>
@@ -107,7 +107,7 @@ export function MobileSearch({ isOpen, onClose }: MobileSearchProps) {
           <MobileSearchSkeleton />
         ) : suggestions.length > 0 ? (
           <>
-            <h2 className="leading-non font-cooper mb-6 text-[20px] font-bold text-white capitalize">
+            <h2 className="mb-6 text-xl font-bold text-white/95 capitalize">
               {label}
             </h2>
             <div className="flex flex-col gap-3">
@@ -124,12 +124,12 @@ export function MobileSearch({ isOpen, onClose }: MobileSearchProps) {
                 <button
                   type="button"
                   onClick={() => navigateToStore(inputValue)}
-                  className="text-primary mt-4 flex w-full items-center justify-center gap-2 rounded-lg border border-white/5 px-4 py-3 text-sm font-semibold transition-colors hover:bg-white/10 focus:outline-none"
+                  className="text-primary mt-4 flex w-full items-center justify-center gap-2 rounded-lg border border-white/5 px-4 py-3 text-sm font-bold transition-colors hover:bg-white/10 focus:outline-none"
                 >
                   <SearchIcon className="size-4 shrink-0" />
                   <span>
                     See all results for&nbsp;
-                    <span className="text-white">
+                    <span className="text-white/95">
                       &ldquo;{inputValue}&rdquo;
                     </span>
                   </span>
@@ -138,7 +138,7 @@ export function MobileSearch({ isOpen, onClose }: MobileSearchProps) {
             </div>
           </>
         ) : debouncedQuery.length > 0 ? (
-          <p className="text-muted-foreground py-10 text-center text-sm">
+          <p className="text-white/65 py-10 text-center text-sm">
             No results found for &ldquo;{debouncedQuery}&rdquo;
           </p>
         ) : (

@@ -17,12 +17,12 @@ interface DetailItemProps {
 function DetailItem({ label, value, emphasize = false }: DetailItemProps) {
   return (
     <div className="flex flex-col gap-1">
-      <p className="text-muted-foreground text-[10px] font-medium md:text-[12px]">
+      <p className="text-white/65 text-xs font-medium md:text-xs">
         {label}
       </p>
       <p
-        className={`text-[14px] leading-tight wrap-break-word text-white ${
-          emphasize ? 'font-semibold uppercase' : 'font-medium'
+        className={`text-sm leading-tight wrap-break-word text-white/95 ${
+          emphasize ? 'font-bold uppercase' : 'font-medium'
         }`}
       >
         {value}
@@ -71,7 +71,7 @@ export function TransactionDetailsGrid({
   return (
     <section className="mt-8 w-full">
       <div className="border-secondary bg-secondary/20 rounded-xl border px-4 py-6 backdrop-blur-[50px] sm:px-5 md:px-10 md:py-8">
-        <h3 className="text-[18px] font-semibold text-white md:text-[20px]">
+        <h3 className="text-xl font-bold text-white/95 md:text-xl">
           Transaction Details
         </h3>
 

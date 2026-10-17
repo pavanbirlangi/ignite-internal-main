@@ -16,11 +16,11 @@ export default function NotFound() {
           unoptimized
         />
 
-        <h1 className="mt-8 text-2xl leading-tight font-semibold tracking-tight text-white md:text-5xl">
+        <h1 className="mt-8 text-2xl font-bold text-white/95 md:text-3xl">
           404 - Page Not Found
         </h1>
 
-        <p className="text-muted-foreground mt-3 max-w-md text-base tracking-tight md:text-lg">
+        <p className="text-white/65 mt-3 max-w-md text-base md:text-xl">
           The page you are looking for does not exist or have been removed from
           our website.
         </p>
@@ -29,7 +29,7 @@ export default function NotFound() {
           asChild
           variant="primary"
           size="md"
-          className="mt-8 px-6 py-3 font-semibold text-sm"
+          className="mt-8 px-6 py-3 font-bold text-sm"
         >
           <Link href="/store">Explore Increddy</Link>
         </Button>

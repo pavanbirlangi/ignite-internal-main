@@ -52,7 +52,7 @@ export function LibraryTabs({
         <div className="relative md:hidden">
           <button
             onClick={() => setIsOpen(!isOpen)}
-            className="flex h-[50px] w-full items-center justify-between rounded-[12px] bg-secondary px-5 text-[14px] font-semibold text-foreground transition-colors"
+            className="flex h-[50px] w-full items-center justify-between rounded-[12px] bg-secondary px-5 text-sm font-bold text-white/95 transition-colors"
           >
             {activeTabTarget.title}
             <ChevronDown className={cn("h-4 w-4 transition-transform", isOpen && "rotate-180")} />
@@ -71,7 +71,7 @@ export function LibraryTabs({
                     }}
                     className={cn(
                       "flex h-[40px] shrink-0 items-center px-5 text-sm font-medium transition-colors hover:bg-secondary/50",
-                      activeCategory === tab.handle ? "bg-primary/10 text-primary" : "text-muted-foreground"
+                      activeCategory === tab.handle ? "bg-primary/10 text-primary" : "text-white/65"
                     )}
                   >
                     {tab.title}
@@ -92,10 +92,10 @@ export function LibraryTabs({
                   key={tab.handle || "all"}
                   onClick={() => onCategoryChange(tab.handle)}
                   className={cn(
-                    "h-[36px] whitespace-nowrap rounded-[12px] cursor-pointer px-5 text-[16px] font-semibold transition-colors",
+                    "h-[36px] whitespace-nowrap rounded-[12px] cursor-pointer px-5 text-base font-bold transition-colors",
                     isActive
-                      ? "bg-primary text-white"
-                      : "bg-secondary text-muted-foreground hover:bg-secondary/80"
+                      ? "bg-primary text-white/95"
+                      : "bg-secondary text-white/65 hover:bg-secondary/80"
                   )}
                 >
                   {tab.title}
@@ -111,7 +111,7 @@ export function LibraryTabs({
         <div className="flex flex-wrap gap-4 items-center">
           {platforms.length > 0 && onPlatformChange && (
             <div className="flex items-center gap-2">
-              <span className="text-sm text-muted-foreground font-medium">Platform:</span>
+              <span className="text-sm text-white/65 font-medium">Platform:</span>
               <select
                 value={activePlatform}
                 onChange={(e) => onPlatformChange(e.target.value)}
@@ -127,7 +127,7 @@ export function LibraryTabs({
 
           {productTypes.length > 0 && onProductTypeChange && (
             <div className="flex items-center gap-2">
-              <span className="text-sm text-muted-foreground font-medium">Type:</span>
+              <span className="text-sm text-white/65 font-medium">Type:</span>
               <select
                 value={activeProductType}
                 onChange={(e) => onProductTypeChange(e.target.value)}

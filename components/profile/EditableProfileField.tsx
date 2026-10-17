@@ -76,13 +76,13 @@ export function EditableProfileField({
             variant="ghost"
             onClick={handleCancel}
             disabled={isSaving}
-            className="flex-1 rounded-[6px] text-base font-semibold sm:flex-none"
+            className="flex-1 rounded-[6px] text-base font-bold sm:flex-none"
           >
             Cancel
           </Button>
           <Button
             variant="primary"
-            className="w-full flex-1 rounded-[6px] text-base font-semibold sm:w-44"
+            className="w-full flex-1 rounded-[6px] text-base font-bold sm:w-44"
             onClick={handleSave}
             disabled={isSaving}
           >
@@ -94,7 +94,7 @@ export function EditableProfileField({
       actionContent = (
         <Button
           variant="secondary"
-          className="w-full rounded-[6px] text-base font-semibold sm:w-44"
+          className="w-full rounded-[6px] text-base font-bold sm:w-44"
           onClick={() => setIsEditing(true)}
         >
           Update
@@ -113,7 +113,7 @@ export function EditableProfileField({
         value={value}
         readOnly
         placeholder={placeholder || '--'}
-        className="bg-secondary text-muted-foreground cursor-default rounded-[6px] border-none py-3.5 pr-8 text-xs! font-medium"
+        className="bg-secondary text-white/65 cursor-default rounded-[6px] border-none py-3.5 pr-8 text-xs! font-medium"
       />
       {children}
     </div>

@@ -35,10 +35,10 @@ export function CartNavbar({
           />
         </Link>
 
-        <div className="flex items-center gap-3 text-white sm:gap-5">
+        <div className="flex items-center gap-3 text-white/95 sm:gap-5">
           <UserMenu />
 
-          <div className="text-muted-foreground transition-colors hover:text-white">
+          <div className="text-white/65 transition-colors hover:text-white">
             <CartDrawer />
           </div>
         </div>
@@ -56,12 +56,12 @@ export function CartNavbar({
                 className={`flex items-center gap-2 rounded-md transition-colors`}
               >
                 <span
-                  className={`flex size-9 items-center justify-center rounded-[6px] px-2 py-1 text-[12px] font-semibold sm:px-3 sm:py-2.5 sm:text-base ${isActive ? 'bg-primary text-white' : 'text-muted-foreground bg-secondary'}`}
+                  className={`flex size-9 items-center justify-center rounded-[6px] px-2 py-1 text-xs font-bold sm:px-3 sm:py-2.5 sm:text-base ${isActive ? 'bg-primary text-white/95' : 'text-white/65 bg-secondary'}`}
                 >
                   {step.number}
                 </span>
                 <span
-                  className={`text-[12px] sm:text-base ${isActive ? 'font-bold text-white' : 'text-muted-foreground font-medium'}`}
+                  className={`text-xs sm:text-base ${isActive ? 'font-bold text-white/95' : 'text-white/65 font-medium'}`}
                 >
                   {step.label}
                 </span>

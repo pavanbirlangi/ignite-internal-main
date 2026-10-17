@@ -42,7 +42,7 @@ export default function HelpTopicDetailWrapper({
 
   if (isLoading) {
     return (
-      <div className="py-20 text-center font-medium text-white">Loading...</div>
+      <div className="py-20 text-center font-medium text-white/95">Loading...</div>
     )
   }
 

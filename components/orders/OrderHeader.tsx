@@ -31,7 +31,7 @@ export function OrderHeader({
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-[28px] leading-tight font-semibold md:text-[40px]">
+        <h1 className="text-3xl font-bold md:text-3xl">
           My Orders
         </h1>
 
@@ -62,7 +62,7 @@ export function OrderHeader({
                   className={cn(
                     'hover:bg-secondary/50 flex h-[40px] w-full items-center px-5 py-3 font-medium transition-colors',
                     sortOrder === option.value
-                      ? 'bg-primary/10 text-primary font-semibold'
+                      ? 'bg-primary/10 text-primary font-bold'
                       : 'text-card-foreground',
                   )}
                 >
@@ -77,13 +77,13 @@ export function OrderHeader({
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         {/* Search */}
         <div className="relative w-full sm:max-w-[522px]">
-          <Search className="text-muted-foreground absolute top-1/2 left-4 h-4 w-4 -translate-y-1/2" />
+          <Search className="text-white/65 absolute top-1/2 left-4 h-4 w-4 -translate-y-1/2" />
           <input
             type="text"
             placeholder="Search by Order Number or Product Title"
             value={searchQuery}
             onChange={(event) => onSearchChange(event.target.value)}
-            className="border-muted-foreground/40 text-foreground placeholder:text-muted-foreground focus:border-primary h-[50px] w-full rounded-full border bg-transparent pr-4 pl-10 text-sm transition-colors outline-none"
+            className="border-muted-foreground/40 text-white/95 placeholder:text-muted-foreground focus:border-primary h-[50px] w-full rounded-full border bg-transparent pr-4 pl-10 text-sm transition-colors outline-none"
           />
         </div>
 
@@ -91,7 +91,7 @@ export function OrderHeader({
         <div className="relative hidden md:block">
           <button
             onClick={() => setIsOpen(!isOpen)}
-            className="bg-secondary text-secondary-foreground hover:bg-secondary/80 flex h-[50px] cursor-pointer items-center gap-2 rounded-[6px] px-4 py-3.5 font-semibold transition-colors"
+            className="bg-secondary text-secondary-foreground hover:bg-secondary/80 flex h-[50px] cursor-pointer items-center gap-2 rounded-[6px] px-4 py-3.5 font-bold transition-colors"
           >
             <span>{activeLabel}</span>
             <ChevronDown

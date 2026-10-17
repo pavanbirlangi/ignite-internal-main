@@ -32,18 +32,18 @@ export function Sidebar() {
               key={item.label}
               href={item.href}
               className={cn(
-                "flex items-center gap-3 px-5 py-4 text-sm font-semibold transition-colors",
+                "flex items-center gap-3 px-5 py-4 text-sm font-bold transition-colors",
                
                 isActive
-                  ? "bg-primary text-white"
-                  : "text-muted-foreground hover:bg-secondary/40 hover:text-foreground"
+                  ? "bg-primary text-white/95"
+                  : "text-white/65 hover:bg-secondary/40 hover:text-foreground"
               )}
             >
               <Icon className={cn(
                 "size-5",
-                isActive ? "text-white" : " text-muted-foreground group-hover:text-foreground"
+                isActive ? "text-white/95" : " text-white/65 group-hover:text-foreground"
               )} />
-              <span className="text-[14px]">{item.label}</span>
+              <span className="text-sm">{item.label}</span>
             </Link>
           )
         })}

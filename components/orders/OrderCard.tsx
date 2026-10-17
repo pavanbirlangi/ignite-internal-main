@@ -37,22 +37,22 @@ const getStatusColor = (status: OrderStatus) => {
     case 'PAID':
     case 'FULFILLED':
     case 'SUCCESSFUL':
-      return 'bg-destructive text-white'
+      return 'bg-destructive text-white/95'
     case 'CANCELLED':
     case 'VOIDED':
-      return 'bg-red text-white'
+      return 'bg-red text-white/95'
     case 'REFUNDED':
     case 'PARTIALLY_REFUNDED':
     case 'REFUND SUCCESSFUL':
-      return 'bg-primary text-white'
+      return 'bg-primary text-white/95'
     case 'PENDING':
     case 'AUTHORIZED':
     case 'UNFULFILLED':
     case 'PARTIALLY_FULFILLED':
     case 'REFUND INITIATED':
-      return 'bg-accent text-white'
+      return 'bg-accent text-white/95'
     default:
-      return 'bg-secondary text-muted-foreground'
+      return 'bg-secondary text-white/65'
   }
 }
 
@@ -79,16 +79,16 @@ export function OrderCard({
       <div className="mb-6 flex flex-col justify-between gap-4 md:flex-row md:items-center">
         <div className="flex flex-wrap gap-8 text-sm font-medium">
           <div className="flex flex-col gap-1">
-            <span className="text-muted-foreground text-xs">Purchased on</span>
-            <span className="font-semibold text-white">{purchaseDate}</span>
+            <span className="text-white/65 text-xs">Purchased on</span>
+            <span className="font-bold text-white/95">{purchaseDate}</span>
           </div>
           <div className="flex flex-col gap-1">
-            <span className="text-muted-foreground text-xs">Order Amount</span>
-            <span className="font-semibold text-white">{amount}</span>
+            <span className="text-white/65 text-xs">Order Amount</span>
+            <span className="font-bold text-white/95">{amount}</span>
           </div>
           <div className="flex flex-col gap-1">
-            <span className="text-muted-foreground text-xs">Order ID</span>
-            <span className="font-semibold text-white">#{id}</span>
+            <span className="text-white/65 text-xs">Order ID</span>
+            <span className="font-bold text-white/95">#{id}</span>
           </div>
         </div>
 
@@ -111,22 +111,22 @@ export function OrderCard({
           {productHref ? (
             <Link
               href={productHref}
-              className="min-w-0 flex-1 text-[16px] font-semibold text-white transition-colors hover:underline md:max-w-100 md:text-[18px]"
+              className="min-w-0 flex-1 text-base font-bold text-white/95 transition-colors hover:underline md:max-w-100 md:text-xl"
             >
               <h3 className="line-clamp-2 wrap-break-word">
                 {title}
                 {itemsCount > 0 && (
-                  <span className="text-muted-foreground ml-2 font-normal">
+                  <span className="text-white/65 ml-2 font-normal">
                     & {itemsCount} more
                   </span>
                 )}
               </h3>
             </Link>
           ) : (
-            <h3 className="min-w-0 flex-1 text-[16px] font-semibold wrap-break-word text-white md:max-w-100 md:text-[18px]">
+            <h3 className="min-w-0 flex-1 text-base font-bold wrap-break-word text-white/95 md:max-w-100 md:text-xl">
               {title}
               {itemsCount > 0 && (
-                <span className="text-muted-foreground ml-2 font-normal">
+                <span className="text-white/65 ml-2 font-normal">
                   & {itemsCount} more
                 </span>
               )}
@@ -139,7 +139,7 @@ export function OrderCard({
           <Link
             href={orderDetailsHref}
             onClick={onViewDetails}
-            className="border-muted-foreground flex h-10 w-full cursor-pointer items-center justify-center rounded-[6px] border bg-transparent px-6 text-sm font-medium text-white transition-colors hover:bg-white/5 md:w-auto"
+            className="border-muted-foreground flex h-10 w-full cursor-pointer items-center justify-center rounded-[6px] border bg-transparent px-6 text-sm font-medium text-white/95 transition-colors hover:bg-white/5 md:w-auto"
           >
             View Details
           </Link>

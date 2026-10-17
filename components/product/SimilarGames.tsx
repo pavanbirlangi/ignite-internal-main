@@ -24,7 +24,7 @@ export default function SimilarGames({ products, title }: SimilarGamesProps) {
     <div className="bg-background mb-16 w-full py-6 md:mt-12 md:mb-20 md:py-10">
       <div className="max-w-container mx-auto w-full px-4 md:px-0">
         {/* Header */}
-        <h2 className="mb-8 pl-1 text-lg font-semibold text-white/50 md:text-[24px]">
+        <h2 className="mb-8 pl-1 text-xl font-bold text-white/65 md:text-2xl">
           {title ?? 'Similar to This'}
         </h2>
 
@@ -50,8 +50,8 @@ export default function SimilarGames({ products, title }: SimilarGamesProps) {
 
             {/* Navigation Arrows */}
             <div className="hidden lg:block">
-              <CarouselPrevious className="bg-secondary hover:bg-secondary absolute top-1/2 -left-16 h-11 w-11 -translate-y-1/2 border-none text-white/50 transition-all hover:text-white [&>svg]:h-5 [&>svg]:w-5" />
-              <CarouselNext className="bg-secondary hover:bg-secondary absolute top-1/2 -right-16 h-11 w-11 -translate-y-1/2 border-none text-white/50 transition-all hover:text-white [&>svg]:h-5 [&>svg]:w-5" />
+              <CarouselPrevious className="bg-secondary hover:bg-secondary absolute top-1/2 -left-16 h-11 w-11 -translate-y-1/2 border-none text-white/65 transition-all hover:text-white [&>svg]:h-5 [&>svg]:w-5" />
+              <CarouselNext className="bg-secondary hover:bg-secondary absolute top-1/2 -right-16 h-11 w-11 -translate-y-1/2 border-none text-white/65 transition-all hover:text-white [&>svg]:h-5 [&>svg]:w-5" />
             </div>
           </Carousel>
         </div>

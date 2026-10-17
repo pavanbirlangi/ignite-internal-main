@@ -59,12 +59,12 @@ export default async function FaqPage({
       />
       <main className="bg-background min-h-screen w-full">
         <div className="max-w-container mx-auto w-full px-4 py-10 md:py-16">
-          <h1 className="mb-10 text-2xl font-semibold md:text-3xl">
+          <h1 className="mb-10 text-2xl font-bold md:text-3xl">
             Frequently Asked Questions
           </h1>
 
           {groups.length === 0 ? (
-            <p className="text-muted-foreground">
+            <p className="text-white/65">
               No FAQs are available right now. Please check back soon.
             </p>
           ) : (

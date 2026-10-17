@@ -39,7 +39,7 @@ export function CheckoutSummary({ cart, charge, onCartChanged }: CheckoutSummary
 
   return (
     <div className="static w-full lg:sticky lg:top-40">
-      <h2 className="mb-5 text-lg font-semibold text-white md:text-xl">
+      <h2 className="mb-5 text-xl font-bold text-white/95 md:text-xl">
         Order Summary
       </h2>
 
@@ -58,14 +58,14 @@ export function CheckoutSummary({ cart, charge, onCartChanged }: CheckoutSummary
                 </div>
                 <div className="flex flex-1 items-center justify-between gap-3">
                   <div className="flex flex-col gap-0.5">
-                    <span className="line-clamp-1 text-[14px] font-medium text-white">
+                    <span className="line-clamp-1 text-sm font-medium text-white/95">
                       {item.title}
                     </span>
-                    <span className="text-muted-foreground text-[12px] font-medium">
+                    <span className="text-white/65 text-xs font-medium">
                       Qty {item.quantity}
                     </span>
                   </div>
-                  <span className="shrink-0 text-[14px] font-semibold text-white">
+                  <span className="shrink-0 text-sm font-bold text-white/95">
                     {formatCurrency(item.unitPrice * item.quantity, currency)}
                   </span>
                 </div>
@@ -73,20 +73,20 @@ export function CheckoutSummary({ cart, charge, onCartChanged }: CheckoutSummary
             ))}
 
             <div className="mt-1 flex items-center justify-between border-t border-white/10 pt-3">
-              <span className="text-muted-foreground text-[14px] font-medium">
+              <span className="text-white/65 text-sm font-medium">
                 Subtotal
               </span>
-              <span className="text-[14px] font-semibold text-white">
+              <span className="text-sm font-bold text-white/95">
                 {formatCurrency(cart.subtotal, currency)}
               </span>
             </div>
 
             {cart.serviceFee > 0 && (
               <div className="flex items-center justify-between">
-                <span className="text-muted-foreground text-[14px] font-medium">
+                <span className="text-white/65 text-sm font-medium">
                   {cart.serviceFeeLabel}
                 </span>
-                <span className="text-[14px] font-semibold text-white">
+                <span className="text-sm font-bold text-white/95">
                   {formatCurrency(cart.serviceFee, currency)}
                 </span>
               </div>
@@ -94,10 +94,10 @@ export function CheckoutSummary({ cart, charge, onCartChanged }: CheckoutSummary
 
             {cart.taxTotal > 0 && (
               <div className="flex items-center justify-between">
-                <span className="text-muted-foreground text-[14px] font-medium">
+                <span className="text-white/65 text-sm font-medium">
                   Tax
                 </span>
-                <span className="text-[14px] font-semibold text-white">
+                <span className="text-sm font-bold text-white/95">
                   {formatCurrency(cart.taxTotal, currency)}
                 </span>
               </div>
@@ -105,28 +105,28 @@ export function CheckoutSummary({ cart, charge, onCartChanged }: CheckoutSummary
 
             {cart.discountTotal > 0 && (
               <div className="flex items-center justify-between">
-                <span className="text-muted-foreground text-[14px] font-medium">
+                <span className="text-white/65 text-sm font-medium">
                   Discount{cart.promoCodes[0] ? ` (${cart.promoCodes[0]})` : ''}
                 </span>
-                <span className="text-destructive text-[14px] font-semibold">
+                <span className="text-destructive text-sm font-bold">
                   -{formatCurrency(cart.discountTotal, currency)}
                 </span>
               </div>
             )}
 
             <div className="mt-1 flex items-start justify-between border-t border-white/10 pt-3">
-              <span className="text-[18px] font-semibold text-white">
+              <span className="text-xl font-bold text-white/95">
                 Total
               </span>
-              <span className="text-[18px] font-semibold text-white">
+              <span className="text-xl font-bold text-white/95">
                 {formatCurrency(cart.total, currency)}
               </span>
             </div>
 
             {showCharge && (
-              <p className="text-muted-foreground -mt-2 text-right text-[12px] font-semibold tracking-wide uppercase">
+              <p className="text-white/65 -mt-2 text-right text-xs font-bold uppercase">
                 You will pay{' '}
-                <span className="text-white">{formatCharge(charge)}</span>
+                <span className="text-white/95">{formatCharge(charge)}</span>
               </p>
             )}
           </div>
@@ -134,7 +134,7 @@ export function CheckoutSummary({ cart, charge, onCartChanged }: CheckoutSummary
 
         <CardContent className="flex flex-col gap-4 px-6 pb-6">
           <CouponInput onCartChanged={onCartChanged} />
-          <p className="text-muted-foreground text-[12px] leading-4.5 font-medium">
+          <p className="text-white/65 text-xs font-medium">
             Digital delivery only, nothing is shipped. Your key lands in your
             account the moment payment is confirmed.
           </p>

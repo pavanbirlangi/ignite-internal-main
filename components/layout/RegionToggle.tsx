@@ -48,7 +48,7 @@ export default function RegionToggle() {
             <div className="h-full w-full animate-pulse bg-white/10" />
           )}
         </div>
-        <span className="text-sm font-semibold text-white">
+        <span className="text-sm font-bold text-white/95">
           {mounted ? `${currency} • ${fullLanguageName}` : 'USD • English'}
         </span>
       </button>

@@ -144,7 +144,7 @@ export default function SystemRequirements({
 
   return (
     <div className="max-w-container mx-auto mt-8 mb-16 w-full px-4 md:mt-12 md:mb-20 md:px-0">
-      <h2 className="text-muted-foreground mb-6 text-lg font-semibold md:text-[20px]">
+      <h2 className="text-white/65 mb-6 text-xl font-bold md:text-xl">
         {labels?.heading ?? 'System Requirements'}
       </h2>
 
@@ -154,9 +154,9 @@ export default function SystemRequirements({
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
-            className={`cursor-pointer rounded-[6px] border px-3 py-2 text-[14px] font-semibold transition-all duration-300 ${activeTab === tab
+            className={`cursor-pointer rounded-[6px] border px-3 py-2 text-sm font-bold transition-all duration-300 ${activeTab === tab
               ? 'border-primary text-primary bg-primary/5'
-              : 'border-border text-white/40 hover:border-white/20 hover:text-white/60'
+              : 'border-border text-white/65 hover:border-white/20 hover:text-white/60'
               }`}
           >
             {tab}
@@ -167,7 +167,7 @@ export default function SystemRequirements({
       {/* Minimum Section */}
       {minimumRequirements.length > 0 && (
         <div className="mb-12">
-          <h3 className="text-muted-foreground mb-8 text-[16px] font-semibold">
+          <h3 className="text-white/65 mb-8 text-base font-bold">
             {labels?.minimum ?? 'Minimum System Requirements'}
           </h3>
           <div className="grid w-full grid-cols-1 justify-between gap-x-8 gap-y-8 sm:grid-cols-2 lg:flex">
@@ -177,10 +177,10 @@ export default function SystemRequirements({
                   <req.icon />
                 </div>
                 <div className="flex flex-col gap-1">
-                  <span className="text-muted-foreground text-[12px] font-semibold">
+                  <span className="text-white/65 text-xs font-bold">
                     {req.label}
                   </span>
-                  <span className="text-[14px] leading-snug font-medium text-white md:max-w-48">
+                  <span className="text-sm font-medium text-white/95 md:max-w-48">
                     {req.value}
                   </span>
                 </div>
@@ -193,7 +193,7 @@ export default function SystemRequirements({
       {/* Recommended Section */}
       {recommendedRequirements.length > 0 && (
         <div>
-          <h3 className="text-muted-foreground mb-8 text-[16px] font-semibold">
+          <h3 className="text-white/65 mb-8 text-base font-bold">
             {labels?.recommended ?? 'Recommended System Requirements'}
           </h3>
           <div className="grid w-full grid-cols-1 justify-between gap-x-8 gap-y-8 sm:grid-cols-2 lg:flex">
@@ -203,10 +203,10 @@ export default function SystemRequirements({
                   <req.icon />
                 </div>
                 <div className="flex flex-col gap-1">
-                  <span className="text-muted-foreground text-[12px] font-semibold">
+                  <span className="text-white/65 text-xs font-bold">
                     {req.label}
                   </span>
-                  <span className="text-[14px] leading-snug font-medium text-white md:max-w-48">
+                  <span className="text-sm font-medium text-white/95 md:max-w-48">
                     {req.value}
                   </span>
                 </div>

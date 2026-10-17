@@ -46,10 +46,10 @@ export function LogoutDialog({ open, onOpenChange }: LogoutDialogProps) {
     <AlertDialog open={open} onOpenChange={onOpenChange}>
       <AlertDialogContent className="max-w-[90vw] gap-6 rounded-2xl p-6 sm:max-w-md">
         <AlertDialogHeader className="space-y-3">
-          <AlertDialogTitle className="text-[17px] font-bold sm:text-2xl">
+          <AlertDialogTitle className="text-base font-bold sm:text-2xl">
             Confirm Logout
           </AlertDialogTitle>
-          <AlertDialogDescription className="text-sm leading-relaxed sm:text-base">
+          <AlertDialogDescription className="text-sm sm:text-base">
             Are you sure you want to log out? You'll need your credentials to
             access your profile and library again.
           </AlertDialogDescription>

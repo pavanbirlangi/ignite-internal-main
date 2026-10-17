@@ -49,11 +49,11 @@ export default function AuthModal({
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent
         showCloseButton={false}
-        className="border-secondary bg-secondary/40 scrollbar-hide no-scrollbar max-h-[90vh] overflow-y-auto p-0 text-white shadow-2xl backdrop-blur-2xl sm:max-w-165 sm:rounded-[30px]"
+        className="border-secondary bg-secondary/40 scrollbar-hide no-scrollbar max-h-[90vh] overflow-y-auto p-0 text-white/95 shadow-2xl backdrop-blur-2xl sm:max-w-165 sm:rounded-[30px]"
       >
         <div className="p-6 sm:p-10">
           <DialogHeader className="border-secondary mb-6 flex flex-row items-center justify-between border-b pb-4">
-            <DialogTitle className="text-xl font-semibold tracking-wide text-white md:text-2xl">
+            <DialogTitle className="text-xl font-bold text-white/95 md:text-2xl">
               {mode === 'login' && 'Login Into Account'}
               {mode === 'register' && 'Register New Account'}
               {mode === 'recover' && 'Recover Password'}
@@ -62,7 +62,7 @@ export default function AuthModal({
               {mode === 'verify-email' && 'Verify Your Email'}
             </DialogTitle>
             <DialogClose className="cursor-pointer rounded-full transition-colors hover:bg-white/10">
-              <X className="text-muted-foreground h-4 w-4" strokeWidth={2.5} />
+              <X className="text-white/65 h-4 w-4" strokeWidth={2.5} />
             </DialogClose>
           </DialogHeader>
 

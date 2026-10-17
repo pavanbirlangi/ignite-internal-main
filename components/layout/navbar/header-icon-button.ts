@@ -1,7 +1,7 @@
 // The round glass buttons on the right of the header (account, cart): the same glass as the
 // platform pill, brightening with a blue glow on hover while the icon lifts.
 export const headerIconButtonClass = [
-  'relative flex size-11 shrink-0 items-center justify-center rounded-full text-white',
+  'relative flex size-11 shrink-0 items-center justify-center rounded-full text-white/95',
   'bg-background/60 border border-white/10 shadow-lg backdrop-blur-2xl',
   'transition-[background-color,border-color,box-shadow,scale] duration-200 ease-out',
   'hover:border-white/20 hover:bg-white/10 hover:shadow-[0_8px_24px_-8px_rgba(36,104,223,0.75)]',

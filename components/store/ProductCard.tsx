@@ -126,7 +126,7 @@ const StoreCard: React.FC<ProductCardProps> = ({ product, wishlisted }) => {
             >
               <HeartIcon
                 filled={wishlisted}
-                className={`size-4 ${wishlisted ? 'animate-in zoom-in-50 duration-300' : 'text-white/70'}`}
+                className={`size-4 ${wishlisted ? 'animate-in zoom-in-50 duration-300' : 'text-white/65'}`}
               />
             </button>
           )}
@@ -135,7 +135,7 @@ const StoreCard: React.FC<ProductCardProps> = ({ product, wishlisted }) => {
           {!isInStock && (
             <div className="absolute top-3 left-3 z-10">
               <div className="bg-red/90 flex items-center rounded-lg border border-white/10 px-2 py-1 shadow-lg backdrop-blur-md">
-                <span className="text-[10px] leading-none font-bold tracking-wider text-white uppercase">
+                <span className="text-xs font-bold text-white/95 uppercase">
                   Out of Stock
                 </span>
               </div>
@@ -164,7 +164,7 @@ const StoreCard: React.FC<ProductCardProps> = ({ product, wishlisted }) => {
                     : 0,
                 ) > 0 && (
                   <div className="bg-red shadow-red/20 flex items-center rounded-lg px-2.5 py-1.5 shadow-xl">
-                    <span className="text-xs leading-none font-medium text-white">
+                    <span className="text-xs font-medium text-white/95">
                       -{product.discount?.percentage}%
                     </span>
                   </div>
@@ -176,13 +176,13 @@ const StoreCard: React.FC<ProductCardProps> = ({ product, wishlisted }) => {
         {/* Details Section */}
         <div className="flex flex-1 flex-col p-3 transition-colors">
           <div className="flex flex-col gap-2">
-            <h3 className="line-clamp-2 min-h-10 text-[12px] leading-5 font-semibold text-white/90 transition-colors group-hover:text-white">
+            <h3 className="line-clamp-2 min-h-10 text-xs font-bold text-white/95 transition-colors group-hover:text-white">
               {product.title}
             </h3>
 
             {/* Price */}
             <div className="mt-2 flex flex-col gap-0.5 md:flex-row md:items-center md:gap-2">
-              <span className="text-base leading-none font-bold tracking-tight text-white">
+              <span className="text-base font-bold text-white/95">
                 {product.priceRange?.minVariantPrice?.amount
                   ? formatCurrency(
                     product.priceRange.minVariantPrice.amount,
@@ -199,7 +199,7 @@ const StoreCard: React.FC<ProductCardProps> = ({ product, wishlisted }) => {
                 (typeof product.compareAtPrice === 'object' &&
                   product.compareAtPrice?.amount &&
                   Number(product.compareAtPrice.amount) > 0)) && (
-                  <span className="mt-2 text-[10px] leading-none font-medium tracking-tight text-white/40 line-through decoration-white/20 md:mt-0 md:text-[12px]">
+                  <span className="mt-2 text-xs font-medium text-white/65 line-through decoration-white/20 md:mt-0 md:text-xs">
                     {product.originalPrice ??
                       (typeof product.compareAtPrice === 'object' &&
                         formatCurrency(
@@ -222,7 +222,7 @@ const StoreCard: React.FC<ProductCardProps> = ({ product, wishlisted }) => {
             className="group/btn border-border flex w-full cursor-pointer items-center justify-center gap-1 rounded-[6px] border bg-transparent py-1.5 transition-all hover:border-white hover:bg-white/10 disabled:opacity-50"
           >
             <CartPlusIcon height={14} width={14} />
-            <span className="text-[12px] font-semibold text-white transition-colors">
+            <span className="text-xs font-bold text-white/95 transition-colors">
               Add
             </span>
           </button>
@@ -234,7 +234,7 @@ const StoreCard: React.FC<ProductCardProps> = ({ product, wishlisted }) => {
             className="bg-primary hover:bg-primary flex w-full cursor-pointer items-center justify-center gap-1 rounded-[6px] py-1.5 transition-all hover:shadow-[0_0_15px_var(--primary-glow)] disabled:opacity-50"
           >
             <Thunder height={14} width={14} />
-            <span className="text-[12px] font-semibold text-white">Buy</span>
+            <span className="text-xs font-bold text-white/95">Buy</span>
           </button>
         </div>
       </div>

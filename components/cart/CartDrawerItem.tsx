@@ -71,34 +71,34 @@ export const CartDrawerItem = ({
               <Link
                 href={productHref}
                 onClick={onNavigate}
-                className="line-clamp-2 text-sm leading-snug font-semibold text-white hover:underline"
+                className="line-clamp-2 text-sm font-bold text-white/95 hover:underline"
               >
                 {product.title}
               </Link>
             ) : (
-              <h4 className="line-clamp-2 text-sm leading-snug font-semibold text-white">
+              <h4 className="line-clamp-2 text-sm font-bold text-white/95">
                 {product.title}
               </h4>
             )}
             {/* {product.platform && (
-              <p className="text-muted-foreground text-[10px] leading-none font-medium sm:text-[11px]">
+              <p className="text-white/65 text-xs font-medium sm:text-xs">
                 {product.platform}
               </p>
             )} */}
             {product.availableForSale === false && (
-              <span className="text-red text-[10px] font-semibold tracking-wide uppercase">
+              <span className="text-red text-xs font-bold uppercase">
                 Out of Stock
               </span>
             )}
           </div>
 
           <div className="mt-2 flex items-center gap-2">
-            <span className="text-sm font-semibold text-white">
+            <span className="text-sm font-bold text-white/95">
               {formatApiCurrency(product.price, product.currencyCode)}
             </span>
             {typeof product.originalPrice === 'number' &&
               product.originalPrice > product.price && (
-                <span className="text-muted-foreground text-xs font-medium line-through">
+                <span className="text-white/65 text-sm font-medium line-through">
                   {formatApiCurrency(
                     product.originalPrice,
                     product.currencyCode,
@@ -123,11 +123,11 @@ export const CartDrawerItem = ({
             }
           >
             <SelectTrigger
-              className={`bg-background! text-foreground border-secondary flex h-7.5 min-w-12.5 gap-1 rounded-[6px] border p-2 text-sm font-semibold transition-colors focus:ring-0 focus:ring-offset-0 ${isItemLoading || product.availableForSale === false ? 'cursor-not-allowed opacity-50' : 'hover:bg-secondary hover:text-white'}`}
+              className={`bg-background! text-white/95 border-secondary flex h-7.5 min-w-12.5 gap-1 rounded-[6px] border p-2 text-sm font-bold transition-colors focus:ring-0 focus:ring-offset-0 ${isItemLoading || product.availableForSale === false ? 'cursor-not-allowed opacity-50' : 'hover:bg-secondary hover:text-white'}`}
             >
               <SelectValue placeholder="1" />
             </SelectTrigger>
-            <SelectContent className="bg-background text-foreground border-secondary min-w-12.5">
+            <SelectContent className="bg-background text-white/95 border-secondary min-w-12.5">
               {quantityOptions.map((option) => (
                 <SelectItem key={option} value={option.toString()}>
                   {option}

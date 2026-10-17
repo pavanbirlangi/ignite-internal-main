@@ -32,7 +32,7 @@ export function OrderSummary({
 
   return (
     <div className="static w-full lg:sticky lg:top-40">
-      <h2 className="mb-5 text-lg font-semibold text-white md:text-xl">
+      <h2 className="mb-5 text-xl font-bold text-white/95 md:text-xl">
         Order Summary
       </h2>
 
@@ -40,10 +40,10 @@ export function OrderSummary({
         <CardHeader className="px-6 py-4">
           <div className="flex flex-col gap-2.5">
             <div className="flex items-center justify-between">
-              <span className="text-muted-foreground text-[14px] font-medium">
+              <span className="text-white/65 text-sm font-medium">
                 Base Price
               </span>
-              <span className="text-[14px] font-semibold text-white">
+              <span className="text-sm font-bold text-white/95">
                 {formatCurrency(basePrice, currency)}
               </span>
             </div>
@@ -53,18 +53,18 @@ export function OrderSummary({
                 it's only real/final once attached to a cart at checkout -- so this total is
                 intentionally just the products subtotal, matching Base Price. */}
             <div className="mt-1 flex items-start justify-between border-t border-white/10 pt-3">
-              <CardTitle className="text-[18px] font-semibold text-white">
+              <CardTitle className="text-xl font-bold text-white/95">
                 Your cart total
               </CardTitle>
               <div className="flex flex-col items-end gap-1">
-                <span className="text-[18px] font-semibold text-white">
+                <span className="text-xl font-bold text-white/95">
                   {formatCurrency(total, currency)}
                 </span>
                 {/* Tax (and, if the store owner turns it on, the service fee) isn't computed
                     until checkout, so the final total can still differ from this one -- flagged
                     rather than left to surprise the customer at the next step. */}
                 <span
-                  className="text-muted-foreground flex items-center gap-1 text-[11px] font-medium tracking-wide uppercase"
+                  className="text-white/65 flex items-center gap-1 text-xs font-medium uppercase"
                   title="Tax and any service fee are calculated at checkout and may change this total slightly."
                 >
                   Price not final
@@ -77,7 +77,7 @@ export function OrderSummary({
 
         <CardContent className="px-6">
           <Button
-            className="bg-primary hover:bg-primary/90 mb-2 h-12 w-full gap-1.5 rounded-[6px] px-11 py-4 !text-[16px] font-semibold text-white"
+            className="bg-primary hover:bg-primary/90 mb-2 h-12 w-full gap-1.5 rounded-[6px] px-11 py-4 !text-base font-bold text-white/95"
             onClick={onCheckout}
           >
             Proceed to Checkout
@@ -87,11 +87,11 @@ export function OrderSummary({
       </Card>
       {cartCmsData?.acknowledgement_text ? (
         <div
-          className="text-muted-foreground prose-a:text-primary prose-a:underline px-2 text-[12px] leading-4.5 font-medium"
+          className="text-white/65 prose-a:text-primary prose-a:underline px-2 text-xs font-medium"
           dangerouslySetInnerHTML={{ __html: cartCmsData.acknowledgement_text }}
         />
       ) : (
-        <p className="text-muted-foreground px-2 text-[12px] leading-4.5 font-medium">
+        <p className="text-white/65 px-2 text-xs font-medium">
           By proceeding through checkout, I acknowledge I have read and accepted
           the{' '}
           <span className="text-primary underline">Terms and Conditions</span>{' '}
@@ -107,19 +107,19 @@ export function OrderSummary({
           Directus-managed (`/items/cart`). */}
       {reviewCount && (
         <div className="flex flex-col items-center justify-center gap-3 py-4 sm:flex-row">
-          <span className="text-[14px] font-medium text-white">
+          <span className="text-sm font-medium text-white/95">
             See our{' '}
             {cartCmsData?.review_redirect_link ? (
               <a
                 href={cartCmsData.review_redirect_link}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="font-semibold underline transition-opacity hover:opacity-80"
+                className="font-bold underline transition-opacity hover:opacity-80"
               >
                 {reviewCount} {reviewLabel}
               </a>
             ) : (
-              <span className="font-semibold">
+              <span className="font-bold">
                 {reviewCount} {reviewLabel}
               </span>
             )}{' '}
@@ -127,7 +127,7 @@ export function OrderSummary({
           </span>
           <div className="flex items-center gap-1">
             <StarIcon />
-            <span className="text-[14px] font-bold text-white">Trustpilot</span>
+            <span className="text-sm font-bold text-white/95">Trustpilot</span>
           </div>
         </div>
       )}

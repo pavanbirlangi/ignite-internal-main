@@ -18,10 +18,10 @@ export default function MyProfile() {
 
   return (
     <div className="flex flex-col gap-8">
-      <h1 className="text-[28px] font-semibold md:text-[40px]">My Profile</h1>
+      <h1 className="text-3xl font-bold md:text-3xl">My Profile</h1>
 
       <div className="mt-2">
-        <h2 className="text-muted-foreground mb-6 text-xl md:text-2xl leading-10 font-semibold">
+        <h2 className="text-white/65 mb-6 text-xl md:text-2xl font-bold">
           Personal Details
         </h2>
 

@@ -35,7 +35,7 @@ export function LibraryProductList({
       <div className="mt-16 flex flex-col items-center justify-center text-center">
         <div className="bg-secondary mb-4 rounded-full p-6">
           <svg
-            className="text-muted-foreground h-12 w-12 opacity-50"
+            className="text-white/65 h-12 w-12 opacity-50"
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
@@ -49,8 +49,8 @@ export function LibraryProductList({
             />
           </svg>
         </div>
-        <h3 className="text-xl font-semibold text-white">No products found</h3>
-        <p className="text-muted-foreground mt-2 max-w-sm text-sm">
+        <h3 className="text-xl font-bold text-white/95">No products found</h3>
+        <p className="text-white/65 mt-2 max-w-sm text-sm">
           We couldn't find any products in your library matching your current
           filters.
         </p>

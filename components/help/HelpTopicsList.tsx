@@ -26,7 +26,7 @@ export function HelpTopicsList({
         <div className="mb-6 flex items-center gap-3">
           <button
             onClick={onBack}
-            className="hover:text-muted-foreground cursor-pointer text-white transition-colors"
+            className="hover:text-muted-foreground cursor-pointer text-white/95 transition-colors"
             aria-label="Go back"
           >
             <svg
@@ -45,7 +45,7 @@ export function HelpTopicsList({
               />
             </svg>
           </button>
-          <h1 className="text-xl font-semibold text-white md:text-[28px]">
+          <h1 className="text-xl font-bold text-white/95 md:text-3xl">
             {title}
           </h1>
         </div>
@@ -59,19 +59,19 @@ export function HelpTopicsList({
               className="bg-secondary hover:bg-secondary/60 flex cursor-pointer items-center justify-between gap-4 rounded-[6px] px-8 py-6 text-left transition-colors"
             >
               <div className="flex items-start gap-3">
-                <span className="text-white mt-0.5 shrink-0 text-sm font-medium">
+                <span className="text-white/95 mt-0.5 shrink-0 text-sm font-medium">
                   {index + 1}.
                 </span>
                 <div>
-                  <h3 className="text-sm font-semibold text-white md:text-[18px]">
+                  <h3 className="text-sm font-bold text-white/95 md:text-xl">
                     {topic.title}
                   </h3>
-                  <p className="text-muted-foreground font-medium mt-0.5 text-xs">
+                  <p className="text-white/65 font-medium mt-0.5 text-xs">
                     {topic.description}
                   </p>
                 </div>
               </div>
-              <ChevronRight className="text-white size-5 shrink-0" />
+              <ChevronRight className="text-white/95 size-5 shrink-0" />
             </button>
           ))}
         </div>

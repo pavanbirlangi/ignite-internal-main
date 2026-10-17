@@ -50,7 +50,7 @@ export function LibraryHeader({
   return (
     <div className="flex flex-col gap-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-[28px] font-semibold md:text-[40px]">My Library</h1>
+        <h1 className="text-3xl font-bold md:text-3xl">My Library</h1>
 
         {/* Mobile Dropdown Trigger */}
         <div className="relative md:hidden">
@@ -101,13 +101,13 @@ export function LibraryHeader({
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         {/* Search */}
         <div className="relative w-full sm:max-w-[522px]">
-          <Search className="text-muted-foreground absolute top-1/2 left-4 h-4 w-4 -translate-y-1/2" />
+          <Search className="text-white/65 absolute top-1/2 left-4 h-4 w-4 -translate-y-1/2" />
           <input
             type="text"
             value={localSearch}
             onChange={(e) => setLocalSearch(e.target.value)}
             placeholder="Search products..."
-            className="border-muted-foreground/40 text-foreground placeholder:text-muted-foreground focus:border-primary h-12.5 w-full rounded-full border bg-transparent pr-4 pl-10 text-sm transition-colors outline-none"
+            className="border-muted-foreground/40 text-white/95 placeholder:text-muted-foreground focus:border-primary h-12.5 w-full rounded-full border bg-transparent pr-4 pl-10 text-sm transition-colors outline-none"
           />
         </div>
 
@@ -115,7 +115,7 @@ export function LibraryHeader({
         <div className="relative hidden md:block">
           <button
             onClick={() => setIsOpen(!isOpen)}
-            className="bg-secondary text-secondary-foreground hover:bg-secondary/80 flex h-[50px] cursor-pointer items-center gap-1 rounded-[6px] px-4 py-3.5 font-semibold transition-colors"
+            className="bg-secondary text-secondary-foreground hover:bg-secondary/80 flex h-[50px] cursor-pointer items-center gap-1 rounded-[6px] px-4 py-3.5 font-bold transition-colors"
           >
             <span>{activeOption.label}</span>
             <ChevronDown

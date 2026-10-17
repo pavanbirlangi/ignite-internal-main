@@ -45,24 +45,24 @@ export function OrderDetailItem({
               {productHref ? (
                 <Link
                   href={productHref}
-                  className="hover:underline line-clamp-2 max-w-[500px] text-[16px] leading-snug font-semibold text-white transition-all md:text-[18px]"
+                  className="hover:underline line-clamp-2 max-w-[500px] text-base font-bold text-white/95 transition-all md:text-xl"
                 >
                   {title}
                 </Link>
               ) : (
-                <h3 className="line-clamp-2 max-w-[500px] text-[16px] leading-snug font-semibold text-white md:text-[18px]">
+                <h3 className="line-clamp-2 max-w-[500px] text-base font-bold text-white/95 md:text-xl">
                   {title}
                 </h3>
               )}
               {variantTitle && (
-                <p className="text-muted-foreground text-[11px] leading-none font-medium sm:text-xs">
+                <p className="text-white/65 text-xs font-medium sm:text-xs">
                   {variantTitle}
                 </p>
               )}
             </div>
             <div className="flex items-end gap-3">
-              <span className="text-[18px] font-bold text-white">{price}</span>
-              <span className="text-muted-foreground font-medium mb-1 text-xs">
+              <span className="text-xl font-bold text-white/95">{price}</span>
+              <span className="text-white/65 font-medium mb-1 text-xs">
                 x{quantity}
               </span>
             </div>
@@ -75,7 +75,7 @@ export function OrderDetailItem({
             {tags.map((tag) => (
               <span
                 key={tag}
-                className="rounded border border-white/20 bg-transparent px-3 py-2 text-[10px] font-semibold text-white uppercase"
+                className="rounded border border-white/20 bg-transparent px-3 py-2 text-xs font-bold text-white/95 uppercase"
               >
                 {tag}
               </span>
@@ -85,7 +85,7 @@ export function OrderDetailItem({
           {onReveal && (
             <button
               onClick={onReveal}
-              className="bg-primary hover:bg-primary h-10 w-full cursor-pointer rounded-[6px] px-6 py-3 text-sm font-semibold text-white transition-colors md:w-auto"
+              className="bg-primary hover:bg-primary h-10 w-full cursor-pointer rounded-[6px] px-6 py-3 text-sm font-bold text-white/95 transition-colors md:w-auto"
             >
               {actionLabel}
             </button>

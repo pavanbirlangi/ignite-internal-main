@@ -134,11 +134,11 @@ export default function TicketDetailsPage({ params }: TicketDetailsPageProps) {
             <div className="flex items-start gap-2">
               <Link
                 href="/dashboard/my-tickets"
-                className="inline-flex items-center py-1 text-white transition-colors hover:opacity-75"
+                className="inline-flex items-center py-1 text-white/95 transition-colors hover:opacity-75"
               >
                 <LeftArrowIcon className="size-6" />
               </Link>
-              <h2 className="text-[28px] font-semibold text-white">
+              <h2 className="text-2xl font-bold text-white/95">
                 Ticket Details
               </h2>
             </div>

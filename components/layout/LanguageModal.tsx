@@ -28,11 +28,11 @@ import {
 import { useCurrencyStore } from '@/store/useCurrencyStore'
 
 const TRIGGER_CLASS =
-  'bg-secondary h-14 w-full rounded-[12px] border-none font-medium text-white focus:ring-0'
-const CONTENT_CLASS = 'border-border bg-secondary max-h-80 rounded-[12px] text-white'
+  'bg-secondary h-14 w-full rounded-[12px] border-none font-medium text-white/95 focus:ring-0'
+const CONTENT_CLASS = 'border-border bg-secondary max-h-80 rounded-[12px] text-white/95'
 const ITEM_CLASS =
   'cursor-pointer rounded-lg py-3 font-medium focus:bg-white/10 focus:text-white'
-const LABEL_CLASS = 'text-muted-foreground md:font-base text-xs font-semibold'
+const LABEL_CLASS = 'text-white/65 md:font-base text-xs font-bold'
 
 function Flag({ code }: { code: string }) {
   return (
@@ -92,15 +92,15 @@ export default function LanguageModal({ children }: { children: React.ReactNode 
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent
         showCloseButton={false}
-        className="border-secondary bg-secondary p-0 text-white shadow-2xl sm:max-w-140 sm:rounded-2xl"
+        className="border-secondary bg-secondary p-0 text-white/95 shadow-2xl sm:max-w-140 sm:rounded-2xl"
       >
         <div className="p-8 sm:p-10">
           <DialogHeader className="mb-8 flex flex-row items-start justify-between">
             <div>
-              <DialogTitle className="mb-2 text-xl font-semibold tracking-tight text-white md:text-2xl">
+              <DialogTitle className="mb-2 text-xl font-bold text-white/95 md:text-2xl">
                 Update Your Settings
               </DialogTitle>
-              <p className="text-muted-foreground text-sm font-medium">
+              <p className="text-white/65 text-sm font-medium">
                 Set your preferred country, currency and language
               </p>
             </div>
@@ -108,7 +108,7 @@ export default function LanguageModal({ children }: { children: React.ReactNode 
               aria-label="Close settings"
               className="cursor-pointer rounded-sm p-1 transition-colors hover:bg-white/10"
             >
-              <X className="text-muted-foreground h-5 w-5" strokeWidth={2} />
+              <X className="text-white/65 h-5 w-5" strokeWidth={2} />
             </DialogClose>
           </DialogHeader>
 
@@ -160,19 +160,19 @@ export default function LanguageModal({ children }: { children: React.ReactNode 
                   </SelectItem>
                 </SelectContent>
               </Select>
-              <p className="text-muted-foreground text-xs">More languages coming soon.</p>
+              <p className="text-white/65 text-xs">More languages coming soon.</p>
             </div>
 
             <div className="mt-2 flex gap-4">
               <button
                 onClick={handleSave}
                 disabled={isSaving || !country || !currency}
-                className="bg-primary hover:bg-primary flex-1 rounded-[6px] py-3.5 text-sm font-semibold text-white transition-colors disabled:cursor-not-allowed disabled:opacity-50"
+                className="bg-primary hover:bg-primary flex-1 rounded-[6px] py-3.5 text-sm font-bold text-white/95 transition-colors disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {isSaving ? 'Saving' : 'Save'}
               </button>
               <DialogClose asChild>
-                <button className="border-border flex-1 rounded-[6px] border bg-transparent py-3.5 text-sm text-white transition-colors hover:bg-white/5">
+                <button className="border-border flex-1 rounded-[6px] border bg-transparent py-3.5 text-sm text-white/95 transition-colors hover:bg-white/5">
                   Cancel
                 </button>
               </DialogClose>

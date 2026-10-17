@@ -35,7 +35,7 @@ export default function ContactPage({ translatedContent }: ContactPageProps) {
 
   if (!content) {
     return (
-      <div className="text-muted-foreground container py-20 text-center">
+      <div className="text-white/65 container py-20 text-center">
         Failed to load contact information.
       </div>
     )
@@ -45,10 +45,10 @@ export default function ContactPage({ translatedContent }: ContactPageProps) {
     <div className="container py-20 [--max-width-container:1280px] lg:py-28">
       {/* Header */}
       <div className="mx-auto mb-16 flex flex-col items-center gap-4 text-center md:mb-20">
-        <h1 className="text-4xl leading-tight font-semibold text-white capitalize md:text-[72px] md:leading-[88px]">
+        <h1 className="text-3xl font-bold text-white/95 capitalize md:text-3xl">
           {content.heading}
         </h1>
-        <p className="text-muted-foreground text-[18px] leading-[23px]">
+        <p className="text-white/65 text-xl">
           {content.description}
         </p>
       </div>
@@ -67,15 +67,15 @@ export default function ContactPage({ translatedContent }: ContactPageProps) {
 
       {/* CTA — Still Experiencing Issues */}
       <div className="bg-secondary/40 mx-auto flex max-w-[752px] flex-col items-center gap-3 rounded-[20px] px-10 pt-8 pb-10 text-center">
-        <h2 className="text-xl md:text-[28px] leading-tight md:leading-[36px] font-semibold text-white">
+        <h2 className="text-xl md:text-3xl font-bold text-white/95">
           {content.bottom_text_title}
         </h2>
-        <p className="text-muted-foreground max-w-[418px] text-[14px] leading-[18px] font-medium">
+        <p className="text-white/65 max-w-[418px] text-sm font-medium">
           {content.bottom_text_desc}
         </p>
         <Button
           asChild
-          className="mt-1 h-[40px] py-3.75 rounded-[6px] px-6 text-[14px] font-semibold text-white transition-opacity hover:opacity-90"
+          className="mt-1 h-[40px] py-3.75 rounded-[6px] px-6 text-sm font-bold text-white/95 transition-opacity hover:opacity-90"
           variant="primary"
         >
           <Link href={content.cta_url || '/help/create-ticket'}>

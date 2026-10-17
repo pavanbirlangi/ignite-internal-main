@@ -39,14 +39,14 @@ function AccordionTrigger({
       <AccordionPrimitive.Trigger
         data-slot="accordion-trigger"
         className={cn(
-          'flex flex-1 items-center justify-between gap-4 py-4 text-left text-sm font-semibold outline-none transition-colors disabled:pointer-events-none disabled:opacity-50 [&[data-state=open]>svg]:rotate-180',
+          'flex flex-1 items-center justify-between gap-4 py-4 text-left text-sm font-bold outline-none transition-colors disabled:pointer-events-none disabled:opacity-50 [&[data-state=open]>svg]:rotate-180',
           className,
         )}
         {...props}
       >
         {children}
         {icon ?? (
-          <ChevronDownIcon className="text-muted-foreground pointer-events-none size-4 shrink-0 transition-transform duration-200" />
+          <ChevronDownIcon className="text-white/65 pointer-events-none size-4 shrink-0 transition-transform duration-200" />
         )}
       </AccordionPrimitive.Trigger>
     </AccordionPrimitive.Header>
@@ -64,7 +64,7 @@ function AccordionContent({
       className="data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down overflow-hidden text-sm"
       {...props}
     >
-      <div className={cn('text-muted-foreground pb-4', className)}>
+      <div className={cn('text-white/65 pb-4', className)}>
         {children}
       </div>
     </AccordionPrimitive.Content>

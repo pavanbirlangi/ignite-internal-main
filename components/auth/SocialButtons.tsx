@@ -122,16 +122,16 @@ export function SocialButtons() {
         onClick={handleGoogleLogin}
       />
       <SocialButton
-        icon={<FacebookIcon className="size-8 text-white" />}
+        icon={<FacebookIcon className="size-8 text-white/95" />}
         className="border-muted-foreground/30 border bg-[var(--facebook-blue)] hover:bg-[var(--facebook-blue)]/80 transition-colors"
       />
       <SocialButton
-        icon={<DiscordIcon className="size-12 text-white" />}
+        icon={<DiscordIcon className="size-12 text-white/95" />}
         className="border-muted-foreground/30 border bg-[var(--discord-blue)] hover:bg-[var(--discord-blue)]/80 transition-colors"
         onClick={() => handleSocialLoginUnavailable('Discord')}
       />
       {/* <SocialButton
-        icon={<AppleIcon className="size-8 text-white" />}
+        icon={<AppleIcon className="size-8 text-white/95" />}
         className="bg-background hover:bg-white/10 transition-colors"
       /> */}
     </div>

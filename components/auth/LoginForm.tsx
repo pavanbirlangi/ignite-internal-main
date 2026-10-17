@@ -140,7 +140,7 @@ export function LoginForm({
               {...register('email')}
             />
             {errors.email && (
-              <span className="text-red mt-1 block text-xs font-semibold">
+              <span className="text-red mt-1 block text-xs font-bold">
                 {errors.email.message}
               </span>
             )}
@@ -165,7 +165,7 @@ export function LoginForm({
               </button>
             </div>
             {errors.password && (
-              <span className="text-red mt-1 block text-xs font-semibold">
+              <span className="text-red mt-1 block text-xs font-bold">
                 {errors.password.message}
               </span>
             )}
@@ -177,7 +177,7 @@ export function LoginForm({
           <button
             type="submit"
             disabled={isLoading}
-            className="bg-primary hover:bg-primary/90 mb-3 h-[48px] w-full cursor-pointer rounded-[6px] text-base font-semibold text-white transition-colors disabled:cursor-not-allowed disabled:opacity-50"
+            className="bg-primary hover:bg-primary/90 mb-3 h-[48px] w-full cursor-pointer rounded-[6px] text-base font-bold text-white/95 transition-colors disabled:cursor-not-allowed disabled:opacity-50"
           >
             {isLoading ? 'Logging in...' : 'Login'}
           </button>
@@ -185,7 +185,7 @@ export function LoginForm({
             <button
               type="button"
               onClick={onSwitchToRecover}
-              className="text-primary hover:text-primary/80 cursor-pointer text-xs font-semibold underline transition-colors focus:outline-none"
+              className="text-primary hover:text-primary/80 cursor-pointer text-xs font-bold underline transition-colors focus:outline-none"
             >
               Forgot password?
             </button>
@@ -193,7 +193,7 @@ export function LoginForm({
               <button
                 type="button"
                 onClick={onSwitchToEmailCode}
-                className="text-primary hover:text-primary/80 cursor-pointer text-xs font-semibold underline transition-colors focus:outline-none"
+                className="text-primary hover:text-primary/80 cursor-pointer text-xs font-bold underline transition-colors focus:outline-none"
               >
                 Email me a sign-in code
               </button>
@@ -204,7 +204,7 @@ export function LoginForm({
 
       <button
         onClick={onSwitchToRegister}
-        className="border-muted-foreground h-[48px] w-full cursor-pointer rounded-[6px] border-[0.78px] bg-transparent text-base font-semibold text-white transition-all hover:bg-white/5"
+        className="border-muted-foreground h-[48px] w-full cursor-pointer rounded-[6px] border-[0.78px] bg-transparent text-base font-bold text-white/95 transition-all hover:bg-white/5"
       >
         Create New Account
       </button>

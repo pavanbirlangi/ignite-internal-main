@@ -56,7 +56,7 @@ export function RecoverForm({
     <form onSubmit={handleSubmit(onSubmit)}>
       {/* Inputs */}
       <div className="mb-6 flex flex-col gap-3">
-        <p className="text-muted-foreground mb-2 text-sm">
+        <p className="text-white/65 mb-2 text-sm">
           Enter your registered email address to receive password reset
           instructions.
         </p>
@@ -68,7 +68,7 @@ export function RecoverForm({
             {...register('email')}
           />
           {errors.email && (
-            <span className="text-red mt-1 block text-xs font-semibold">
+            <span className="text-red mt-1 block text-xs font-bold">
               {errors.email.message}
             </span>
           )}
@@ -80,7 +80,7 @@ export function RecoverForm({
         <button
           type="submit"
           disabled={isLoading}
-          className="bg-primary hover:bg-primary/90 mb-3 h-[48px] w-full cursor-pointer rounded-[6px] text-base font-semibold text-white transition-colors disabled:cursor-not-allowed disabled:opacity-50"
+          className="bg-primary hover:bg-primary/90 mb-3 h-[48px] w-full cursor-pointer rounded-[6px] text-base font-bold text-white/95 transition-colors disabled:cursor-not-allowed disabled:opacity-50"
         >
           {isLoading ? 'Sending Request...' : 'Recover Password'}
         </button>
@@ -89,7 +89,7 @@ export function RecoverForm({
       <button
         type="button"
         onClick={onSwitchToLogin}
-        className="border-muted-foreground h-[48px] w-full cursor-pointer rounded-[6px] border-[0.78px] bg-transparent text-base font-semibold text-white transition-all hover:bg-white/5"
+        className="border-muted-foreground h-[48px] w-full cursor-pointer rounded-[6px] border-[0.78px] bg-transparent text-base font-bold text-white/95 transition-all hover:bg-white/5"
       >
         Back to Login
       </button>

@@ -27,7 +27,7 @@ export function PurchasedProduct({
   return (
     <div className="rounded-xl border border-secondary p-4 text-card-foreground bg-secondary/20 shadow-sm backdrop-blur-[50px]">
       {/* Purchase date */}
-      <div className="mb-4 text-sm text-muted-foreground">
+      <div className="mb-4 text-sm text-white/65">
         Purchased on {formattedDate}
       </div>
 
@@ -43,13 +43,13 @@ export function PurchasedProduct({
 
           {/* Title */}
           <div className="flex flex-col">
-            <h3 className="flex-1 text-[16px] md:text-[18px] font-semibold md:max-w-[400px] text-white" title={item.title}>
+            <h3 className="flex-1 text-base md:text-xl font-bold md:max-w-[400px] text-white/95" title={item.title}>
               <Link href={`/${item.handle}`} className="line-clamp-2 hover:underline">
                 {item.title}
               </Link>
             </h3>
             {item.productType && (
-              <span className="text-xs text-muted-foreground mt-1 uppercase tracking-wider font-semibold">
+              <span className="text-xs text-white/65 mt-1 uppercase font-bold">
                 {item.productType}
               </span>
             )}
@@ -60,14 +60,14 @@ export function PurchasedProduct({
         <div className="flex shrink-0 gap-3 mt-2 md:mt-0">
           <button
             onClick={onViewKey}
-            className="flex flex-1 md:flex-none h-10 items-center justify-center gap-2 rounded-[6px] cursor-pointer border border-white/10 bg-transparent px-5 text-sm font-medium text-white transition-colors hover:bg-white/5"
+            className="flex flex-1 md:flex-none h-10 items-center justify-center gap-2 rounded-[6px] cursor-pointer border border-white/10 bg-transparent px-5 text-sm font-medium text-white/95 transition-colors hover:bg-white/5"
           >
             <Eye className="h-4 w-4" />
             View Key
           </button>
           <button
             onClick={onRateProduct}
-            className="flex flex-1 md:flex-none h-10 items-center justify-center gap-2 rounded-[6px] cursor-pointer bg-primary px-5 text-sm font-medium text-white transition-colors hover:bg-primary"
+            className="flex flex-1 md:flex-none h-10 items-center justify-center gap-2 rounded-[6px] cursor-pointer bg-primary px-5 text-sm font-medium text-white/95 transition-colors hover:bg-primary"
           >
             <Star className="h-4 w-4 fill-white" />
             Rate Product

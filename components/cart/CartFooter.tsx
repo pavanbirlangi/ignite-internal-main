@@ -41,8 +41,8 @@ export const CartFooter = ({ total, count, currencyCode }: CartFooterProps) => {
         {/* No promotion module exists yet, so a discount line never renders
             here -- see cart.service.ts. */}
         <div className="flex w-full items-end justify-between pt-2.5 mt-0.5">
-          <span className="text-lg font-semibold text-white">Cart Total:</span>
-          <span className="text-lg font-semibold text-white">
+          <span className="text-xl font-bold text-white/95">Cart Total:</span>
+          <span className="text-xl font-bold text-white/95">
             {formatApiCurrency(total, currencyCode)}
           </span>
         </div>
@@ -56,7 +56,7 @@ export const CartFooter = ({ total, count, currencyCode }: CartFooterProps) => {
               router.push('/cart')
             }}
             variant="ghost"
-            className="bg-secondary border-muted-foreground hover:bg-border h-11 flex-1 rounded-[6px] border-[0.78px] px-4 py-3 text-[15px] font-semibold text-white transition-colors hover:text-white"
+            className="bg-secondary border-muted-foreground hover:bg-border h-11 flex-1 rounded-[6px] border-[0.78px] px-4 py-3 text-base font-bold text-white/95 transition-colors hover:text-white"
           >
             Go To Cart ({count})
           </Button>
@@ -65,7 +65,7 @@ export const CartFooter = ({ total, count, currencyCode }: CartFooterProps) => {
         <Button
           onClick={handlePayNow}
           disabled={isCartEmpty}
-          className="bg-primary glassmorphism shadow-primary/20 flex h-11 flex-1 items-center justify-center gap-2 rounded-[6px] px-4 py-3 text-[15px] font-semibold text-white shadow-lg transition-colors hover:bg-(--primary-dark) disabled:cursor-not-allowed disabled:opacity-50"
+          className="bg-primary glassmorphism shadow-primary/20 flex h-11 flex-1 items-center justify-center gap-2 rounded-[6px] px-4 py-3 text-base font-bold text-white/95 shadow-lg transition-colors hover:bg-(--primary-dark) disabled:cursor-not-allowed disabled:opacity-50"
         >
           Pay Now <ChevronRight className="ml-0.5 h-4 w-4" />
         </Button>
@@ -76,7 +76,7 @@ export const CartFooter = ({ total, count, currencyCode }: CartFooterProps) => {
           block originally did. The count and the profile link are both
           Directus-managed (`/items/cart`). */}
       {reviewCount && (
-        <div className="flex w-full items-center justify-center gap-1.5 pt-1 text-[13px]">
+        <div className="flex w-full items-center justify-center gap-1.5 pt-1 text-sm">
           <span className="font-medium">
             See our{' '}
             {cartCmsData?.review_redirect_link ? (
@@ -84,19 +84,19 @@ export const CartFooter = ({ total, count, currencyCode }: CartFooterProps) => {
                 href={cartCmsData.review_redirect_link}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="font-semibold text-white underline transition-opacity hover:opacity-80"
+                className="font-bold text-white/95 underline transition-opacity hover:opacity-80"
               >
                 {reviewCount} {reviewLabel}
               </a>
             ) : (
-              <span className="font-semibold text-white">
+              <span className="font-bold text-white/95">
                 {reviewCount} {reviewLabel}
               </span>
             )}{' '}
             on
           </span>
           <StarIcon />
-          <span className="font-medium text-white">Trustpilot</span>
+          <span className="font-medium text-white/95">Trustpilot</span>
         </div>
       )}
     </div>

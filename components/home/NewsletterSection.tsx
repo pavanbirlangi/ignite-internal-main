@@ -99,10 +99,10 @@ export default function NewsletterSection({
         />
 
         <div className="relative flex max-w-[520px] flex-col gap-5 p-8 md:p-14">
-          <h2 className="trim text-[28px] leading-none font-semibold md:text-[40px]">
+          <h2 data-display className="trim text-3xl font-bold">
             {title}
           </h2>
-          <p className="text-muted-foreground text-base leading-6">
+          <p className="text-white/65 text-base">
             {description}
           </p>
 
@@ -112,9 +112,9 @@ export default function NewsletterSection({
           >
             <label className="relative sm:flex-1">
               <span className="sr-only">Email address</span>
-              <Icons.MailPencil className="text-muted-foreground pointer-events-none absolute inset-y-0 left-4 m-auto size-5" />
+              <Icons.MailPencil className="text-white/65 pointer-events-none absolute inset-y-0 left-4 m-auto size-5" />
               <input
-                className="border-border placeholder:text-muted-foreground/70 focus:border-primary focus:bg-primary/5 h-[52px] w-full rounded-xl border bg-white/[0.03] pr-4 max-md:bg-background/85 pl-12 text-[15px] font-medium text-white transition-colors outline-none disabled:opacity-60"
+                className="border-border placeholder:text-muted-foreground/70 focus:border-primary focus:bg-primary/5 h-[52px] w-full rounded-xl border bg-white/[0.03] pr-4 max-md:bg-background/85 pl-12 text-base font-medium text-white/95 transition-colors outline-none disabled:opacity-60"
                 type="email"
                 placeholder={placeholder}
                 value={email}
@@ -126,7 +126,7 @@ export default function NewsletterSection({
             </label>
             <Button
               variant="primary"
-              className="h-[52px] rounded-xl px-6 text-[15px] md:text-[15px]"
+              className="h-[52px] rounded-xl px-6 text-base md:text-base"
               type="submit"
               disabled={isSubmitting}
             >
@@ -134,7 +134,7 @@ export default function NewsletterSection({
             </Button>
           </form>
 
-          <p className="text-muted-foreground/70 text-[13px]">
+          <p className="text-muted-foreground/70 text-sm">
             No spam. Unsubscribe any time.
           </p>
         </div>

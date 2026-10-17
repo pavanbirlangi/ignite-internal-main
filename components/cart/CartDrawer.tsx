@@ -241,7 +241,7 @@ export function CartDrawer() {
           {cartCount > 0 && (
             <span
               key={`count-${cartCount}`}
-              className="bg-primary text-primary-foreground animate-in zoom-in-50 absolute -top-1 -right-1 flex h-5 min-w-5 items-center justify-center rounded-full px-1 text-[11px] font-semibold shadow-[0_0_0_2px_var(--background)] duration-300 motion-reduce:animate-none"
+              className="bg-primary text-primary-foreground animate-in zoom-in-50 absolute -top-1 -right-1 flex h-5 min-w-5 items-center justify-center rounded-full px-1 text-xs font-bold shadow-[0_0_0_2px_var(--background)] duration-300 motion-reduce:animate-none"
             >
               {cartCount}
             </span>
@@ -249,14 +249,14 @@ export function CartDrawer() {
         </button>
       </SheetTrigger>
       <SheetContent
-        className="bg-secondary my-auto flex w-full flex-col overflow-hidden rounded-[12px] p-0 text-white focus:outline-none focus-visible:outline-none sm:mr-4 sm:max-h-[95vh] sm:max-w-110"
+        className="bg-secondary my-auto flex w-full flex-col overflow-hidden rounded-[12px] p-0 text-white/95 focus:outline-none focus-visible:outline-none sm:mr-4 sm:max-h-[95vh] sm:max-w-110"
         showCloseButton={false}
       >
         {/* Header */}
         <SheetHeader className="borde-muted-foreground flex shrink-0 flex-row items-center justify-between space-y-0 border-b px-6 py-5 text-left">
-          <SheetTitle className="flex items-baseline gap-2 font-sans text-xl font-semibold text-white md:text-2xl">
+          <SheetTitle className="flex items-baseline gap-2 font-sans text-xl font-bold text-white/95 md:text-2xl">
             Cart{' '}
-            <span className="text-muted-foreground text-lg font-semibold">
+            <span className="text-white/65 text-xl font-bold">
               ({cartCount} item{cartCount !== 1 ? 's' : ''})
             </span>
           </SheetTitle>
@@ -264,7 +264,7 @@ export function CartDrawer() {
             aria-label="Close cart"
             className="rounded-full p-2 transition-colors hover:bg-white/10"
           >
-            <X className="text-muted-foreground h-6 w-6" />
+            <X className="text-white/65 h-6 w-6" />
           </SheetClose>
         </SheetHeader>
 
@@ -281,7 +281,7 @@ export function CartDrawer() {
             {isLoading && cartItems.length === 0 ? (
               <div className="flex flex-col items-center justify-center gap-4 py-20 text-center">
                 <div className="border-muted-foreground h-8 w-8 animate-spin rounded-full border-2 border-t-white" />
-                <p className="text-muted-foreground text-sm">
+                <p className="text-white/65 text-sm">
                   Loading your cart...
                 </p>
               </div>
@@ -300,11 +300,11 @@ export function CartDrawer() {
               ))
             ) : (
               <div className="flex flex-col items-center justify-center gap-4 py-20 text-center">
-                <div className="bg-secondary text-muted-foreground flex h-16 w-16 items-center justify-center rounded-full">
+                <div className="bg-secondary text-white/65 flex h-16 w-16 items-center justify-center rounded-full">
                   <ShoppingCart className="h-8 w-8" />
                 </div>
                 <div className="space-y-1">
-                  <h3 className="text-lg font-bold text-white">
+                  <h3 className="text-xl font-bold text-white/95">
                     Your cart is empty
                   </h3>
                   <p className="tex-muted-foreground text-sm">
@@ -318,14 +318,14 @@ export function CartDrawer() {
           {/* Recommendations */}
           {cartItems.length > 0 && (
             <div className="flex flex-col gap-4">
-              <h3 className="font-sans text-xl font-semibold text-white md:text-2xl">
+              <h3 className="font-sans text-xl font-bold text-white/95 md:text-2xl">
                 We Also Recommend
               </h3>
               <div className="flex flex-col gap-3">
                 {isRecommendationsLoading ? (
                   <div className="flex flex-col items-center justify-center gap-3 py-6 text-center">
                     <div className="border-muted-foreground h-7 w-7 animate-spin rounded-full border-2 border-t-white" />
-                    <p className="text-muted-foreground text-sm">
+                    <p className="text-white/65 text-sm">
                       Loading recommendations...
                     </p>
                   </div>
@@ -339,7 +339,7 @@ export function CartDrawer() {
                     />
                   ))
                 ) : (
-                  <p className="text-muted-foreground text-sm">
+                  <p className="text-white/65 text-sm">
                     No recommendations available right now.
                   </p>
                 )}

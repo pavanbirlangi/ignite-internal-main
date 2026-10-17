@@ -191,14 +191,14 @@ export function CartPageContent() {
         <div className="relative grid grid-cols-1 gap-6 lg:grid-cols-12 lg:gap-8">
           {/* Left Column: Cart Items & Recommendations */}
           <div className={itemCount > 0 ? 'lg:col-span-8' : 'lg:col-span-12'}>
-            <h1 className="mb-5 text-lg font-semibold text-white md:text-xl">
+            <h1 className="mb-5 text-xl font-bold text-white/95 md:text-xl">
               My Cart
             </h1>
             <div className="flex flex-col gap-4 sm:gap-4">
               {isLoading && items.length === 0 ? (
                 <div className="flex flex-col items-center justify-center gap-4 py-16 text-center">
                   <div className="border-muted-foreground h-8 w-8 animate-spin rounded-full border-2 border-t-white" />
-                  <p className="text-muted-foreground text-sm">
+                  <p className="text-white/65 text-sm">
                     Loading your cart...
                   </p>
                 </div>
@@ -217,14 +217,14 @@ export function CartPageContent() {
                 ))
               ) : (
                 <div className="flex flex-col items-center justify-center gap-4 py-16 text-center">
-                  <div className="bg-secondary text-muted-foreground flex h-14 w-14 items-center justify-center rounded-full">
+                  <div className="bg-secondary text-white/65 flex h-14 w-14 items-center justify-center rounded-full">
                     <ShoppingCart className="h-7 w-7" />
                   </div>
                   <div className="space-y-1">
-                    <h3 className="text-base font-bold text-white">
+                    <h3 className="text-base font-bold text-white/95">
                       Your cart is empty
                     </h3>
-                    <p className="text-muted-foreground text-sm">
+                    <p className="text-white/65 text-sm">
                       Looks like you haven&apos;t added any games yet.
                     </p>
                   </div>
@@ -234,7 +234,7 @@ export function CartPageContent() {
 
             {items.length > 0 && (
               <div className="mt-4 hidden flex-col gap-4 md:flex lg:col-span-8 lg:mt-16">
-                <h2 className="text-lg font-semibold text-white md:text-xl">
+                <h2 className="text-xl font-bold text-white/95 md:text-xl">
                   Recommended for You
                 </h2>
                 <div className="flex flex-col gap-3">
@@ -261,7 +261,7 @@ export function CartPageContent() {
                       />
                     ))
                   ) : (
-                    <p className="text-muted-foreground py-4 text-sm">
+                    <p className="text-white/65 py-4 text-sm">
                       No recommendations available right now.
                     </p>
                   )}
@@ -285,7 +285,7 @@ export function CartPageContent() {
           {/* Recommendations Section - After Order Summary on Mobile */}
           {items.length > 0 && (
             <div className="mt-4 flex flex-col gap-4 md:hidden lg:col-span-8 lg:mt-10">
-              <h2 className="text-lg font-semibold text-white md:text-xl">
+              <h2 className="text-xl font-bold text-white/95 md:text-xl">
                 Recommended for You
               </h2>
               <div className="flex flex-col gap-3">
@@ -312,7 +312,7 @@ export function CartPageContent() {
                     />
                   ))
                 ) : (
-                  <p className="text-muted-foreground py-4 text-sm">
+                  <p className="text-white/65 py-4 text-sm">
                     No recommendations available right now.
                   </p>
                 )}

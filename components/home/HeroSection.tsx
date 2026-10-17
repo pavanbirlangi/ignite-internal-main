@@ -113,12 +113,12 @@ export default function HeroSection({
           {/* No decorative line before this: it read as a dash-like accent, which looks
               AI-generated to the client, so the label stands on its own. */}
           <p
-            className="mb-3 text-sm font-bold text-white/80 uppercase sm:text-base"
+            className="mb-3 text-xs leading-3! font-bold tracking-[1.2px]! text-white/95 uppercase"
           >
             {smallText}
           </p>
           <h1
-            className="text-3xl font-semibold md:text-[36px] lg:text-[44px]"
+            className="text-3xl font-bold md:text-3xl lg:text-3xl"
           >
             {/* The last word in a solid accent colour, not a gradient: with this font, a
                 gradient clipped to the text (bg-clip-text) cut the top off "?" and other
@@ -142,7 +142,7 @@ export default function HeroSection({
               aria-label="Search"
               className="pointer-events-auto absolute inset-y-0 left-5 z-1 m-auto flex items-center"
             >
-              <SearchIcon className="text-muted-foreground size-6" />
+              <SearchIcon className="text-white/65 size-6" />
             </button>
             <Input
               type="text"
@@ -204,7 +204,7 @@ export default function HeroSection({
         <Button
           variant="primary"
           size="lg"
-          className="group/cta relative w-fit min-w-48 overflow-hidden rounded-[12px] px-6 py-5 font-semibold"
+          className="group/cta relative w-fit min-w-48 overflow-hidden rounded-[12px] px-6 py-5 font-bold"
           asChild
         >
           <Link href={btnUrl}>

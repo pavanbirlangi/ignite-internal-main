@@ -58,14 +58,14 @@ export default function ProductDescription({
   }, [isExpanded, shouldShowToggle])
 
   return (
-    <div className="max-w-container text-muted-foreground mx-auto w-full px-4 md:px-0">
+    <div className="max-w-container text-white/65 mx-auto w-full px-4 md:px-0">
       {/* Section Header */}
-      <h2 className="text-muted-foreground mb-2 text-[18px] font-semibold md:text-[20px]">
+      <h2 className="text-white/65 mb-2 text-xl font-bold md:text-xl">
         {heading}
       </h2>
 
       {/* Main Title */}
-      <h3 className="mt-3 mb-4 text-lg font-semibold text-white md:text-xl">
+      <h3 className="mt-3 mb-4 text-xl font-bold text-white/95 md:text-xl">
         {product.title}
       </h3>
 
@@ -75,7 +75,7 @@ export default function ProductDescription({
           {visibleTags.map((tag) => (
             <span
               key={tag}
-              className="border-muted-foreground text-muted-foreground cursor-default rounded-md border px-2 py-1.5 text-xs transition-colors hover:border-white/40"
+              className="border-muted-foreground text-white/65 cursor-default rounded-md border px-2 py-1.5 text-xs transition-colors hover:border-white/40"
             >
               {tag}
             </span>
@@ -84,7 +84,7 @@ export default function ProductDescription({
             <button
               type="button"
               onClick={() => setAreTagsExpanded((prev) => !prev)}
-              className="border-muted-foreground text-muted-foreground rounded-md border px-2 py-1.5 text-xs transition-colors hover:border-white/40 hover:text-white"
+              className="border-muted-foreground text-white/65 rounded-md border px-2 py-1.5 text-xs transition-colors hover:border-white/40 hover:text-white"
               aria-label={areTagsExpanded ? 'Hide extra tags' : 'Show more tags'}
             >
               ...
@@ -96,7 +96,7 @@ export default function ProductDescription({
       {/* Description (HTML from API) */}
       <div
         ref={descriptionRef}
-        className={`prose prose-invert prose-sm text-muted-foreground mb-8 max-w-none overflow-hidden transition-all duration-300 ${
+        className={`prose prose-invert prose-sm prose-h2:text-xl prose-h3:text-base prose-h3:font-bold prose-strong:font-bold text-white/65 mb-8 max-w-none overflow-hidden transition-all duration-300 ${
           isExpanded ? 'max-h-none' : 'max-h-44'
         }`}
         dangerouslySetInnerHTML={{ __html: descriptionHtml }}
@@ -108,7 +108,7 @@ export default function ProductDescription({
           <button
             type="button"
             onClick={() => setIsExpanded(!isExpanded)}
-            className="hover:text-muted-foreground flex cursor-pointer items-center gap-2 text-sm font-semibold text-white transition-colors"
+            className="hover:text-muted-foreground flex cursor-pointer items-center gap-2 text-sm font-bold text-white/95 transition-colors"
           >
             {isExpanded ? (
               <>

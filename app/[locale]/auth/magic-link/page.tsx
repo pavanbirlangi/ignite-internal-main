@@ -17,16 +17,16 @@ export default async function MagicLinkPage({
 
   return (
     <section className="container mx-auto flex min-h-[70vh] items-center justify-center px-4 py-20">
-      <div className="bg-secondary/40 border-secondary w-full max-w-lg overflow-hidden rounded-[30px] p-6 text-white shadow-2xl backdrop-blur-2xl sm:p-10">
+      <div className="bg-secondary/40 border-secondary w-full max-w-lg overflow-hidden rounded-[30px] p-6 text-white/95 shadow-2xl backdrop-blur-2xl sm:p-10">
         <div className="border-secondary mb-8 border-b pb-4">
-          <h1 className="text-xl font-semibold tracking-wide text-white md:text-2xl">
+          <h1 className="text-xl font-bold text-white/95 md:text-2xl">
             Sign In to Increddy
           </h1>
         </div>
         {token ? (
           <MagicLinkSignIn token={token} />
         ) : (
-          <p className="text-red text-sm font-semibold">
+          <p className="text-red text-sm font-bold">
             This sign-in link is missing its token. Please request a new code.
           </p>
         )}

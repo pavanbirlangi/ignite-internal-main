@@ -78,7 +78,7 @@ export function ProfileForm({ initialData }: ProfileFormProps) {
         value={email}
         readOnly
         customAction={
-          <div className="bg-destructive rounded-[6px] px-3 py-2 text-xs font-semibold text-white">
+          <div className="bg-destructive rounded-[6px] px-3 py-2 text-xs font-bold text-white/95">
             VERIFIED
           </div>
         }
@@ -127,7 +127,7 @@ export function ProfileForm({ initialData }: ProfileFormProps) {
                 <PopoverTrigger asChild>
                   <Button
                     variant="outline"
-                    className={`bg-secondary hover:bg-secondary/80 focus:bg-secondary w-full justify-start rounded-[6px] border-none px-3 py-3.5 text-left text-xs! font-medium text-white ${!date ? 'text-muted-foreground' : ''}`}
+                    className={`bg-secondary hover:bg-secondary/80 focus:bg-secondary w-full justify-start rounded-[6px] border-none px-3 py-3.5 text-left text-xs! font-medium text-white/95 ${!date ? 'text-white/65' : ''}`}
                     style={{ height: 'auto' }}
                   >
                     <CalendarIcon className="mr-2 h-4 w-4" />
@@ -159,7 +159,7 @@ export function ProfileForm({ initialData }: ProfileFormProps) {
         customAction={
           <Button
             variant={resetSent ? 'outline' : 'secondary'}
-            className={`w-full rounded-[6px] text-base font-semibold sm:w-44 ${resetSent ? 'border-destructive text-destructive' : ''}`}
+            className={`w-full rounded-[6px] text-base font-bold sm:w-44 ${resetSent ? 'border-destructive text-destructive' : ''}`}
             onClick={handleResetPassword}
             disabled={isSendingReset || resetSent}
           >
@@ -175,7 +175,7 @@ export function ProfileForm({ initialData }: ProfileFormProps) {
           </Button>
         }
         renderDisplay={() => (
-          <div className="bg-secondary text-muted-foreground w-full rounded-[6px] p-3 text-xs! font-medium sm:max-w-md">
+          <div className="bg-secondary text-white/65 w-full rounded-[6px] p-3 text-xs! font-medium sm:max-w-md">
             Reset link will be sent on registered mail
           </div>
         )}
