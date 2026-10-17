@@ -1,12 +1,8 @@
 'use client'
 
 import React from 'react'
-import {
-  ChevronLeft,
-  ChevronRight,
-  ChevronsRight,
-  ChevronsLeft,
-} from 'lucide-react'
+import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { cn } from '@/lib/utils'
 
 interface PaginationProps {
   currentPage: number
@@ -41,8 +37,8 @@ const Pagination: React.FC<PaginationProps> = ({
     }
 
     // Middle range
-    let start = leftSiblingIndex
-    let end = rightSiblingIndex
+    const start = leftSiblingIndex
+    const end = rightSiblingIndex
 
     for (let i = start; i <= end; i++) {
       if (i > 1 && i < totalPages) {
@@ -63,87 +59,61 @@ const Pagination: React.FC<PaginationProps> = ({
     return pages
   }
 
+  if (totalPages <= 1) return null
+
   return (
-    <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-6">
-      {/* Previous */}
-      <div className="flex items-center gap-1">
-        <button
-          disabled={currentPage === 1}
-          onClick={() => onPageChange(1)}
-          className="group hidden h-[37px] w-[37px] cursor-pointer items-center justify-center transition-colors hover:text-white disabled:cursor-not-allowed disabled:opacity-30 sm:flex"
-          aria-label="First Page"
-        >
-          <ChevronsLeft
-            aria-hidden="true"
-            className="text-white/65 h-auto min-h-6 w-auto min-w-6 transition-colors group-hover:text-white"
-          />
-        </button>
-        <button
-          disabled={currentPage === 1}
-          onClick={() => onPageChange(currentPage - 1)}
-          className="group flex h-[37px] w-[37px] cursor-pointer items-center justify-center transition-colors hover:text-white disabled:cursor-not-allowed disabled:opacity-30"
-          aria-label="Previous Page"
-        >
-          <ChevronLeft
-            aria-hidden="true"
-            className="text-white/65 h-auto min-h-6 w-auto min-w-6 transition-colors group-hover:text-white"
-          />
-        </button>
-      </div>
+    <nav aria-label="Pagination" className="flex items-center justify-center gap-1.5">
+      <button
+        type="button"
+        disabled={currentPage === 1}
+        onClick={() => onPageChange(currentPage - 1)}
+        className={ARROW_CLASS}
+        aria-label="Previous Page"
+      >
+        <ChevronLeft aria-hidden="true" className="size-4" />
+      </button>
 
-      {/* Page Numbers */}
-      <div className="flex items-center gap-0.5 sm:gap-[8px]">
-        {getPageNumbers().map((page, index) => (
-          <React.Fragment key={index}>
-            {page === '...' ? (
-              <div className="flex h-[11px] w-[30px] items-center justify-center sm:w-[54px]">
-                <span className="text-white/65 truncate text-center text-sm font-bold">
-                  ...
-                </span>
-              </div>
-            ) : (
-              <button
-                onClick={() => typeof page === 'number' && onPageChange(page)}
-                aria-current={currentPage === page ? 'page' : undefined}
-                className={`flex h-[32px] w-[32px] cursor-pointer items-center justify-center rounded-[6px] text-center text-sm font-bold transition-all sm:h-[37px] sm:w-[37px] ${currentPage === page
-                    ? 'bg-background border-primary text-white/95 border-2'
-                    : 'bg-secondary text-white/65 hover:bg-secondary border-none hover:text-white'
-                  }`}
-              >
-                {page}
-              </button>
+      {getPageNumbers().map((page, index) =>
+        page === '...' ? (
+          <span
+            key={`dots-${index}`}
+            aria-hidden="true"
+            className="flex h-9 w-6 items-center justify-center text-sm font-medium text-white/45"
+          >
+            ...
+          </span>
+        ) : (
+          <button
+            key={page}
+            type="button"
+            onClick={() => typeof page === 'number' && onPageChange(page)}
+            aria-current={currentPage === page ? 'page' : undefined}
+            className={cn(
+              'flex h-9 min-w-9 cursor-pointer items-center justify-center rounded-lg px-2 text-sm font-medium transition-colors outline-none focus-visible:ring-2 focus-visible:ring-white/40',
+              currentPage === page
+                ? 'text-background bg-white'
+                : 'bg-secondary text-white/65 hover:bg-white/10 hover:text-white',
             )}
-          </React.Fragment>
-        ))}
-      </div>
+          >
+            {page}
+          </button>
+        ),
+      )}
 
-      {/* Next */}
-      <div className="flex items-center gap-1">
-        <button
-          disabled={currentPage === totalPages}
-          onClick={() => onPageChange(currentPage + 1)}
-          className="group flex h-[32px] w-[32px] cursor-pointer items-center justify-center transition-colors hover:text-white disabled:cursor-not-allowed disabled:opacity-30"
-          aria-label="Next Page"
-        >
-          <ChevronRight
-            aria-hidden="true"
-            className="text-white/65 h-auto min-h-6 w-auto min-w-6 transition-colors group-hover:text-white"
-          />
-        </button>
-        <button
-          disabled={currentPage === totalPages}
-          onClick={() => onPageChange(totalPages)}
-          className="group hidden h-[32px] w-[32px] cursor-pointer items-center justify-center transition-colors hover:text-white disabled:cursor-not-allowed disabled:opacity-30 sm:flex"
-          aria-label="Last Page"
-        >
-          <ChevronsRight
-            aria-hidden="true"
-            className="text-white/65 h-auto min-h-6 w-auto min-w-6 transition-colors group-hover:text-white"
-          />
-        </button>
-      </div>
-    </div>
+      <button
+        type="button"
+        disabled={currentPage === totalPages}
+        onClick={() => onPageChange(currentPage + 1)}
+        className={ARROW_CLASS}
+        aria-label="Next Page"
+      >
+        <ChevronRight aria-hidden="true" className="size-4" />
+      </button>
+    </nav>
   )
 }
+
+const ARROW_CLASS =
+  'flex size-9 cursor-pointer items-center justify-center rounded-lg text-white/65 transition-colors outline-none hover:bg-white/5 hover:text-white focus-visible:ring-2 focus-visible:ring-white/40 disabled:pointer-events-none disabled:opacity-30'
 
 export default Pagination

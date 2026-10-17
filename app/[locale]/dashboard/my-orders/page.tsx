@@ -8,7 +8,8 @@ import { useOrderStore, type OrderTab, type SortOrder } from '@/store/useOrderSt
 import type { Order } from '@/lib/services/order.service'
 import { useDebounce } from '@/hooks/useDebounce'
 import { formatPrice as currencyFormatPrice } from '@/lib/currency'
-import { ACCOUNT_PRIMARY_BUTTON_CLASS, ACCOUNT_SECONDARY_BUTTON_CLASS } from '@/components/library/account-ui'
+import { ACCOUNT_PRIMARY_BUTTON_CLASS } from '@/components/library/account-ui'
+import Pagination from '@/components/store/Pagination'
 
 function formatDate(isoDate: string): string {
   const date = new Date(isoDate)
@@ -73,7 +74,6 @@ export default function MyOrdersPage() {
     sortOrder,
     setSortOrder,
     pageInfo,
-    fetchNextPage,
     currentCursor,
   } = useOrderStore()
 
@@ -84,16 +84,16 @@ export default function MyOrdersPage() {
     fetchOrders()
   }, [fetchOrders, activeTab, debouncedSearchQuery, sortOrder])
 
-  const handlePrevPage = () => {
-    // Go back to the first page (API cursor pagination doesn't support backward natively)
-    fetchOrders()
-  }
+  // The service pages by offset ("after" = how many orders to skip), so page N starts at (N-1) x size.
+  const pageSize = pageInfo.pageSize ?? 10
+  const currentPage = Math.floor((Number(currentCursor) || 0) / pageSize) + 1
+  const totalPages = Math.max(1, Math.ceil((pageInfo.totalCount ?? 0) / pageSize))
 
-  const handleNextPage = () => {
-    fetchNextPage()
+  const handlePageChange = (page: number) => {
+    if (page < 1 || page > totalPages || page === currentPage) return
+    fetchOrders(page === 1 ? undefined : String((page - 1) * pageSize))
+    window.scrollTo({ top: 0, behavior: 'smooth' })
   }
-
-  const isFirstPage = !currentCursor
 
   return (
     <div className="min-w-0 overflow-x-hidden">
@@ -168,23 +168,13 @@ export default function MyOrdersPage() {
         </div>
       )}
 
-      {/* Cursor-based Pagination */}
-      {!isLoading && !error && orders.length > 0 && (!isFirstPage || pageInfo.hasNextPage) && (
-        <div className="mt-10 flex items-center justify-center gap-4">
-          <button
-            onClick={handlePrevPage}
-            disabled={isFirstPage}
-            className={ACCOUNT_SECONDARY_BUTTON_CLASS}
-          >
-            ← First Page
-          </button>
-          <button
-            onClick={handleNextPage}
-            disabled={!pageInfo.hasNextPage}
-            className={ACCOUNT_SECONDARY_BUTTON_CLASS}
-          >
-            Next Page →
-          </button>
+      {!isLoading && !error && orders.length > 0 && totalPages > 1 && (
+        <div className="mt-10">
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={handlePageChange}
+          />
         </div>
       )}
     </div>

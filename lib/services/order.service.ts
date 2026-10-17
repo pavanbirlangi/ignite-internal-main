@@ -104,6 +104,9 @@ export interface OrderDetails extends Order {
 export interface OrderPageInfo {
   hasNextPage: boolean
   endCursor: string | null
+  // All matching orders and the page size, for numbered pages.
+  totalCount?: number
+  pageSize?: number
 }
 
 export interface GetOrdersResponse {
@@ -293,6 +296,8 @@ export const orderService = {
       pageInfo: {
         hasNextPage,
         endCursor: hasNextPage ? String(nextOffset) : null,
+        totalCount: orders.length,
+        pageSize,
       },
     }
   },
