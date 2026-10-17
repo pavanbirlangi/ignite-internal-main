@@ -50,6 +50,8 @@ export interface TicketConversationProps {
   messages: Message[]
   ticketId: string // Used currently for orderId
   shortId?: string // The generated ticket short ID
+  status?: TicketStatus
+  openedOn?: string
   onReply?: (message: string, attachments?: File[]) => Promise<void>
   isReplying?: boolean
 }

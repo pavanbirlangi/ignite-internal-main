@@ -2,11 +2,10 @@
 
 import { use, useState, useEffect, useCallback } from 'react'
 import { TicketConversation } from '@/components/tickets/TicketConversation'
-import { helpdeskService } from '@/lib/services/helpdesk.service'
-import { Loader2 } from 'lucide-react'
+import { helpdeskService, mapHDTicketToTicket } from '@/lib/services/helpdesk.service'
+import { ChevronLeft } from 'lucide-react'
 import Link from 'next/link'
-import LeftArrowIcon from '@/components/icons/LeftArrowIcon'
-import type { Message } from '@/types/TicketTypes'
+import type { Message, TicketStatus } from '@/types/TicketTypes'
 import { useUserStore } from '@/store/useUserStore'
 import { toast } from 'sonner'
 
@@ -16,20 +15,12 @@ interface TicketDetailsPageProps {
 
 function ConversationSkeleton() {
   return (
-    <div className="flex animate-pulse flex-col gap-8">
-      <div className="flex items-start gap-3">
-        <div className="bg-secondary size-8 rounded-full" />
-        <div className="flex-1 space-y-2">
-          <div className="bg-secondary h-4 w-24 rounded" />
-          <div className="bg-secondary h-3 w-48 rounded" />
-        </div>
-      </div>
-      {[1, 2].map((i) => (
-        <div key={i} className="flex gap-4">
-          <div className="bg-secondary size-14 shrink-0 rounded-full" />
-          <div className="bg-secondary h-28 flex-1 rounded-4xl" />
-        </div>
-      ))}
+    <div className="flex animate-pulse flex-col gap-4">
+      <div className="bg-secondary h-4 w-24 rounded" />
+      <div className="bg-secondary h-9 w-56 rounded-lg" />
+      <div className="bg-card border-border mt-2 h-24 rounded-xl border" />
+      <div className="bg-secondary ml-auto h-12 w-2/5 rounded-2xl" />
+      <div className="bg-secondary h-12 w-1/2 rounded-2xl" />
     </div>
   )
 }
@@ -43,6 +34,8 @@ export default function TicketDetailsPage({ params }: TicketDetailsPageProps) {
   const [messages, setMessages] = useState<Message[]>([])
   const [orderId, setOrderId] = useState<string>('')
   const [shortId, setShortId] = useState<string>('')
+  const [status, setStatus] = useState<TicketStatus | undefined>()
+  const [openedOn, setOpenedOn] = useState<string>('')
   const [isLoading, setIsLoading] = useState(true)
   const [isReplying, setIsReplying] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -67,8 +60,6 @@ export default function TicketDetailsPage({ params }: TicketDetailsPageProps) {
           },
         )
 
-        console.log(ticket, msgs)
-
         setMessages(msgs)
         const customFields = ticket.customFields ?? {}
         setOrderId(
@@ -78,6 +69,9 @@ export default function TicketDetailsPage({ params }: TicketDetailsPageProps) {
             id,
         )
         setShortId(ticket.shortID ?? '')
+        const summary = mapHDTicketToTicket(ticket)
+        setStatus(summary.status)
+        setOpenedOn(summary.openedOn)
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load ticket')
       } finally {
@@ -126,22 +120,19 @@ export default function TicketDetailsPage({ params }: TicketDetailsPageProps) {
 
   return (
     <div className="flex flex-col gap-8">
-      <div className="mx-auto w-full max-w-188 rounded-3xl bg-(--secondary-40) p-8 md:p-10">
+      <div className="w-full">
         {isLoading && <ConversationSkeleton />}
 
         {!isLoading && error && (
           <div className="flex flex-col gap-6">
-            <div className="flex items-start gap-2">
-              <Link
-                href="/dashboard/my-tickets"
-                className="inline-flex items-center py-1 text-white/95 transition-colors hover:opacity-75"
-              >
-                <LeftArrowIcon className="size-6" />
-              </Link>
-              <h2 className="text-2xl font-bold text-white/95">
-                Ticket Details
-              </h2>
-            </div>
+            <Link
+              href="/dashboard/my-tickets"
+              className="inline-flex w-fit items-center gap-1 text-sm text-white/65 transition-colors hover:text-white"
+            >
+              <ChevronLeft className="size-4" />
+              My Tickets
+            </Link>
+            <h1 className="text-3xl font-bold">Ticket Details</h1>
             <div className="border-red/30 bg-red/10 rounded-xl border p-6 text-center">
               <p className="text-red text-sm font-medium">{error}</p>
             </div>
@@ -153,6 +144,8 @@ export default function TicketDetailsPage({ params }: TicketDetailsPageProps) {
             messages={messages}
             ticketId={orderId}
             shortId={shortId}
+            status={status}
+            openedOn={openedOn}
             onReply={handleReply}
             isReplying={isReplying}
           />

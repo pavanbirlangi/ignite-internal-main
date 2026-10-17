@@ -55,18 +55,11 @@ function formatHDDate(iso: string): string {
 function formatHDDateTime(iso: string): string {
   try {
     const d = new Date(iso)
+    // "16 Sept 2026, 3:57 PM"
     return (
-      d.toLocaleTimeString('en-US', {
-        hour: '2-digit',
-        minute: '2-digit',
-        hour12: true,
-      }) +
+      d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) +
       ', ' +
-      d.toLocaleDateString('en-GB', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric',
-      })
+      d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })
     )
   } catch {
     return iso

@@ -1,15 +1,56 @@
 import { cn } from '@/lib/utils'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import Link from 'next/link'
-import LeftArrowIcon from '../icons/LeftArrowIcon'
-import type { TicketConversationProps } from '@/types/TicketTypes'
+import type { Message, TicketConversationProps, TicketStatus } from '@/types/TicketTypes'
 import { useState, useRef } from 'react'
-import { Paperclip, Send, Loader2, X } from 'lucide-react'
+import { ChevronLeft, Paperclip, Send, Loader2, X } from 'lucide-react'
+import {
+  ACCOUNT_CARD_CLASS,
+  ACCOUNT_PRIMARY_BUTTON_CLASS,
+  ACCOUNT_SECTION_LABEL_CLASS,
+  AccountPageHeader,
+  StatusPill,
+  type StatusTone,
+} from '@/components/library/account-ui'
 
+const STATUS_TONE: Record<TicketStatus, StatusTone> = {
+  'UNDER PROCESS': 'warning',
+  REJECTED: 'danger',
+  RESOLVED: 'success',
+}
+
+const STATUS_LABEL: Record<TicketStatus, string> = {
+  'UNDER PROCESS': 'Under process',
+  REJECTED: 'Rejected',
+  RESOLVED: 'Resolved',
+}
+
+function Attachments({ files }: { files: NonNullable<Message['content']['attachments']> }) {
+  return (
+    <div className="mt-2 flex flex-wrap gap-2">
+      {files.map((file, i) => (
+        <a
+          key={i}
+          href={file.url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="bg-background/60 border-border flex max-w-full items-center gap-2 rounded-lg border px-2.5 py-1.5 text-xs font-medium text-white/95 transition-colors hover:bg-white/10"
+        >
+          <Paperclip className="size-3.5 shrink-0 text-white/65" />
+          <span className="truncate">{file.name}</span>
+        </a>
+      ))}
+    </div>
+  )
+}
+
+// Chat view of a HelpDesk ticket: the original request pinned on top, then your messages on the
+// right and support's on the left, with the reply box at the bottom.
 export function TicketConversation({
   messages,
   ticketId,
   shortId,
+  status,
+  openedOn,
   onReply,
   isReplying = false,
 }: TicketConversationProps) {
@@ -38,247 +79,155 @@ export function TicketConversation({
     }
   }
 
+  const request = messages.find((msg) => msg.content.title)
+
   return (
-    <div className="flex flex-col space-y-6 md:space-y-8">
-      {/* Header Section */}
-      <div className="flex items-start gap-2">
-        <Link
-          href="/dashboard/my-tickets"
-          className="inline-flex items-center py-1 text-white/95 transition-colors hover:opacity-75"
-        >
-          <LeftArrowIcon className="size-5 md:size-6" />
-        </Link>
-        <div className="flex flex-col gap-1 md:gap-2">
-          <h2 className="flex items-center gap-3 text-2xl font-bold text-white/95 md:gap-4 md:text-3xl">
-            Ticket Details
-            {shortId && (
-              <span className="text-white/65 text-base font-normal">
-                #{shortId}
+    <div className="flex flex-col">
+      <Link
+        href="/dashboard/my-tickets"
+        className="mb-3 inline-flex w-fit items-center gap-1 rounded-md text-sm text-white/65 transition-colors outline-none hover:text-white focus-visible:ring-2 focus-visible:ring-white/40"
+      >
+        <ChevronLeft className="size-4" />
+        My Tickets
+      </Link>
+
+      <AccountPageHeader
+        title={shortId ? `Ticket #${shortId}` : 'Ticket Details'}
+        subtitle={ticketId ? `For order #${ticketId}` : undefined}
+        action={
+          status && <StatusPill tone={STATUS_TONE[status]}>{STATUS_LABEL[status]}</StatusPill>
+        }
+      />
+
+      {/* The original request */}
+      {request && (
+        <div className={cn(ACCOUNT_CARD_CLASS, 'mb-6 px-5 py-4')}>
+          <h2 data-display className={cn(ACCOUNT_SECTION_LABEL_CLASS, 'mb-2')}>
+            Request
+          </h2>
+          <div className="flex flex-col items-start justify-between gap-3 sm:flex-row">
+            <div className="min-w-0">
+              <p className="text-base font-bold text-white/95">{request.content.title}</p>
+              <p className="mt-0.5 text-sm! leading-5! text-white/65">
+                {[openedOn && `Opened ${openedOn}`, ticketId && `Order #${ticketId}`]
+                  .filter(Boolean)
+                  .join(' · ')}
+              </p>
+            </div>
+            {request.content.resolutionType && (
+              <span className="shrink-0 rounded-md bg-white/8 px-2 py-1 text-xs font-medium text-white/65">
+                Resolution: {request.content.resolutionType}
               </span>
             )}
-          </h2>
-          <p className="text-white/65 text-xs font-medium md:text-sm">
-            Read details regarding ticket raised for order ID{' '}
-            <span className="decoration-muted-foreground/50 underline underline-offset-4">
-              #{ticketId}
-            </span>
-          </p>
+          </div>
         </div>
-      </div>
+      )}
 
-      {/* Conversation Thread */}
-      <div className="space-y-8 md:space-y-12">
-        {messages.map((msg) => (
-          <div key={msg.id} className="relative">
-            <div className="flex flex-col gap-3 md:gap-4">
-              {/* Header Row: Avatar + Name/Time */}
-              <div
-                className={cn(
-                  'flex items-center gap-3 md:gap-4',
-                  msg.sender.role === 'support' && 'flex-row-reverse',
-                )}
-              >
-                <Avatar className="bg-primary grid size-10 place-items-center md:size-14">
-                  {msg.sender.avatar ? (
-                    <AvatarImage
-                      src={msg.sender.avatar}
-                      alt={msg.sender.name}
-                    />
-                  ) : null}
-                  <AvatarFallback className="bg-primary text-xs font-bold text-white/95 md:text-sm">
-                    {msg.sender.initials ||
-                      (msg.sender.role === 'user' ? 'U' : 'S')}
-                  </AvatarFallback>
-                </Avatar>
-
-                <div
-                  className={cn(
-                    'flex flex-col',
-                    msg.sender.role === 'support' && 'items-end',
-                  )}
-                >
-                  <span className="text-sm font-bold text-white/95 md:text-base">
-                    {msg.sender.name}
-                  </span>
-                  <span className="text-white/65 mt-0.5 text-xs font-medium md:mt-1 md:text-xs">
-                    {msg.timestamp}
-                  </span>
-                </div>
+      {/* Conversation */}
+      <div className="flex flex-col gap-4">
+        {messages.map((msg) => {
+          if (msg.type === 'status_update') {
+            return (
+              <div key={msg.id} className="flex flex-col items-center gap-1.5 py-1 text-center">
+                <p className="max-w-md text-xs! leading-4! text-white/65">{msg.content.text}</p>
+                {msg.status === 'RESOLVED' && <StatusPill tone="success">Marked resolved</StatusPill>}
               </div>
+            )
+          }
 
-              {/* Message Content Row */}
+          const isMine = msg.sender.role === 'user'
+          return (
+            <div key={msg.id} className={cn('flex flex-col', isMine ? 'items-end' : 'items-start')}>
+              <p className="mb-1 text-xs! leading-4! text-white/65">
+                {isMine ? 'You' : `${msg.sender.name} · Support`} · {msg.timestamp}
+              </p>
               <div
                 className={cn(
-                  'flex w-full',
-                  msg.sender.role === 'support' && 'justify-end',
+                  'max-w-[88%] rounded-2xl border px-3.5 py-2.5 text-sm text-white/95 sm:max-w-[78%]',
+                  isMine
+                    ? 'bg-primary/18 border-primary/35 rounded-br-md'
+                    : 'bg-card border-border rounded-bl-md',
                 )}
               >
-                {/* Standard Message Type */}
-                {msg.type === 'message' && (
-                  <div
-                    className={cn(
-                      'bg-secondary space-y-3 px-5 py-4 md:space-y-4 md:px-6 md:py-5',
-                      'w-full',
-                      msg.sender.role === 'user'
-                        ? 'rounded-tr-3xl rounded-br-3xl rounded-bl-3xl'
-                        : 'rounded-tl-3xl rounded-br-3xl rounded-bl-3xl',
-                    )}
-                  >
-                    {msg.content.title && (
-                      <div className="flex flex-col gap-2 pb-2 md:gap-3 md:pb-3">
-                        <div className="flex flex-col items-start justify-between gap-2 sm:flex-row sm:items-center">
-                          <h3 className="text-base font-bold text-white/95 md:text-xl">
-                            {msg.content.title}
-                          </h3>
-                          {msg.content.resolutionType && (
-                            <span className="text-white/65 text-xs font-bold whitespace-nowrap underline md:text-sm">
-                              Resolution Type: {msg.content.resolutionType}
-                            </span>
-                          )}
-                        </div>
-                        <p className="text-white/65 text-xs font-medium whitespace-pre-wrap md:text-xs">
-                          {msg.content.text}
-                        </p>
-                      </div>
-                    )}
-
-                    {!msg.content.title && (
-                      <p className="text-white/65 text-sm whitespace-pre-wrap md:text-base">
-                        {msg.content.text}
-                      </p>
-                    )}
-
-                    {msg.content.attachments &&
-                      msg.content.attachments.length > 0 && (
-                        <div className="mt-3 space-y-2 md:mt-4 md:space-y-3">
-                          <div className="bg-muted-foreground/30 h-px w-full" />
-                          <p className="text-white/65 text-xs font-medium md:text-xs">
-                            Attachments:
-                          </p>
-                          <div className="flex flex-wrap gap-2 md:gap-3">
-                            {msg.content.attachments.map((file, i) => (
-                              <a
-                                key={i}
-                                href={file.url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="bg-background/50 flex items-center gap-2 rounded-lg border border-white/10 px-3 py-2 transition-colors hover:bg-white/10"
-                              >
-                                <svg
-                                  xmlns="http://www.w3.org/2000/svg"
-                                  width="16"
-                                  height="16"
-                                  viewBox="0 0 24 24"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  strokeWidth="2"
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  className="text-white/65 shrink-0"
-                                >
-                                  <path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48" />
-                                </svg>
-                                <span className="text-xs font-medium text-white/95 md:text-sm line-clamp-1">
-                                  {file.name}
-                                </span>
-                              </a>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                  </div>
+                {msg.content.text && (
+                  <p className="text-sm! leading-5! whitespace-pre-wrap">{msg.content.text}</p>
                 )}
-
-                {/* Status Update Type */}
-                {msg.type === 'status_update' && (
-                  <div className="border-border bg-secondary w-[92%] space-y-3 rounded-tl-3xl rounded-br-3xl rounded-bl-3xl border p-5 sm:w-[85%] md:w-[75%] md:space-y-4 md:p-6 lg:max-w-[800px]">
-                    <p className="text-white/65 text-sm whitespace-pre-wrap md:text-base">
-                      {msg.content.text}
-                    </p>
-                    <div className="bg-muted-foreground/30 h-px w-full" />
-                    {msg.status === 'RESOLVED' && (
-                      <span className="bg-destructive inline-block rounded-md px-3 py-1.5 text-xs font-bold text-white/95 uppercase md:px-3 md:py-2 md:text-sm">
-                        Marked Resolved
-                      </span>
-                    )}
-                  </div>
+                {msg.content.attachments && msg.content.attachments.length > 0 && (
+                  <Attachments files={msg.content.attachments} />
                 )}
               </div>
             </div>
-          </div>
-        ))}
+          )
+        })}
       </div>
 
-      {/* Reply Section */}
+      {/* Reply */}
       {onReply && (
-        <div className="pt-4 md:mt-8 md:pt-0">
-          <div className="bg-secondary focus-within:border-primary/30 focus-within:ring-primary/30 relative rounded-3xl border border-white/5 p-1 transition-all focus-within:ring-1 md:rounded-4xl md:p-2">
-            <textarea
-              className="min-h-24 w-full resize-none border-none bg-transparent px-4 py-3 text-sm text-white/95 placeholder-white/40 focus:ring-0 focus:outline-none md:min-h-32 md:px-6 md:py-4 md:text-base"
-              placeholder="Type your message here..."
-              value={replyText}
-              onChange={(e) => setReplyText(e.target.value)}
+        <div
+          className={cn(
+            ACCOUNT_CARD_CLASS,
+            'focus-within:border-primary/50 mt-6 p-3 transition-colors',
+          )}
+        >
+          <textarea
+            aria-label="Your message"
+            className="min-h-20 w-full resize-none bg-transparent px-1 py-1 text-sm text-white/95 outline-none placeholder:text-white/45"
+            placeholder="Type your message here..."
+            value={replyText}
+            onChange={(e) => setReplyText(e.target.value)}
+            disabled={isReplying}
+          />
+
+          {attachments.length > 0 && (
+            <div className="flex flex-wrap gap-2 pb-2">
+              {attachments.map((file, i) => (
+                <div
+                  key={i}
+                  className="bg-secondary border-border flex items-center gap-2 rounded-lg border px-2.5 py-1 text-xs text-white/95"
+                >
+                  <span className="max-w-40 truncate">{file.name}</span>
+                  <button
+                    type="button"
+                    onClick={() => removeAttachment(i)}
+                    aria-label={`Remove ${file.name}`}
+                    className="cursor-pointer text-white/65 hover:text-white"
+                    disabled={isReplying}
+                  >
+                    <X className="size-3" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+
+          <div className="flex items-center justify-between">
+            <button
+              type="button"
+              aria-label="Attach files"
+              className="grid size-9 cursor-pointer place-items-center rounded-full text-white/65 transition-colors outline-none hover:bg-white/5 hover:text-white focus-visible:ring-2 focus-visible:ring-white/40"
+              onClick={() => fileInputRef.current?.click()}
               disabled={isReplying}
+            >
+              <Paperclip className="size-4.5" />
+            </button>
+            <input
+              type="file"
+              multiple
+              className="hidden"
+              ref={fileInputRef}
+              onChange={handleFileChange}
             />
 
-            {attachments.length > 0 && (
-              <div className="flex flex-wrap gap-2 px-4 pb-2 md:px-6">
-                {attachments.map((file, i) => (
-                  <div
-                    key={i}
-                    className="bg-secondary flex items-center gap-2 rounded-lg border border-white/10 px-2 py-1 text-xs text-white/95 md:px-3 md:py-1.5 md:text-xs"
-                  >
-                    <span className="max-w-32 truncate md:max-w-40">
-                      {file.name}
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => removeAttachment(i)}
-                      className="text-white/65 hover:text-white"
-                      disabled={isReplying}
-                    >
-                      <X className="size-3" />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            <div className="flex items-center justify-between px-4 pb-3 md:px-6 md:pb-4">
-              <div className="flex items-center gap-3 md:gap-4">
-                <button
-                  type="button"
-                  className="text-white/65 transition-colors hover:text-white"
-                  onClick={() => fileInputRef.current?.click()}
-                  disabled={isReplying}
-                >
-                  <Paperclip className="size-4 md:size-5" />
-                </button>
-                <input
-                  type="file"
-                  multiple
-                  className="hidden"
-                  ref={fileInputRef}
-                  onChange={handleFileChange}
-                />
-              </div>
-
-              <button
-                onClick={handleSend}
-                disabled={
-                  isReplying || (!replyText.trim() && attachments.length === 0)
-                }
-                className="bg-primary hover:bg-primary/90 flex items-center gap-2 rounded-full px-5 py-2 text-xs font-bold text-white/95 transition-all disabled:opacity-50 md:px-6 md:text-sm"
-              >
-                {isReplying ? (
-                  <Loader2 className="size-3 animate-spin md:size-4" />
-                ) : (
-                  <Send className="size-3 md:size-4" />
-                )}
-                <span className="hidden sm:inline">Send Message</span>
-                <span className="inline sm:hidden">Send</span>
-              </button>
-            </div>
+            <button
+              type="button"
+              onClick={handleSend}
+              disabled={isReplying || (!replyText.trim() && attachments.length === 0)}
+              aria-busy={isReplying || undefined}
+              className={ACCOUNT_PRIMARY_BUTTON_CLASS}
+            >
+              {isReplying ? <Loader2 className="animate-spin" /> : <Send />}
+              Send message
+            </button>
           </div>
         </div>
       )}
