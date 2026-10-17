@@ -1,5 +1,13 @@
 'use client'
-import { Search } from 'lucide-react'
+import { Heart, Search } from 'lucide-react'
+import Link from 'next/link'
+import { cn } from '@/lib/utils'
+import {
+  ACCOUNT_CARD_CLASS,
+  ACCOUNT_PRIMARY_BUTTON_CLASS,
+  ACCOUNT_SEARCH_INPUT_CLASS,
+  AccountPageHeader,
+} from '@/components/library/account-ui'
 import Pagination from '@/components/store/Pagination'
 import { useCallback, useState } from 'react'
 import { useWishlist } from '@/hooks/useWishlist'
@@ -38,27 +46,27 @@ const Wishlist = () => {
 
   return (
     <>
-      <div className="flex flex-col gap-12">
-        <div className="flex flex-col justify-between gap-6 sm:flex-row sm:items-center">
-          <h1 className="text-3xl font-bold md:text-3xl">Wishlist</h1>
-          <div className="relative w-full sm:max-w-130.5">
-            <Search className="text-white/65 absolute top-1/2 left-4 size-4 -translate-y-1/2" />
+      <div>
+        <AccountPageHeader title="Wishlist" />
+        {(wishlistItems.length > 0 || search) && (
+          <div className="relative mb-6 w-full sm:max-w-[520px]">
+            <Search className="absolute top-1/2 left-3.5 size-4 -translate-y-1/2 text-white/45" />
             <input
               type="text"
-              placeholder="Search here"
+              placeholder="Search your wishlist"
               value={search}
               onChange={(e) => handleSearchChange(e.target.value)}
-              className="border-muted-foreground/40 text-white/95 placeholder:text-muted-foreground focus:border-primary h-12.5 w-full rounded-full border bg-transparent pr-4 pl-10 text-sm transition-colors outline-none"
+              className={ACCOUNT_SEARCH_INPUT_CLASS}
             />
           </div>
-        </div>
+        )}
 
         <div className="grid grid-cols-2 justify-items-center gap-x-3.5 gap-y-6 sm:gap-x-4 sm:gap-y-8 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
           {isLoading ? (
             Array.from({ length: 5 }).map((_, i) => (
               <div
                 key={i}
-                className="bg-secondary/20 h-64 w-full animate-pulse rounded-2xl"
+                className="bg-card h-64 w-full animate-pulse rounded-2xl"
               />
             ))
           ) : wishlistItems.length > 0 ? (
@@ -66,8 +74,23 @@ const Wishlist = () => {
               <StoreCard key={wp.id} product={wp} wishlisted />
             ))
           ) : (
-            <div className="text-white/65 col-span-full flex h-72 items-center justify-center text-center">
-              Your wishlist is empty.
+            <div className={cn(ACCOUNT_CARD_CLASS, 'col-span-full w-full px-6 py-14 text-center')}>
+              <div className="bg-secondary mx-auto mb-4 grid size-14 place-items-center rounded-2xl text-white/65">
+                <Heart className="size-6" />
+              </div>
+              <p className="text-base font-bold text-white/95">
+                {search ? 'No matches in your wishlist' : 'Your wishlist is empty'}
+              </p>
+              <p className="mx-auto mt-1.5 mb-5 max-w-xs text-sm! leading-5! text-white/65">
+                {search
+                  ? 'Try a different search.'
+                  : 'Tap the heart on any game to save it here for later.'}
+              </p>
+              {!search && (
+                <Link href="/store" className={ACCOUNT_PRIMARY_BUTTON_CLASS}>
+                  Browse the store
+                </Link>
+              )}
             </div>
           )}
         </div>

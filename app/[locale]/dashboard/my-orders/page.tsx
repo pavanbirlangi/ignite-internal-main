@@ -3,11 +3,12 @@
 import { useEffect } from 'react'
 import { OrderHeader } from '@/components/orders/OrderHeader'
 import { OrderTabs } from '@/components/orders/OrderTabs'
-import { OrderCard, type OrderStatus } from '@/components/orders/OrderCard'
+import { OrderCard, getOrderDisplayStatus } from '@/components/orders/OrderCard'
 import { useOrderStore, type OrderTab, type SortOrder } from '@/store/useOrderStore'
 import type { Order } from '@/lib/services/order.service'
 import { useDebounce } from '@/hooks/useDebounce'
 import { formatPrice as currencyFormatPrice } from '@/lib/currency'
+import { ACCOUNT_PRIMARY_BUTTON_CLASS, ACCOUNT_SECONDARY_BUTTON_CLASS } from '@/components/library/account-ui'
 
 function formatDate(isoDate: string): string {
   const date = new Date(isoDate)
@@ -20,20 +21,6 @@ function formatDate(isoDate: string): string {
 
 function formatPrice(price: Order['totalPrice']): string {
   return currencyFormatPrice(price.amount, price.currencyCode)
-}
-
-function getDisplayStatus(order: Order): OrderStatus {
-  if (order.financialStatus === 'REFUNDED') return 'REFUNDED'
-  if (order.financialStatus === 'PARTIALLY_REFUNDED') return 'PARTIALLY_REFUNDED'
-  if (order.financialStatus === 'VOIDED') return 'VOIDED'
-  if (order.fulfillmentStatus === 'FULFILLED') return 'FULFILLED'
-  if (order.financialStatus === 'PAID') return 'PAID'
-  if (
-    order.financialStatus === 'PENDING' ||
-    order.financialStatus === 'AUTHORIZED'
-  )
-    return 'PENDING'
-  return order.financialStatus as OrderStatus
 }
 
 function getPrimaryLineItem(order: Order) {
@@ -117,7 +104,7 @@ export default function MyOrdersPage() {
         onSortChange={(value: SortOrder) => setSortOrder(value)}
       />
 
-      <div className="border-secondary mt-8 border-y py-4">
+      <div className="mt-4">
         <OrderTabs
           activeTab={activeTab}
           onTabChange={(tab) => setActiveTab(tab as OrderTab)}
@@ -126,11 +113,11 @@ export default function MyOrdersPage() {
 
       {/* Loading State */}
       {isLoading && (
-        <div className="mt-8 flex flex-col gap-4">
+        <div className="mt-6 flex flex-col gap-3">
           {[...Array(3)].map((_, i) => (
             <div
               key={i}
-              className="border-secondary bg-secondary/20 h-45 animate-pulse rounded-xl border"
+              className="bg-card border-border h-40 animate-pulse rounded-xl border"
             />
           ))}
         </div>
@@ -138,11 +125,11 @@ export default function MyOrdersPage() {
 
       {/* Error State */}
       {!isLoading && error && (
-        <div className="border-secondary bg-secondary/20 mt-8 flex flex-col items-center justify-center gap-4 rounded-xl border p-12 text-center">
+        <div className="bg-card border-border mt-6 flex flex-col items-center justify-center gap-4 rounded-xl border p-12 text-center">
           <p className="text-white/65">{error}</p>
           <button
             onClick={() => fetchOrders()}
-            className="bg-primary hover:bg-primary rounded-[6px] px-6 py-2 text-sm font-medium text-white/95 transition-colors"
+            className={ACCOUNT_PRIMARY_BUTTON_CLASS}
           >
             Try Again
           </button>
@@ -151,8 +138,8 @@ export default function MyOrdersPage() {
 
       {/* Empty State */}
       {!isLoading && !error && orders.length === 0 && (
-        <div className="border-secondary bg-secondary/20 mt-8 flex flex-col items-center justify-center gap-2 rounded-xl border p-12 text-center">
-          <p className="text-xl font-bold text-white/95">No orders found</p>
+        <div className="bg-card border-border mt-6 flex flex-col items-center justify-center gap-2 rounded-xl border p-12 text-center">
+          <p className="text-base font-bold text-white/95">No orders found</p>
           <p className="text-white/65 text-sm">
             {activeTab === 'All Orders'
               ? "You haven't placed any orders yet."
@@ -163,7 +150,7 @@ export default function MyOrdersPage() {
 
       {/* Order List */}
       {!isLoading && !error && orders.length > 0 && (
-        <div className="mt-8 flex flex-col gap-4">
+        <div className="mt-6 flex flex-col gap-3">
           {orders.map((order) => (
             <OrderCard
               key={order.id}
@@ -172,7 +159,7 @@ export default function MyOrdersPage() {
               productHandle={getOrderHandle(order)}
               amount={formatPrice(order.totalPrice)}
               purchaseDate={formatDate(order.processedAt)}
-              status={getDisplayStatus(order)}
+              status={getOrderDisplayStatus(order)}
               image={getOrderImage(order)}
               title={getFirstLineItemTitle(order)}
               itemsCount={getExtraItemsCount(order)}
@@ -187,14 +174,14 @@ export default function MyOrdersPage() {
           <button
             onClick={handlePrevPage}
             disabled={isFirstPage}
-            className="bg-secondary text-secondary-foreground hover:bg-secondary/80 disabled:pointer-events-none disabled:opacity-40 rounded-[6px] px-6 py-2.5 text-sm font-medium transition-colors"
+            className={ACCOUNT_SECONDARY_BUTTON_CLASS}
           >
             ← First Page
           </button>
           <button
             onClick={handleNextPage}
             disabled={!pageInfo.hasNextPage}
-            className="bg-secondary text-secondary-foreground hover:bg-secondary/80 disabled:pointer-events-none disabled:opacity-40 rounded-[6px] px-6 py-2.5 text-sm font-medium transition-colors"
+            className={ACCOUNT_SECONDARY_BUTTON_CLASS}
           >
             Next Page →
           </button>

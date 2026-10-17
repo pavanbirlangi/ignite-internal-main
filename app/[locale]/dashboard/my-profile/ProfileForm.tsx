@@ -1,6 +1,12 @@
 'use client'
 
-import { Button } from '@/components/ui/button'
+import { cn } from '@/lib/utils'
+import {
+  ACCOUNT_CARD_CLASS,
+  ACCOUNT_INPUT_CLASS,
+  ACCOUNT_TEXT_BUTTON_CLASS,
+  StatusPill,
+} from '@/components/library/account-ui'
 import { Loader2, CalendarIcon } from 'lucide-react'
 import { toast } from 'sonner'
 import { format } from 'date-fns'
@@ -45,7 +51,7 @@ export function ProfileForm({ initialData }: ProfileFormProps) {
 
 
   return (
-    <div className="glassmorphism bg-background/60 flex flex-col gap-6 rounded-[20px] px-4 py-4 sm:px-5">
+    <div className={cn(ACCOUNT_CARD_CLASS, 'flex flex-col overflow-hidden')}>
       <ProfileAvatar
         displayName={displayName}
         email={email}
@@ -78,9 +84,7 @@ export function ProfileForm({ initialData }: ProfileFormProps) {
         value={email}
         readOnly
         customAction={
-          <div className="bg-destructive rounded-[6px] px-3 py-2 text-xs font-bold text-white/95">
-            VERIFIED
-          </div>
+          <StatusPill tone="success">Verified</StatusPill>
         }
       />
 
@@ -125,14 +129,17 @@ export function ProfileForm({ initialData }: ProfileFormProps) {
             <div className="relative w-full">
               <Popover>
                 <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className={`bg-secondary hover:bg-secondary/80 focus:bg-secondary w-full justify-start rounded-[6px] border-none px-3 py-3.5 text-left text-xs! font-medium text-white/95 ${!date ? 'text-white/65' : ''}`}
-                    style={{ height: 'auto' }}
+                  <button
+                    type="button"
+                    className={cn(
+                      ACCOUNT_INPUT_CLASS,
+                      'flex cursor-pointer items-center gap-2 text-left',
+                      !date && 'text-white/45',
+                    )}
                   >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    <CalendarIcon className="size-4 text-white/65" />
                     {date ? format(date, 'PPP') : <span>Pick a date</span>}
-                  </Button>
+                  </button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0" align="start">
                   <Calendar
@@ -154,30 +161,33 @@ export function ProfileForm({ initialData }: ProfileFormProps) {
       {/* Password Section */}
       <EditableProfileField
         label="Password"
-        className="border-none pb-2"
         readOnly
         customAction={
-          <Button
-            variant={resetSent ? 'outline' : 'secondary'}
-            className={`w-full rounded-[6px] text-base font-bold sm:w-44 ${resetSent ? 'border-destructive text-destructive' : ''}`}
-            onClick={handleResetPassword}
-            disabled={isSendingReset || resetSent}
-          >
-            {isSendingReset ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Sending...
-              </>
-            ) : resetSent ? (
-              'Link Sent'
-            ) : (
-              'Change Password'
-            )}
-          </Button>
+          resetSent ? (
+            <StatusPill tone="success">Link sent</StatusPill>
+          ) : (
+            <button
+              type="button"
+              onClick={handleResetPassword}
+              disabled={isSendingReset}
+              className={ACCOUNT_TEXT_BUTTON_CLASS}
+            >
+              {isSendingReset ? (
+                <>
+                  <Loader2 className="mr-2 size-4 animate-spin" /> Sending...
+                </>
+              ) : (
+                'Change password'
+              )}
+            </button>
+          )
         }
         renderDisplay={() => (
-          <div className="bg-secondary text-white/65 w-full rounded-[6px] p-3 text-xs! font-medium sm:max-w-md">
-            Reset link will be sent on registered mail
-          </div>
+          <p className="text-sm! leading-5! font-medium text-white/65">
+            {resetSent
+              ? 'Check your inbox for the reset link'
+              : 'We email a reset link to your registered address'}
+          </p>
         )}
       />
     </div>

@@ -5,97 +5,79 @@ import { useState } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
-import ProfileIcon from "@/components/icons/dashboard/ProfileIcon"
-import ControllerIcon from "@/components/icons/dashboard/ControllerIcon"
-import WishlistIcon from "@/components/icons/dashboard/WishlistIcon"
-import BagIcon from "@/components/icons/dashboard/BagIcon"
-import SupportIcon from "@/components/icons/dashboard/SupportIcon"
 import { LogoutDialog } from '../auth/LogoutDialog'
-
-const sidebarItems = [
-  { label: "My Profile", icon: ProfileIcon, href: "/dashboard/my-profile" },
-  { label: "My Library", icon: ControllerIcon, href: "/dashboard/my-library" },
-  { label: "Wishlist", icon: WishlistIcon, href: "/dashboard/wishlist" },
-  { label: "My Orders", icon: BagIcon, href: "/dashboard/my-orders" },
-  { label: "My Tickets", icon: SupportIcon, href: "/dashboard/my-tickets" },
-]
+import { ACCOUNT_NAV_ITEMS, isAccountNavActive } from "./account-nav"
+import { ACCOUNT_NAV_ACTIVE_CLASS, ACCOUNT_NAV_LINK_CLASS, AccountIdentity } from "./Sidebar"
 
 export function MobileSidebar() {
   const [isOpen, setIsOpen] = useState(false)
   const [logoutDialogOpen, setLogoutDialogOpen] = useState(false)
   const pathname = usePathname()
 
-  // Find the current active item based on the URL
-  const activeItem = sidebarItems.find((item) =>  item.href === '/'
-              ? pathname === '/' || pathname.match(/^\/[a-z]{2}$/) 
-              : pathname.includes(item.href)) || sidebarItems[1]
+  const activeItem =
+    ACCOUNT_NAV_ITEMS.find((item) => isAccountNavActive(pathname, item.href)) || ACCOUNT_NAV_ITEMS[1]
   const ActiveIcon = activeItem.icon
 
   return (
-    <div className="lg:hidden w-full py-6 relative">
-      {/* Dropdown Trigger */}
+    <div className="relative w-full lg:hidden">
+      <AccountIdentity className="pb-3" />
+
       <button
+        type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className="flex h-[50px] w-full items-center justify-between rounded-[12px] bg-secondary px-5 text-sm font-bold text-white/95 transition-colors"
+        aria-expanded={isOpen}
+        className="bg-card border-border flex h-12 w-full cursor-pointer items-center justify-between rounded-xl border px-4 text-sm font-medium text-white/95 outline-none focus-visible:ring-2 focus-visible:ring-white/40"
       >
-        <span className="flex items-center gap-2">
+        <span className="flex items-center gap-2.5">
           <ActiveIcon className="size-5" />
           {activeItem.label}
         </span>
-        <ChevronDown className={cn("h-4 w-4 transition-transform", isOpen && "rotate-180")} />
+        <ChevronDown className={cn("size-4 text-white/65 transition-transform", isOpen && "rotate-180")} />
       </button>
 
-      {/* Dropdown Menu */}
       {isOpen && (
         <>
-          {/* Overlay to close dropdown when clicking outside */}
+          {/* Clicking anywhere outside closes the menu */}
           <div
             className="fixed inset-0 z-40 bg-transparent"
             onClick={() => setIsOpen(false)}
           />
 
-          <div className="absolute left-0 right-0 z-50 mt-2 flex flex-col overflow-hidden rounded-[12px] border border-border bg-card shadow-lg">
-            <nav className="flex flex-col">
-              {sidebarItems.map((item) => {
-                const isActive = pathname === item.href || (item.href !== '/dashboard' && pathname.startsWith(item.href))
-                const Icon = item.icon
-                return (
-                  <Link
-                    key={item.label}
-                    href={item.href}
-                    onClick={() => setIsOpen(false)}
-                    className={cn(
-                      "flex items-center gap-3 px-5 py-4 text-sm font-bold transition-colors",
-                      isActive
-                        ? "bg-primary text-white/95"
-                        : "text-white/65 hover:bg-secondary/50"
-                    )}
-                  >
-                    <Icon className={cn("size-5", isActive ? "text-white/95" : "")} />
-                    <span className="text-sm">{item.label}</span>
-                  </Link>
-                )
-              })}
+          <nav className="bg-card border-border absolute right-0 left-0 z-50 mt-2 flex flex-col gap-0.5 rounded-xl border p-1 shadow-lg">
+            {ACCOUNT_NAV_ITEMS.map((item) => {
+              const isActive = isAccountNavActive(pathname, item.href)
+              const Icon = item.icon
+              return (
+                <Link
+                  key={item.label}
+                  href={item.href}
+                  onClick={() => setIsOpen(false)}
+                  aria-current={isActive ? "page" : undefined}
+                  className={cn(ACCOUNT_NAV_LINK_CLASS, isActive && ACCOUNT_NAV_ACTIVE_CLASS)}
+                >
+                  <Icon className="size-5 shrink-0" />
+                  {item.label}
+                </Link>
+              )
+            })}
 
-              {/* Logout Button */}
+            <div className="border-border mt-1 border-t pt-1">
               <button
+                type="button"
                 onClick={() => {
                   setIsOpen(false)
                   setLogoutDialogOpen(true)
                 }}
-                className={cn(
-                  "flex items-center gap-3 px-5 py-4 text-sm font-bold transition-colors text-red cursor-pointer"
-                )}
+                className={ACCOUNT_NAV_LINK_CLASS}
               >
-                <LogOut className="size-5" />
-                <span className="text-sm">Logout</span>
+                <LogOut className="size-5 shrink-0" />
+                Log out
               </button>
-            </nav>
-          </div>
+            </div>
+          </nav>
         </>
       )}
 
-      {/* Logout Confirmation Dialog */}
       <LogoutDialog open={logoutDialogOpen} onOpenChange={setLogoutDialogOpen} />
     </div>
   )

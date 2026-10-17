@@ -59,7 +59,7 @@ export function LibraryPageContainer({
       />
 
       {/* Filter Tabs Section */}
-      <div className="border-secondary mt-8 border-y py-4">
+      <div className="mt-4">
         <LibraryTabs
           categories={data?.facets.categories}
           activeCategory={queryParams.category || ''}

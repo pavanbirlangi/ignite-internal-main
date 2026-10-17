@@ -1,6 +1,13 @@
 'use client'
 
-import { getProxyImageUrl } from '@/lib/utils'
+import { cn, getProxyImageUrl } from '@/lib/utils'
+import {
+  ACCOUNT_CARD_CLASS,
+  ACCOUNT_SECONDARY_BUTTON_CLASS,
+  MetaItem,
+  StatusPill,
+  type StatusTone,
+} from '@/components/library/account-ui'
 import Image from 'next/image'
 import Link from 'next/link'
 
@@ -32,28 +39,49 @@ interface OrderCardProps {
   onViewDetails?: () => void
 }
 
-const getStatusColor = (status: OrderStatus) => {
+// One status per order for the badge: refunds first, then delivery, then payment.
+export function getOrderDisplayStatus(order: {
+  financialStatus?: string
+  fulfillmentStatus?: string
+}): OrderStatus {
+  if (order.financialStatus === 'REFUNDED') return 'REFUNDED'
+  if (order.financialStatus === 'PARTIALLY_REFUNDED') return 'PARTIALLY_REFUNDED'
+  if (order.financialStatus === 'VOIDED') return 'VOIDED'
+  if (order.fulfillmentStatus === 'FULFILLED') return 'FULFILLED'
+  if (order.financialStatus === 'PAID') return 'PAID'
+  if (order.financialStatus === 'PENDING' || order.financialStatus === 'AUTHORIZED')
+    return 'PENDING'
+  return order.financialStatus as OrderStatus
+}
+
+export function orderStatusTone(status: OrderStatus): StatusTone {
   switch (status) {
-    case 'PAID':
     case 'FULFILLED':
     case 'SUCCESSFUL':
-      return 'bg-destructive text-white/95'
+      return 'success'
+    case 'PAID':
+    case 'AUTHORIZED':
+      return 'info'
     case 'CANCELLED':
     case 'VOIDED':
-      return 'bg-red text-white/95'
+      return 'danger'
+    case 'PENDING':
+    case 'UNFULFILLED':
+    case 'PARTIALLY_FULFILLED':
     case 'REFUNDED':
     case 'PARTIALLY_REFUNDED':
     case 'REFUND SUCCESSFUL':
-      return 'bg-primary text-white/95'
-    case 'PENDING':
-    case 'AUTHORIZED':
-    case 'UNFULFILLED':
-    case 'PARTIALLY_FULFILLED':
     case 'REFUND INITIATED':
-      return 'bg-accent text-white/95'
+      return 'warning'
     default:
-      return 'bg-secondary text-white/65'
+      return 'neutral'
   }
+}
+
+// PARTIALLY_REFUNDED -> "Partially refunded"
+export function orderStatusLabel(status: OrderStatus) {
+  const words = status.replace(/_/g, ' ').toLowerCase()
+  return words.charAt(0).toUpperCase() + words.slice(1)
 }
 
 export function OrderCard({
@@ -73,77 +101,57 @@ export function OrderCard({
     ? `/${encodeURIComponent(productHandle)}`
     : null
 
-  return (
-    <div className="border-secondary text-card-foreground bg-secondary/20 w-full min-w-0 rounded-xl border px-5 py-3 shadow-sm backdrop-blur-[50px]">
-      {/* Top Row: Meta Data & Status */}
-      <div className="mb-6 flex flex-col justify-between gap-4 md:flex-row md:items-center">
-        <div className="flex flex-wrap gap-8 text-sm font-medium">
-          <div className="flex flex-col gap-1">
-            <span className="text-white/65 text-xs">Purchased on</span>
-            <span className="font-bold text-white/95">{purchaseDate}</span>
-          </div>
-          <div className="flex flex-col gap-1">
-            <span className="text-white/65 text-xs">Order Amount</span>
-            <span className="font-bold text-white/95">{amount}</span>
-          </div>
-          <div className="flex flex-col gap-1">
-            <span className="text-white/65 text-xs">Order ID</span>
-            <span className="font-bold text-white/95">#{id}</span>
-          </div>
-        </div>
+  const titleContent = (
+    <>
+      {title}
+      {itemsCount > 0 && (
+        <span className="ml-1.5 font-medium text-white/65">+ {itemsCount} more</span>
+      )}
+    </>
+  )
 
-        <div
-          className={`w-fit rounded px-3 py-1 text-xs font-bold uppercase ${getStatusColor(status)}`}
-        >
-          {status.replace(/_/g, ' ')}
+  return (
+    <div className={cn(ACCOUNT_CARD_CLASS, 'w-full min-w-0 px-4 py-4 sm:px-5')}>
+      {/* Top row: order facts and status */}
+      <div className="mb-4 flex flex-col-reverse items-start gap-3 sm:flex-row sm:justify-between sm:gap-4">
+        <div className="flex flex-wrap gap-x-8 gap-y-3">
+          <MetaItem label="Purchased on" value={purchaseDate} />
+          <MetaItem label="Order Amount" value={amount} />
+          <MetaItem label="Order ID" value={`#${id}`} />
         </div>
+        <StatusPill tone={orderStatusTone(status)}>{orderStatusLabel(status)}</StatusPill>
       </div>
 
-      <div className="mb-6 h-px w-full bg-white/5"></div>
+      <div className="bg-border mb-4 h-px w-full" />
 
-      {/* Product Content */}
+      {/* Product and action */}
       <div className="flex w-full min-w-0 flex-col justify-between gap-4 md:flex-row md:items-center">
         <div className="flex min-w-0 items-center gap-4">
-          <div className="relative h-20 w-15.5 shrink-0 overflow-hidden rounded-md">
-            <Image src={getProxyImageUrl(image)} alt={title} fill className="object-cover" />
+          <div className="bg-secondary relative h-16 w-12 shrink-0 overflow-hidden rounded-md">
+            <Image src={getProxyImageUrl(image)} alt={title} fill sizes="48px" className="object-cover" />
           </div>
 
           {productHref ? (
             <Link
               href={productHref}
-              className="min-w-0 flex-1 text-base font-bold text-white/95 transition-colors hover:underline md:max-w-100 md:text-xl"
+              className="min-w-0 flex-1 text-base font-bold text-white/95 transition-colors hover:underline md:max-w-[480px]"
             >
-              <h3 className="line-clamp-2 wrap-break-word">
-                {title}
-                {itemsCount > 0 && (
-                  <span className="text-white/65 ml-2 font-normal">
-                    & {itemsCount} more
-                  </span>
-                )}
-              </h3>
+              <h3 className="line-clamp-2 wrap-break-word">{titleContent}</h3>
             </Link>
           ) : (
-            <h3 className="min-w-0 flex-1 text-base font-bold wrap-break-word text-white/95 md:max-w-100 md:text-xl">
-              {title}
-              {itemsCount > 0 && (
-                <span className="text-white/65 ml-2 font-normal">
-                  & {itemsCount} more
-                </span>
-              )}
+            <h3 className="min-w-0 flex-1 text-base font-bold wrap-break-word text-white/95 md:max-w-[480px]">
+              {titleContent}
             </h3>
           )}
         </div>
 
-        {/* Action Button */}
-        <div className="mt-2 flex shrink-0 md:mt-0">
-          <Link
-            href={orderDetailsHref}
-            onClick={onViewDetails}
-            className="border-muted-foreground flex h-10 w-full cursor-pointer items-center justify-center rounded-[6px] border bg-transparent px-6 text-sm font-medium text-white/95 transition-colors hover:bg-white/5 md:w-auto"
-          >
-            View Details
-          </Link>
-        </div>
+        <Link
+          href={orderDetailsHref}
+          onClick={onViewDetails}
+          className={cn(ACCOUNT_SECONDARY_BUTTON_CLASS, 'w-full md:w-auto')}
+        >
+          View Details
+        </Link>
       </div>
     </div>
   )

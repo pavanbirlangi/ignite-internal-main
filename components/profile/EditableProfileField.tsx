@@ -1,10 +1,14 @@
 'use client'
 
 import { useEffect, useState, ReactNode } from 'react'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import { ProfileField } from './ProfileField'
 import { Loader2 } from 'lucide-react'
+import { cn } from '@/lib/utils'
+import {
+  ACCOUNT_INPUT_CLASS,
+  ACCOUNT_PRIMARY_BUTTON_CLASS,
+  ACCOUNT_TEXT_BUTTON_CLASS,
+} from '@/components/library/account-ui'
 
 interface EditableProfileFieldProps {
   label: string
@@ -71,74 +75,82 @@ export function EditableProfileField({
   } else if (!readOnly && onSave) {
     if (isEditing) {
       actionContent = (
-        <div className="flex w-full gap-2 sm:w-auto">
-          <Button
-            variant="ghost"
+        <div className="flex gap-2">
+          <button
+            type="button"
             onClick={handleCancel}
             disabled={isSaving}
-            className="flex-1 rounded-[6px] text-base font-bold sm:flex-none"
+            className={cn(ACCOUNT_TEXT_BUTTON_CLASS, 'h-10 px-3')}
           >
             Cancel
-          </Button>
-          <Button
-            variant="primary"
-            className="w-full flex-1 rounded-[6px] text-base font-bold sm:w-44"
+          </button>
+          <button
+            type="button"
             onClick={handleSave}
             disabled={isSaving}
+            aria-busy={isSaving || undefined}
+            className={cn(ACCOUNT_PRIMARY_BUTTON_CLASS, 'min-w-20')}
           >
-            {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Save'}
-          </Button>
+            {isSaving ? <Loader2 className="animate-spin" /> : 'Save'}
+          </button>
         </div>
       )
     } else {
       actionContent = (
-        <Button
-          variant="secondary"
-          className="w-full rounded-[6px] text-base font-bold sm:w-44"
+        <button
+          type="button"
           onClick={() => setIsEditing(true)}
+          className={ACCOUNT_TEXT_BUTTON_CLASS}
         >
-          Update
-        </Button>
+          {value ? 'Edit' : 'Add'}
+        </button>
       )
     }
-  } else if (readOnly && customAction) {
-    actionContent = customAction
   }
 
   const displayContent = renderDisplay ? (
     renderDisplay(value)
   ) : (
-    <div className="relative w-full">
-      <Input
-        value={value}
-        readOnly
-        placeholder={placeholder || '--'}
-        className="bg-secondary text-white/65 cursor-default rounded-[6px] border-none py-3.5 pr-8 text-xs! font-medium"
-      />
+    <div className="relative">
+      <p
+        className={cn(
+          'truncate text-sm! leading-5! font-medium',
+          value ? 'text-white/95' : 'text-white/65',
+        )}
+      >
+        {value || placeholder || 'Not added'}
+      </p>
       {children}
     </div>
   )
 
   return (
-    <ProfileField label={label} action={actionContent} className={className}>
+    <ProfileField
+      label={label}
+      action={actionContent}
+      className={className}
+      stacked={isEditing}
+    >
       {isEditing ? (
-        renderEdit ? (
-          renderEdit(tempValue, setTempValue)
-        ) : (
-          <Input
-            value={tempValue}
-            onChange={(e) =>
-              setTempValue(
-                transformValue ? transformValue(e.target.value) : e.target.value,
-              )
-            }
-            placeholder={placeholder}
-            className="bg-secondary rounded-[6px] border-none text-xs! font-medium"
-            inputMode={inputMode}
-            maxLength={maxLength}
-            autoFocus
-          />
-        )
+        <div className="pt-1">
+          {renderEdit ? (
+            renderEdit(tempValue, setTempValue)
+          ) : (
+            <input
+              value={tempValue}
+              onChange={(e) =>
+                setTempValue(
+                  transformValue ? transformValue(e.target.value) : e.target.value,
+                )
+              }
+              placeholder={placeholder}
+              className={ACCOUNT_INPUT_CLASS}
+              inputMode={inputMode}
+              maxLength={maxLength}
+              autoFocus
+            />
+          )}
+        </div>
       ) : (
         displayContent
       )}

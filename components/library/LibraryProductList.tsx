@@ -49,7 +49,7 @@ export function LibraryProductList({
             />
           </svg>
         </div>
-        <h3 className="text-xl font-bold text-white/95">No products found</h3>
+        <h3 className="text-base font-bold text-white/95">No products found</h3>
         <p className="text-white/65 mt-2 max-w-sm text-sm">
           We couldn't find any products in your library matching your current
           filters.
@@ -62,7 +62,7 @@ export function LibraryProductList({
   return (
     <>
       {data && data.items.length > 0 && (
-        <div className="relative mt-8 flex flex-col gap-6">
+        <div className="relative mt-6 flex flex-col gap-3">
           {loading && (
             <div className="bg-background/50 absolute inset-0 z-10 flex items-center justify-center rounded-xl backdrop-blur-sm">
               <Loader2 className="text-primary h-8 w-8 animate-spin" />

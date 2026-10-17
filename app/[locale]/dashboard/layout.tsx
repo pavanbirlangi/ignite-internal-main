@@ -18,11 +18,12 @@ export default function LibraryLayout({
   children: React.ReactNode
 }) {
   return (
-    <div className="bg-background border-muted-foreground/40 mt-2 flex min-h-screen flex-col border-t md:mt-6">
-      <div className="mx-auto flex w-full max-w-[1440px] flex-1 flex-col max-lg:px-4 md:gap-8 lg:flex-row lg:items-stretch">
+    <div className="bg-background flex min-h-screen flex-col">
+      {/* Same container as the header, so the menu and content line up with the logo and icons. */}
+      <div className="container flex flex-1 flex-col gap-4 pt-4 [--max-width-container:1240px] md:pt-8 lg:flex-row lg:items-start lg:gap-10">
         <MobileSidebar />
         <Sidebar />
-        <main className="min-w-0 flex-1 py-4 !pb-20 md:py-10">{children}</main>
+        <main className="min-w-0 flex-1 pb-24">{children}</main>
       </div>
     </div>
   )

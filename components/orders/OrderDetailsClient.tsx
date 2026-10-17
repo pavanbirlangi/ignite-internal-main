@@ -1,11 +1,25 @@
 'use client'
 
-import { ChevronRight, Download } from 'lucide-react'
+import { ChevronLeft, Download } from 'lucide-react'
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
 import { OrderDetailItem } from '@/components/orders/OrderDetailItem'
 import { TransactionDetails } from '@/components/orders/TransactionDetails'
+import {
+  getOrderDisplayStatus,
+  orderStatusLabel,
+  orderStatusTone,
+} from '@/components/orders/OrderCard'
+import {
+  ACCOUNT_CARD_CLASS,
+  ACCOUNT_PRIMARY_BUTTON_CLASS,
+  ACCOUNT_SECONDARY_BUTTON_CLASS,
+  ACCOUNT_SECTION_LABEL_CLASS,
+  AccountPageHeader,
+  StatusPill,
+} from '@/components/library/account-ui'
+import { cn } from '@/lib/utils'
 import { RevealProductModal } from '@/components/library/RevealProductModal'
 import {
   formatOrderDate,
@@ -161,169 +175,146 @@ export default function OrderDetailsClient({
     }
   }
 
+  const displayStatus = order ? getOrderDisplayStatus(order) : null
+
   return (
     <>
-      {/* Breadcrumb Header */}
-      <div className="mb-6 flex min-w-0 flex-wrap items-center gap-2 md:mb-8 md:gap-3">
-        <Link
-          href="/dashboard/my-orders"
-          className="text-white/65 text-xl font-bold transition-colors hover:text-white sm:text-2xl md:text-3xl"
-        >
-          My Orders
-        </Link>
-        <ChevronRight className="text-white/65 size-5 shrink-0 sm:size-6 md:size-7" />
-        <h1 className="text-xl font-bold text-white/95 sm:text-2xl md:text-3xl">
-          Order Details
-        </h1>
-      </div>
+      <Link
+        href="/dashboard/my-orders"
+        className="mb-3 inline-flex items-center gap-1 rounded-md text-sm text-white/65 transition-colors outline-none hover:text-white focus-visible:ring-2 focus-visible:ring-white/40"
+      >
+        <ChevronLeft className="size-4" />
+        My Orders
+      </Link>
 
-      {/* Order Summary Card */}
-      <div className="border-secondary bg-secondary/20 mb-8 rounded-xl border p-5 backdrop-blur-[50px]">
-        <div className="flex flex-col justify-between gap-6 md:flex-row md:items-center">
-          <div className="flex flex-wrap gap-8 md:gap-16">
-            <div className="flex flex-col gap-1">
-              <span className="text-white/65 text-sm">
-                Purchased on
-              </span>
-              <span className="font-bold text-white/95">
-                {order?.processedAt ? formatOrderDate(order.processedAt) : '-'}
-              </span>
-            </div>
-            <div className="flex flex-col gap-1">
-              <span className="text-white/65 text-sm">
-                Order Amount
-              </span>
-              <span className="font-bold text-white/95">
-                {formatOrderPrice(
-                  order?.totalPrice?.amount,
-                  order?.totalPrice?.currencyCode,
-                )}
-              </span>
-            </div>
-            <div className="flex flex-col gap-1">
-              <span className="text-white/65 text-sm">Order ID</span>
-              <span className="font-bold text-white/95 uppercase">
-                #{order?.orderNumber ?? '-'}
-              </span>
-            </div>
-          </div>
-
-          <div className="flex flex-col gap-3 sm:flex-row">
-            <button
-              onClick={handleDownloadReceipt}
-              disabled={!order || !hasReceipt(order)}
-              title={
-                order && !hasReceipt(order)
-                  ? 'A receipt is available once payment is confirmed'
-                  : undefined
-              }
-              className="border-muted-foreground flex h-10 cursor-pointer items-center justify-center gap-2 rounded-[6px] border px-6 text-sm font-medium text-white/95 transition-colors hover:bg-white/5 disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              <Download className="h-4 w-4" />
-              Download Receipt
-            </button>
-            <button
-              onClick={handleDownloadAllKeys}
-              disabled={!order || keysLoading}
-              className="bg-primary hover:bg-primary/90 flex h-10 cursor-pointer items-center justify-center gap-2 rounded-[6px] px-6 text-sm font-bold text-white/95 transition-colors disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              <Download className="h-4 w-4" />
-              Download All Keys
-            </button>
-          </div>
-        </div>
-      </div>
+      <AccountPageHeader
+        title={order ? `Order #${order.orderNumber}` : 'Order Details'}
+        subtitle={order?.processedAt ? `Placed ${formatOrderDate(order.processedAt)}` : undefined}
+        action={
+          displayStatus && (
+            <StatusPill tone={orderStatusTone(displayStatus)}>
+              {orderStatusLabel(displayStatus)}
+            </StatusPill>
+          )
+        }
+      />
 
       {isLoading && (
-        <div className="mt-8 flex flex-col gap-4">
-          {[...Array(2)].map((_, index) => (
-            <div
-              key={index}
-              className="border-secondary bg-secondary/20 h-35 animate-pulse rounded-xl border"
-            />
-          ))}
+        <div className="flex flex-col gap-6 lg:flex-row lg:items-start">
+          <div className="bg-card border-border h-40 flex-1 animate-pulse rounded-xl border" />
+          <div className="bg-card border-border h-72 w-full animate-pulse rounded-xl border lg:w-[340px]" />
         </div>
       )}
 
       {!isLoading && error && (
-        <div className="border-secondary bg-secondary/20 mt-8 flex flex-col items-center justify-center gap-4 rounded-xl border p-12 text-center">
+        <div className={cn(ACCOUNT_CARD_CLASS, 'flex flex-col items-center justify-center gap-4 p-12 text-center')}>
           <p className="text-white/65">{error}</p>
         </div>
       )}
 
-      {/* Order Items List */}
-      {!isLoading && !error && lineItems.length > 0 && (
-        <div className="flex flex-col gap-4">
-          {lineItems.map((item, index) => {
-            const node = item.node
-            const variant = node?.variant
-            const productTitle = node?.title || 'Untitled Product'
-            const variantName = getVariantDisplayName(variant?.title)
-
-            return (
-              <OrderDetailItem
-                key={variant?.id ?? `${productTitle}-${index}`}
-                image={variant?.image?.url ?? '/images/404.png'}
-                title={productTitle}
-                productHandle={variant?.product?.handle}
-                variantTitle={variantName}
-                price={formatOrderPrice(
-                  variant?.price?.amount,
-                  variant?.price?.currencyCode,
-                )}
-                quantity={node?.quantity ?? 1}
-                tags={node?.tags ?? variant?.product?.tags ?? []}
-                onReveal={() => handleViewKey(item)}
-              />
-            )
-          })}
-        </div>
-      )}
-
-      {!isLoading && !error && lineItems.length === 0 && (
-        <div className="border-secondary bg-secondary/20 mt-8 flex flex-col items-center justify-center gap-2 rounded-xl border p-12 text-center">
-          <p className="text-xl font-bold text-white/95">
-            No items found in this order
-          </p>
-        </div>
-      )}
-
-      {/* Transaction Details */}
       {!isLoading && !error && order && (
-        <TransactionDetails
-          transactionNumber={`${order.orderNumber}`}
-          paymentMode={paymentModeDisplay}
-          subtotal={formatOrderPrice(order.itemsSubtotal, order.totalPrice?.currencyCode)}
-          discount={formatOptionalAmount(order.totalDiscountV2, '-')}
-          serviceFee={
-            order.platformFee
-              ? formatOrderPrice(order.platformFee, order.totalPrice?.currencyCode)
-              : undefined
-          }
-          serviceFeeLabel={order.platformFeeLabel}
-          tax={formatOptionalAmount(order.totalTaxV2)}
-          refunded={formatOptionalAmount(order.totalRefundedV2, '-')}
-          charged={(() => {
-            const foreign = getForeignCharge(order.paymentMethod, order.totalPrice?.currencyCode)
-            return foreign
-              ? {
-                  currency: foreign.currency.toUpperCase(),
-                  amount: formatOrderPrice(foreign.amount, foreign.currency.toUpperCase()),
-                }
-              : undefined
-          })()}
-          netPaid={formatOrderPrice(
-            Math.max(
-              0,
-              Number(order.totalPrice?.amount ?? 0) - Number(order.totalRefundedV2?.amount ?? 0),
-            ).toFixed(2),
-            order.totalPrice?.currencyCode,
-          )}
-          total={formatOrderPrice(
-            order.totalPrice?.amount,
-            order.totalPrice?.currencyCode,
-          )}
-        />
+        <div className="flex flex-col gap-6 lg:flex-row lg:items-start">
+          {/* Products */}
+          <div className={cn(ACCOUNT_CARD_CLASS, 'min-w-0 flex-1 p-5')}>
+            <h2 data-display className={cn(ACCOUNT_SECTION_LABEL_CLASS, 'mb-4')}>
+              Products
+            </h2>
+            {lineItems.length > 0 ? (
+              <div className="divide-border flex flex-col divide-y [&>*]:py-4 [&>*:first-child]:pt-0 [&>*:last-child]:pb-0">
+                {lineItems.map((item, index) => {
+                  const node = item.node
+                  const variant = node?.variant
+                  const productTitle = node?.title || 'Untitled Product'
+                  const variantName = getVariantDisplayName(variant?.title)
+
+                  return (
+                    <OrderDetailItem
+                      key={variant?.id ?? `${productTitle}-${index}`}
+                      image={variant?.image?.url ?? '/images/404.png'}
+                      title={productTitle}
+                      productHandle={variant?.product?.handle}
+                      variantTitle={variantName}
+                      price={formatOrderPrice(
+                        variant?.price?.amount,
+                        variant?.price?.currencyCode,
+                      )}
+                      quantity={node?.quantity ?? 1}
+                      tags={node?.tags ?? variant?.product?.tags ?? []}
+                      onReveal={() => handleViewKey(item)}
+                    />
+                  )
+                })}
+              </div>
+            ) : (
+              <p className="text-sm text-white/65">No items found in this order</p>
+            )}
+          </div>
+
+          {/* Summary */}
+          <TransactionDetails
+            className="w-full shrink-0 lg:w-[340px]"
+            transactionNumber={`${order.orderNumber}`}
+            paymentMode={paymentModeDisplay}
+            subtotal={formatOrderPrice(order.itemsSubtotal, order.totalPrice?.currencyCode)}
+            discount={formatOptionalAmount(order.totalDiscountV2, '-')}
+            serviceFee={
+              order.platformFee
+                ? formatOrderPrice(order.platformFee, order.totalPrice?.currencyCode)
+                : undefined
+            }
+            serviceFeeLabel={order.platformFeeLabel}
+            tax={formatOptionalAmount(order.totalTaxV2)}
+            refunded={formatOptionalAmount(order.totalRefundedV2, '-')}
+            charged={(() => {
+              const foreign = getForeignCharge(order.paymentMethod, order.totalPrice?.currencyCode)
+              return foreign
+                ? {
+                    currency: foreign.currency.toUpperCase(),
+                    amount: formatOrderPrice(foreign.amount, foreign.currency.toUpperCase()),
+                  }
+                : undefined
+            })()}
+            netPaid={formatOrderPrice(
+              Math.max(
+                0,
+                Number(order.totalPrice?.amount ?? 0) - Number(order.totalRefundedV2?.amount ?? 0),
+              ).toFixed(2),
+              order.totalPrice?.currencyCode,
+            )}
+            total={formatOrderPrice(
+              order.totalPrice?.amount,
+              order.totalPrice?.currencyCode,
+            )}
+            actions={
+              <>
+                <button
+                  type="button"
+                  onClick={handleDownloadAllKeys}
+                  disabled={keysLoading}
+                  aria-busy={keysLoading || undefined}
+                  className={cn(ACCOUNT_PRIMARY_BUTTON_CLASS, 'w-full')}
+                >
+                  <Download />
+                  Download All Keys
+                </button>
+                <button
+                  type="button"
+                  onClick={handleDownloadReceipt}
+                  disabled={!hasReceipt(order)}
+                  title={
+                    !hasReceipt(order)
+                      ? 'A receipt is available once payment is confirmed'
+                      : undefined
+                  }
+                  className={cn(ACCOUNT_SECONDARY_BUTTON_CLASS, 'w-full')}
+                >
+                  <Download />
+                  Download Receipt
+                </button>
+              </>
+            }
+          />
+        </div>
       )}
 
       {/* View Key Modal */}

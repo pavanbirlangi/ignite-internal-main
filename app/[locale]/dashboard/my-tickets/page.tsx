@@ -7,14 +7,22 @@ import { TicketCard } from '@/components/tickets/TicketCard'
 import { helpdeskService } from '@/lib/services/helpdesk.service'
 import { useUserStore } from '@/store/useUserStore'
 import type { Ticket } from '@/types/TicketTypes'
+import Link from 'next/link'
+import { cn } from '@/lib/utils'
+import {
+  ACCOUNT_CARD_CLASS,
+  ACCOUNT_PRIMARY_BUTTON_CLASS,
+  ACCOUNT_SECONDARY_BUTTON_CLASS,
+  AccountPageHeader,
+} from '@/components/library/account-ui'
 
 function TicketListSkeleton() {
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-3">
       {[1, 2, 3].map((i) => (
         <div
           key={i}
-          className="border-border bg-secondary h-48 animate-pulse rounded-[12px] border"
+          className="bg-card border-border h-40 animate-pulse rounded-xl border"
         />
       ))}
     </div>
@@ -63,14 +71,16 @@ export default function MyTicketsPage() {
   }
 
   return (
-    <div className="bg-secondary/40 flex flex-col gap-8 rounded-[20px] p-4 sm:p-10">
-      {/* Header */}
-      <div className="space-y-1">
-        <h1 className="text-xl md:text-3xl font-bold">Track Tickets</h1>
-        <p className="text-white/65 text-sm font-medium">
-          Track your opened &amp; closed tickets
-        </p>
-      </div>
+    <div>
+      <AccountPageHeader
+        title="My Tickets"
+        subtitle="Track your opened & closed tickets"
+        action={
+          <Link href="/help" className={ACCOUNT_PRIMARY_BUTTON_CLASS}>
+            New ticket
+          </Link>
+        }
+      />
 
       {/* Loading */}
       {isLoading && <TicketListSkeleton />}
@@ -90,7 +100,7 @@ export default function MyTicketsPage() {
                   .finally(() => setIsLoading(false))
               }
             }}
-            className="bg-secondary hover:bg-border mt-4 cursor-pointer rounded-md px-4 py-2 text-sm font-bold text-white/95 transition-colors"
+            className={cn(ACCOUNT_SECONDARY_BUTTON_CLASS, 'mt-4')}
           >
             Retry
           </button>
@@ -106,8 +116,8 @@ export default function MyTicketsPage() {
 
       {/* Empty */}
       {!isLoading && !error && user?.email && tickets.length === 0 && (
-        <div className="py-16 text-center">
-          <p className="text-white/65 text-sm">
+        <div className={cn(ACCOUNT_CARD_CLASS, 'px-6 py-14 text-center')}>
+          <p className="text-sm text-white/65">
             You haven&apos;t raised any support tickets yet.
           </p>
         </div>
@@ -115,7 +125,7 @@ export default function MyTicketsPage() {
 
       {/* Ticket List */}
       {!isLoading && !error && tickets.length > 0 && (
-        <div className="flex flex-col gap-6">
+        <div className="flex flex-col gap-3">
           {tickets.map((ticket) => (
             <TicketCard
               key={ticket.id}

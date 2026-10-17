@@ -4,7 +4,12 @@ import Image from "next/image"
 import Link from "next/link"
 import { Eye, Star } from "lucide-react"
 import type { LibraryItem } from "@/types/library"
-import { getProxyImageUrl } from "@/lib/utils"
+import { cn, getProxyImageUrl } from "@/lib/utils"
+import {
+  ACCOUNT_CARD_CLASS,
+  ACCOUNT_PRIMARY_BUTTON_CLASS,
+  ACCOUNT_SECONDARY_BUTTON_CLASS,
+} from "./account-ui"
 
 interface PurchasedProductProps {
   item: LibraryItem
@@ -18,58 +23,53 @@ export function PurchasedProduct({
   onRateProduct,
 }: PurchasedProductProps) {
   const imageUrl = getProxyImageUrl(item.featuredImage?.url) || "/images/product/cover.png"
-  const formattedDate = new Date(item.purchasedAt).toLocaleDateString("en-US", {
+  const formattedDate = new Date(item.purchasedAt).toLocaleDateString("en-GB", {
     year: "numeric",
-    month: "long",
+    month: "short",
     day: "numeric",
   })
 
   return (
-    <div className="rounded-xl border border-secondary p-4 text-card-foreground bg-secondary/20 shadow-sm backdrop-blur-[50px]">
-      {/* Purchase date */}
-      <div className="mb-4 text-sm text-white/65">
+    <div className={cn(ACCOUNT_CARD_CLASS, "px-4 py-4 sm:px-5")}>
+      <p className="mb-3 text-xs! leading-4! font-medium text-white/65">
         Purchased on {formattedDate}
-      </div>
+      </p>
 
-      <div className="h-px w-full bg-white/5 mb-4"></div>
+      <div className="bg-border mb-4 h-px w-full" />
 
-      {/* Product card content */}
-      <div className="w-full flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div className="flex items-center gap-4">
-          {/* Game cover - small square */}
-          <div className="relative h-[60px] w-[60px] shrink-0 overflow-hidden rounded-md">
-            <Image src={imageUrl} alt={item.title} fill className="object-cover" style={{ objectFit: 'cover' }} />
+      <div className="flex w-full flex-col justify-between gap-4 md:flex-row md:items-center">
+        <div className="flex min-w-0 items-center gap-4">
+          <div className="bg-secondary relative size-14 shrink-0 overflow-hidden rounded-md">
+            <Image src={imageUrl} alt={item.title} fill sizes="56px" className="object-cover" />
           </div>
 
-          {/* Title */}
-          <div className="flex flex-col">
-            <h3 className="flex-1 text-base md:text-xl font-bold md:max-w-[400px] text-white/95" title={item.title}>
+          <div className="flex min-w-0 flex-col gap-0.5">
+            <h3 className="text-base font-bold text-white/95 md:max-w-[420px]" title={item.title}>
               <Link href={`/${item.handle}`} className="line-clamp-2 hover:underline">
                 {item.title}
               </Link>
             </h3>
             {item.productType && (
-              <span className="text-xs text-white/65 mt-1 uppercase font-bold">
-                {item.productType}
-              </span>
+              <span className="text-xs font-medium text-white/65">{item.productType}</span>
             )}
           </div>
         </div>
 
-        {/* Action buttons */}
-        <div className="flex shrink-0 gap-3 mt-2 md:mt-0">
+        <div className="flex shrink-0 gap-2">
           <button
+            type="button"
             onClick={onViewKey}
-            className="flex flex-1 md:flex-none h-10 items-center justify-center gap-2 rounded-[6px] cursor-pointer border border-white/10 bg-transparent px-5 text-sm font-medium text-white/95 transition-colors hover:bg-white/5"
+            className={cn(ACCOUNT_SECONDARY_BUTTON_CLASS, "flex-1 md:flex-none")}
           >
-            <Eye className="h-4 w-4" />
+            <Eye />
             View Key
           </button>
           <button
+            type="button"
             onClick={onRateProduct}
-            className="flex flex-1 md:flex-none h-10 items-center justify-center gap-2 rounded-[6px] cursor-pointer bg-primary px-5 text-sm font-medium text-white/95 transition-colors hover:bg-primary"
+            className={cn(ACCOUNT_PRIMARY_BUTTON_CLASS, "flex-1 md:flex-none")}
           >
-            <Star className="h-4 w-4 fill-white" />
+            <Star className="fill-current" />
             Rate Product
           </button>
         </div>

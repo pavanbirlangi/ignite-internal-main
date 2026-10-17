@@ -4,6 +4,13 @@ import { Search, ChevronDown } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { cn } from '@/lib/utils'
 import { useDebounce } from '@/hooks/useDebounce'
+import {
+  ACCOUNT_MENU_PANEL_CLASS,
+  ACCOUNT_SEARCH_INPUT_CLASS,
+  ACCOUNT_SORT_TRIGGER_CLASS,
+  AccountPageHeader,
+  accountMenuItemClass,
+} from './account-ui'
 
 const sortOptions = [
   { label: 'Order Date', sort: 'purchased_at', order: 'desc' },
@@ -48,79 +55,34 @@ export function LibraryHeader({
     sortOptions[0]
 
   return (
-    <div className="flex flex-col gap-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold md:text-3xl">My Library</h1>
+    <div>
+      <AccountPageHeader title="My Library" />
 
-        {/* Mobile Dropdown Trigger */}
-        <div className="relative md:hidden">
-          <button
-            onClick={() => setIsOpen(!isOpen)}
-            className="bg-secondary text-secondary-foreground hover:bg-secondary/80 flex h-[50px] cursor-pointer items-center gap-2 rounded-[6px] px-5 text-sm font-normal transition-colors"
-          >
-            <span>{activeOption.label}</span>
-            <ChevronDown
-              className={cn(
-                'h-4 w-4 opacity-60 transition-transform',
-                isOpen && 'rotate-180',
-              )}
-            />
-          </button>
-
-          {isOpen && (
-            <>
-              {/* Overlay to close on mobile */}
-              <div
-                className="fixed inset-0 z-10"
-                onClick={() => setIsOpen(false)}
-              />
-              <div className="border-border bg-card absolute top-full right-0 z-20 mt-2 w-[180px] flex-col overflow-hidden rounded-[12px] border shadow-xl">
-                {sortOptions.map((option) => (
-                  <button
-                    key={option.label}
-                    onClick={() => {
-                      onSortChange(option.sort, option.order)
-                      setIsOpen(false)
-                    }}
-                    className={cn(
-                      'hover:bg-secondary/50 flex h-[40px] w-full items-center px-5 text-sm font-medium transition-colors',
-                      activeOption.label === option.label
-                        ? 'bg-primary/10 text-primary'
-                        : 'text-card-foreground',
-                    )}
-                  >
-                    {option.label}
-                  </button>
-                ))}
-              </div>
-            </>
-          )}
-        </div>
-      </div>
-
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex gap-3">
         {/* Search */}
-        <div className="relative w-full sm:max-w-[522px]">
-          <Search className="text-white/65 absolute top-1/2 left-4 h-4 w-4 -translate-y-1/2" />
+        <div className="relative min-w-0 flex-1 sm:max-w-[520px]">
+          <Search className="absolute top-1/2 left-3.5 size-4 -translate-y-1/2 text-white/45" />
           <input
             type="text"
             value={localSearch}
             onChange={(e) => setLocalSearch(e.target.value)}
             placeholder="Search products..."
-            className="border-muted-foreground/40 text-white/95 placeholder:text-muted-foreground focus:border-primary h-12.5 w-full rounded-full border bg-transparent pr-4 pl-10 text-sm transition-colors outline-none"
+            className={ACCOUNT_SEARCH_INPUT_CLASS}
           />
         </div>
 
-        {/* Desktop Dropdown */}
-        <div className="relative hidden md:block">
+        {/* Sort */}
+        <div className="relative shrink-0">
           <button
+            type="button"
             onClick={() => setIsOpen(!isOpen)}
-            className="bg-secondary text-secondary-foreground hover:bg-secondary/80 flex h-[50px] cursor-pointer items-center gap-1 rounded-[6px] px-4 py-3.5 font-bold transition-colors"
+            aria-expanded={isOpen}
+            className={ACCOUNT_SORT_TRIGGER_CLASS}
           >
             <span>{activeOption.label}</span>
             <ChevronDown
               className={cn(
-                'h-4 w-4 opacity-60 transition-transform',
+                'size-4 text-white/65 transition-transform',
                 isOpen && 'rotate-180',
               )}
             />
@@ -128,25 +90,21 @@ export function LibraryHeader({
 
           {isOpen && (
             <>
-              {/* Overlay to close on desktop */}
+              {/* Clicking anywhere outside closes the menu */}
               <div
                 className="fixed inset-0 z-10"
                 onClick={() => setIsOpen(false)}
               />
-              <div className="border-border bg-card absolute top-full right-0 z-20 mt-2 w-[180px] flex-col overflow-hidden rounded-[12px] border shadow-xl">
+              <div className={ACCOUNT_MENU_PANEL_CLASS}>
                 {sortOptions.map((option) => (
                   <button
                     key={option.label}
+                    type="button"
                     onClick={() => {
                       onSortChange(option.sort, option.order)
                       setIsOpen(false)
                     }}
-                    className={cn(
-                      'hover:bg-secondary/50 flex h-[40px] w-full items-center px-5 text-sm font-medium transition-colors',
-                      activeOption.label === option.label
-                        ? 'bg-primary/10 text-primary'
-                        : 'text-card-foreground',
-                    )}
+                    className={accountMenuItemClass(activeOption.label === option.label)}
                   >
                     {option.label}
                   </button>

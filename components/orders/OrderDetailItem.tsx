@@ -1,6 +1,8 @@
 'use client'
 
-import { getProxyImageUrl } from '@/lib/utils'
+import { KeyRound } from 'lucide-react'
+import { cn, getProxyImageUrl } from '@/lib/utils'
+import { ACCOUNT_PRIMARY_BUTTON_CLASS } from '@/components/library/account-ui'
 import Image from 'next/image'
 import Link from 'next/link'
 
@@ -32,66 +34,54 @@ export function OrderDetailItem({
     : null
 
   return (
-    <div className="border-secondary text-card-foreground bg-secondary/20 mb-4 rounded-xl border p-4 shadow-sm backdrop-blur-[50px]">
-      <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
-        {/* Left Side: Image and Title */}
-        <div className="flex flex-1 items-center gap-4">
-          <div className="relative h-[100px] w-[80px] shrink-0 overflow-hidden rounded-md">
-            <Image src={getProxyImageUrl(image)} alt={title} fill className="object-cover" />
-          </div>
-
-          <div className="flex flex-col gap-1.5 md:max-w-[400px]">
-            <div className="flex flex-col gap-0.5">
-              {productHref ? (
-                <Link
-                  href={productHref}
-                  className="hover:underline line-clamp-2 max-w-[500px] text-base font-bold text-white/95 transition-all md:text-xl"
-                >
-                  {title}
-                </Link>
-              ) : (
-                <h3 className="line-clamp-2 max-w-[500px] text-base font-bold text-white/95 md:text-xl">
-                  {title}
-                </h3>
-              )}
-              {variantTitle && (
-                <p className="text-white/65 text-xs font-medium sm:text-xs">
-                  {variantTitle}
-                </p>
-              )}
-            </div>
-            <div className="flex items-end gap-3">
-              <span className="text-xl font-bold text-white/95">{price}</span>
-              <span className="text-white/65 font-medium mb-1 text-xs">
-                x{quantity}
-              </span>
-            </div>
-          </div>
+    <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+      <div className="flex min-w-0 flex-1 items-center gap-4">
+        <div className="bg-secondary relative h-20 w-15 shrink-0 overflow-hidden rounded-md">
+          <Image src={getProxyImageUrl(image)} alt={title} fill sizes="60px" className="object-cover" />
         </div>
 
-        {/* Right Side: Tags and Button */}
-        <div className="mt-2 flex flex-col items-end gap-4 md:mt-0">
-          <div className="flex gap-2">
-            {tags.map((tag) => (
-              <span
-                key={tag}
-                className="rounded border border-white/20 bg-transparent px-3 py-2 text-xs font-bold text-white/95 uppercase"
-              >
-                {tag}
-              </span>
-            ))}
-          </div>
-
-          {onReveal && (
-            <button
-              onClick={onReveal}
-              className="bg-primary hover:bg-primary h-10 w-full cursor-pointer rounded-[6px] px-6 py-3 text-sm font-bold text-white/95 transition-colors md:w-auto"
+        <div className="flex min-w-0 flex-col gap-1">
+          {productHref ? (
+            <Link
+              href={productHref}
+              className="line-clamp-2 text-base font-bold text-white/95 hover:underline"
             >
-              {actionLabel}
-            </button>
+              {title}
+            </Link>
+          ) : (
+            <h3 className="line-clamp-2 text-base font-bold text-white/95">{title}</h3>
+          )}
+          {variantTitle && (
+            <span className="text-xs font-medium text-white/65">{variantTitle}</span>
+          )}
+          <span className="text-sm text-white/65">
+            {price} · Qty {quantity}
+          </span>
+          {tags.length > 0 && (
+            <div className="mt-1 flex flex-wrap gap-1.5">
+              {tags.map((tag) => (
+                <span
+                  key={tag}
+                  className="rounded-md bg-white/8 px-2 py-1 text-xs font-medium text-white/65"
+                >
+                  {tag}
+                </span>
+              ))}
+            </div>
           )}
         </div>
       </div>
+
+      {onReveal && (
+        <button
+          type="button"
+          onClick={onReveal}
+          className={cn(ACCOUNT_PRIMARY_BUTTON_CLASS, 'w-full sm:w-auto')}
+        >
+          <KeyRound />
+          {actionLabel}
+        </button>
+      )}
     </div>
   )
 }

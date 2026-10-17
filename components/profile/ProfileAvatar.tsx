@@ -1,7 +1,11 @@
 'use client'
 
 import { useRef } from 'react'
-import { Button } from '@/components/ui/button'
+import { cn } from '@/lib/utils'
+import {
+  ACCOUNT_SECONDARY_BUTTON_CLASS,
+  ACCOUNT_TEXT_BUTTON_CLASS,
+} from '@/components/library/account-ui'
 import { Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
 
@@ -53,12 +57,20 @@ export function ProfileAvatar({
   }
 
   const isBusy = isUploadingImage || isDeletingImage
-  const initial = (displayName || email || '-').trim().charAt(0).toUpperCase()
+  const name = displayName.trim()
+  const initials =
+    name
+      .split(/\s+/)
+      .slice(0, 2)
+      .map((part) => part.charAt(0))
+      .join('')
+      .toUpperCase() ||
+    email.trim().charAt(0).toUpperCase() ||
+    '-'
 
   return (
-    <div className="border-muted-foreground flex flex-col items-start gap-4 border-b pb-6 sm:flex-row sm:items-center sm:justify-between">
-      {/* Avatar */}
-      <div className="bg-primary relative flex h-20 w-20 items-center justify-center overflow-hidden rounded text-2xl md:text-3xl font-bold text-white/95">
+    <div className="flex flex-wrap items-center gap-4 p-5">
+      <div className="from-primary relative flex size-16 shrink-0 items-center justify-center overflow-hidden rounded-full bg-linear-to-br to-[#1D4ED8] text-xl font-bold text-white/95">
         {profilePhoto ? (
           <img
             src={profilePhoto}
@@ -66,43 +78,47 @@ export function ProfileAvatar({
             className="h-full w-full object-cover"
           />
         ) : (
-          initial
+          <span className="trim leading-none">{initials}</span>
         )}
       </div>
 
-      {/* Actions */}
-      <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
+      <div className="min-w-0 flex-1">
+        <p className="truncate text-base font-bold text-white/95">{name || email}</p>
+        {name && <p className="truncate text-sm! text-white/65">{email}</p>}
+      </div>
+
+      <div className="flex w-full gap-2 sm:w-auto">
         {profilePhoto && (
-          <Button
-            variant="outline"
-            className="w-full rounded-[6px] px-6 py-4.5 text-base font-bold sm:w-44"
+          <button
+            type="button"
             onClick={onDelete}
             disabled={isBusy}
+            className={cn(ACCOUNT_TEXT_BUTTON_CLASS, 'h-10 px-3')}
           >
             {isDeletingImage ? (
               <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Removing...
+                <Loader2 className="mr-2 size-4 animate-spin" /> Removing...
               </>
             ) : (
               'Remove'
             )}
-          </Button>
+          </button>
         )}
 
-        <Button
-          variant="secondary"
-          className="w-full rounded-[6px] px-6 py-4.5 text-base font-bold sm:w-44"
+        <button
+          type="button"
           onClick={handleSelectFile}
           disabled={isBusy}
+          className={cn(ACCOUNT_SECONDARY_BUTTON_CLASS, 'flex-1 sm:flex-none')}
         >
           {isUploadingImage ? (
             <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Uploading...
+              <Loader2 className="animate-spin" /> Uploading...
             </>
           ) : (
-            'Update'
+            'Change photo'
           )}
-        </Button>
+        </button>
       </div>
 
       <input
