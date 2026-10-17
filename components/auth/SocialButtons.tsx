@@ -12,12 +12,17 @@ import FacebookIcon from '../icons/FacebookIcon'
 import DiscordIcon from '../icons/DiscordIcon'
 import AppleIcon from '../icons/AppleIcon'
 
+// Dark tiles with the brand's own icon colour, so the three providers sit
+// quietly above the form instead of competing with the Log in button. The
+// label hides on narrow phones, leaving the icon.
 function SocialButton({
   icon,
+  label,
   className,
   onClick,
 }: {
   icon: React.ReactNode
+  label: string
   className?: string
   onClick?: () => void
 }) {
@@ -25,12 +30,14 @@ function SocialButton({
     <button
       type="button"
       onClick={onClick}
+      aria-label={`Continue with ${label}`}
       className={cn(
-        'flex h-18 flex-1 cursor-pointer items-center justify-center rounded-[10px] transition-all hover:scale-105 active:scale-95',
+        'border-border flex h-11 min-w-0 cursor-pointer items-center justify-center gap-2 rounded-lg border bg-white/5 text-sm font-medium text-white/95 transition-colors hover:border-white/20 hover:bg-white/10 active:bg-white/5',
         className,
       )}
     >
       {icon}
+      <span className="truncate max-[420px]:hidden">{label}</span>
     </button>
   )
 }
@@ -115,19 +122,21 @@ export function SocialButtons() {
   }
 
   return (
-    <div className="mb-6 flex justify-between gap-3">
+    <div className="grid grid-cols-3 gap-2.5">
       <SocialButton
-        className="bg-white hover:bg-gray-200 transition-colors"
-        icon={<GoogleIcon className="size-8" />}
+        label="Google"
+        icon={<GoogleIcon className="size-[18px] shrink-0" />}
         onClick={handleGoogleLogin}
       />
       <SocialButton
-        icon={<FacebookIcon className="size-8 text-white/95" />}
-        className="border-muted-foreground/30 border bg-[var(--facebook-blue)] hover:bg-[var(--facebook-blue)]/80 transition-colors"
+        label="Facebook"
+        icon={<FacebookIcon className="size-[22px] shrink-0 text-(--facebook-blue)" />}
+        onClick={() => handleSocialLoginUnavailable('Facebook')}
       />
       <SocialButton
-        icon={<DiscordIcon className="size-12 text-white/95" />}
-        className="border-muted-foreground/30 border bg-[var(--discord-blue)] hover:bg-[var(--discord-blue)]/80 transition-colors"
+        label="Discord"
+        // The Discord glyph has a lot of padding in its viewBox.
+        icon={<DiscordIcon className="-m-1.5 size-[30px] shrink-0 text-(--discord-blue)" />}
         onClick={() => handleSocialLoginUnavailable('Discord')}
       />
       {/* <SocialButton

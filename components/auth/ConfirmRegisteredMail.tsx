@@ -4,7 +4,7 @@ export function ConfirmRegisteredMail() {
     return (
         <div className="flex flex-col items-center justify-center py-6 text-center">
             {/* Icon SVG */}
-            <div className="mb-8">
+            <div className="bg-primary/10 mb-5 grid size-16 place-items-center rounded-full [&_svg]:size-8">
                <Mailsent/>
             </div>
 

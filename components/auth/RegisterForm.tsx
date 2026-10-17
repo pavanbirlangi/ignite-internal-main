@@ -4,7 +4,16 @@ import React, { useState } from 'react'
 import { Eye, EyeOff } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { SocialButtons } from './SocialButtons'
-import { INPUT_CLASS, OrDivider } from './shared'
+import { Button } from '@/components/ui/button'
+import {
+  AuthFooter,
+  FOOTER_ACTION_CLASS,
+  Field,
+  INPUT_CLASS,
+  OrDivider,
+  PASSWORD_TOGGLE_CLASS,
+  SUBMIT_CLASS,
+} from './shared'
 import { authService } from '@/lib/services/auth.service'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -108,6 +117,9 @@ export function RegisterForm({
 
   return (
     <>
+      <SocialButtons />
+      <OrDivider />
+
       <form onSubmit={handleSubmit(onSubmit)}>
         {/* Honeypot -- hidden from real users via CSS + off the tab order,
             not just `type="hidden"` (some bots skip fields they can detect
@@ -121,49 +133,38 @@ export function RegisterForm({
           {...register('website')}
         />
 
-        {/* Inputs */}
-        <div className="mb-6 flex flex-col gap-3">
+        <div className="mb-5 flex flex-col gap-4">
           <div className="flex gap-3">
-            <div className="flex-1">
+            <Field label="First name" error={errors.firstName?.message} className="min-w-0 flex-1">
               <Input
                 type="text"
-                placeholder="First Name"
+                placeholder="First name"
                 className={`${INPUT_CLASS} auth-input`}
-                 autoComplete="off"
-              autoCapitalize="none"
-              autoCorrect="off"
-              spellCheck={false}
+                autoComplete="off"
+                autoCapitalize="none"
+                autoCorrect="off"
+                spellCheck={false}
                 {...register('firstName')}
               />
-              {errors.firstName && (
-                <span className="text-red mt-1 block text-xs font-bold">
-                  {errors.firstName.message}
-                </span>
-              )}
-            </div>
-            <div className="flex-1">
+            </Field>
+            <Field label="Last name" error={errors.lastName?.message} className="min-w-0 flex-1">
               <Input
                 type="text"
-                placeholder="Last Name"
+                placeholder="Last name"
                 className={`${INPUT_CLASS} auth-input`}
-                 autoComplete="off"
-              autoCapitalize="none"
-              autoCorrect="off"
-              spellCheck={false}
+                autoComplete="off"
+                autoCapitalize="none"
+                autoCorrect="off"
+                spellCheck={false}
                 {...register('lastName')}
               />
-              {errors.lastName && (
-                <span className="text-red mt-1 block text-xs font-bold">
-                  {errors.lastName.message}
-                </span>
-              )}
-            </div>
+            </Field>
           </div>
 
-          <div>
+          <Field label="Email" error={errors.email?.message}>
             <Input
               type="email"
-              placeholder="Enter Email"
+              placeholder="you@example.com"
               className={`${INPUT_CLASS} auth-input`}
               autoComplete="off"
               autoCapitalize="none"
@@ -171,90 +172,72 @@ export function RegisterForm({
               spellCheck={false}
               {...register('email')}
             />
-            {errors.email && (
-              <span className="text-red mt-1 block text-xs font-bold">
-                {errors.email.message}
-              </span>
-            )}
-          </div>
+          </Field>
 
-          <div>
-            <div className="relative">
+          <Field label="Password" error={errors.password?.message}>
+            <span className="relative block">
               <Input
                 type={showPassword ? 'text' : 'password'}
-                placeholder="Enter Password"
+                placeholder="Create a password"
                 className={`${INPUT_CLASS} auth-input pr-10`}
                 autoComplete="off"
                 autoCapitalize="none"
                 autoCorrect="off"
                 spellCheck={false}
-            
                 {...register('password')}
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="text-white/65 absolute top-1/2 right-3 flex -translate-y-1/2 items-center justify-center p-1 transition-colors hover:text-white"
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
+                className={PASSWORD_TOGGLE_CLASS}
               >
                 {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
               </button>
-            </div>
-            {errors.password && (
-              <span className="text-red mt-1 block text-xs font-bold">
-                {errors.password.message}
-              </span>
-            )}
-          </div>
+            </span>
+          </Field>
 
-          <div>
-            <div className="relative">
+          <Field label="Confirm password" error={errors.confirmPassword?.message}>
+            <span className="relative block">
               <Input
                 type={showConfirmPassword ? 'text' : 'password'}
-                placeholder="Confirm Password"
+                placeholder="Repeat your password"
                 className={`${INPUT_CLASS} auth-input pr-10`}
                 {...register('confirmPassword')}
               />
               <button
                 type="button"
                 onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                className="text-white/65 absolute top-1/2 right-3 flex -translate-y-1/2 items-center justify-center p-1 transition-colors hover:text-white"
+                aria-label={showConfirmPassword ? 'Hide password' : 'Show password'}
+                className={PASSWORD_TOGGLE_CLASS}
               >
                 {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
               </button>
-            </div>
-            {errors.confirmPassword && (
-              <span className="text-red mt-1 block text-xs font-bold">
-                {errors.confirmPassword.message}
-              </span>
-            )}
-          </div>
+            </span>
+          </Field>
         </div>
 
-        <div className="mb-4">
+        <div className="mb-4 empty:hidden">
           <TurnstileWidget onVerify={setTurnstileToken} />
         </div>
 
-        {/* CTA */}
-        <div className="pb-6">
-          <button
-            type="submit"
-            disabled={isLoading || (turnstileRequired && !turnstileToken)}
-            className="bg-primary hover:bg-primary/90 mb-3 h-[48px] w-full cursor-pointer rounded-[6px] text-base font-bold text-white/95 transition-colors disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            {isLoading ? 'Registering...' : 'Register'}
-          </button>
-        </div>
+        <Button
+          type="submit"
+          variant="primary"
+          loading={isLoading}
+          disabled={turnstileRequired && !turnstileToken}
+          className={SUBMIT_CLASS}
+        >
+          Create account
+        </Button>
       </form>
 
-      <OrDivider />
-      <SocialButtons />
-
-      <button
-        onClick={onSwitchToLogin}
-        className="border-muted-foreground h-[48px] w-full cursor-pointer rounded-[6px] border-[0.78px] bg-transparent text-base font-bold text-white/95 transition-all hover:bg-white/5"
-      >
-        Login Existing Account
-      </button>
+      <AuthFooter>
+        Already have an account?{' '}
+        <button type="button" onClick={onSwitchToLogin} className={FOOTER_ACTION_CLASS}>
+          Log in
+        </button>
+      </AuthFooter>
     </>
   )
 }

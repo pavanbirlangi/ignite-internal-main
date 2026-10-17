@@ -3,7 +3,8 @@
 import React, { useEffect, useState } from 'react'
 import { Input } from '@/components/ui/input'
 import { toast } from 'sonner'
-import { INPUT_CLASS } from './shared'
+import { Button } from '@/components/ui/button'
+import { Field, INPUT_CLASS, LINK_CLASS, SUBMIT_CLASS } from './shared'
 import { authService } from '@/lib/services/auth.service'
 import { completeSignIn } from '@/lib/auth/complete-sign-in'
 import { extractApiErrorMessage } from '@/lib/utils/api-error'
@@ -12,10 +13,6 @@ const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 // The backend allows one code request per email every 60 seconds.
 const RESEND_COOLDOWN_SECONDS = 60
 
-const PRIMARY_BUTTON_CLASS =
-  'bg-primary hover:bg-primary/90 mb-3 h-[48px] w-full cursor-pointer rounded-[6px] text-base font-bold text-white/95 transition-colors disabled:cursor-not-allowed disabled:opacity-50'
-const LINK_BUTTON_CLASS =
-  'text-primary hover:text-primary/80 cursor-pointer text-xs font-bold underline transition-colors focus:outline-none disabled:cursor-not-allowed disabled:no-underline disabled:opacity-50'
 
 // Passwordless sign-in: the customer gets one email with a 6-digit code and a magic link. Works for
 // new and existing customers alike -- an unknown email becomes a new account.
@@ -91,37 +88,32 @@ export function EmailCodeForm({
     }
   }
 
-  const errorText = error && (
-    <span className="text-red mt-1 block text-xs font-bold">{error}</span>
-  )
 
   if (!codeSentTo) {
     return (
       <form onSubmit={handleEmailSubmit} noValidate>
-        <p className="text-white/65 mb-4 text-sm font-medium">
-          We&apos;ll email you a 6-digit code and a sign-in link. No password needed.
+        <p className="mb-5 text-sm text-white/65">
+          We&apos;ll email you a 6-digit code and a sign-in link.
         </p>
-        <div className="mb-6">
+        <Field label="Email" error={error ?? undefined} className="mb-5">
           <Input
             type="email"
-            placeholder="Enter Mail"
+            placeholder="you@example.com"
             className={`${INPUT_CLASS} auth-input`}
             autoComplete="email"
             autoCapitalize="none"
             autoCorrect="off"
             spellCheck={false}
-            aria-label="Email address"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
           />
-          {errorText}
-        </div>
-        <button type="submit" disabled={isLoading} className={PRIMARY_BUTTON_CLASS}>
-          {isLoading ? 'Sending...' : 'Send Code'}
-        </button>
-        <div className="flex justify-start">
-          <button type="button" onClick={onSwitchToLogin} className={LINK_BUTTON_CLASS}>
-            Sign in with password instead
+        </Field>
+        <Button type="submit" variant="primary" loading={isLoading} className={SUBMIT_CLASS}>
+          Send code
+        </Button>
+        <div className="mt-4 flex justify-center">
+          <button type="button" onClick={onSwitchToLogin} className={LINK_CLASS}>
+            Use my password instead
           </button>
         </div>
       </form>
@@ -131,38 +123,36 @@ export function EmailCodeForm({
   return (
     <form onSubmit={handleCodeSubmit} noValidate>
       {isVerify ? (
-        <p className="text-white/65 mb-4 text-sm font-medium">
+        <p className="mb-5 text-sm text-white/65">
           Please verify your email to finish setting up your account. We sent a 6-digit code to{' '}
           <span className="text-white/95">{codeSentTo}</span>. It expires in 10 minutes. You can also
           use the link in that email.
         </p>
       ) : (
-        <p className="text-white/65 mb-4 text-sm font-medium">
+        <p className="mb-5 text-sm text-white/65">
           We sent a 6-digit code to <span className="text-white/95">{codeSentTo}</span>. It expires in
           10 minutes. You can also use the sign-in link in that email.
         </p>
       )}
-      <div className="mb-6">
+      <Field label="6-digit code" error={error ?? undefined} className="mb-5">
         <Input
           type="text"
           inputMode="numeric"
           autoComplete="one-time-code"
-          placeholder="Enter 6-digit code"
+          placeholder="000000"
           maxLength={6}
-          className={`${INPUT_CLASS} auth-input tracking-[0.3em] placeholder:tracking-normal`}
-          aria-label="Sign-in code"
+          className={`${INPUT_CLASS} auth-input h-13 text-center text-xl! font-bold! tracking-[0.5em] placeholder:text-white/25`}
           value={code}
           onChange={(e) => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
           autoFocus
         />
-        {errorText}
-      </div>
-      <button type="submit" disabled={isLoading} className={PRIMARY_BUTTON_CLASS}>
-        {isLoading ? (isVerify ? 'Verifying...' : 'Signing in...') : isVerify ? 'Verify Email' : 'Sign In'}
-      </button>
-      <div className="flex items-center justify-between">
+      </Field>
+      <Button type="submit" variant="primary" loading={isLoading} className={SUBMIT_CLASS}>
+        {isVerify ? 'Verify email' : 'Sign in'}
+      </Button>
+      <div className="mt-4 flex items-center justify-between gap-4">
         {isVerify ? (
-          <button type="button" onClick={onSwitchToLogin} className={LINK_BUTTON_CLASS}>
+          <button type="button" onClick={onSwitchToLogin} className={LINK_CLASS}>
             Back to login
           </button>
         ) : (
@@ -172,7 +162,7 @@ export function EmailCodeForm({
               setCodeSentTo(null)
               setError(null)
             }}
-            className={LINK_BUTTON_CLASS}
+            className={LINK_CLASS}
           >
             Use a different email
           </button>
@@ -181,7 +171,7 @@ export function EmailCodeForm({
           type="button"
           disabled={isLoading || cooldown > 0}
           onClick={() => void sendCode(codeSentTo)}
-          className={LINK_BUTTON_CLASS}
+          className={LINK_CLASS}
         >
           {cooldown > 0 ? `Resend code in ${cooldown}s` : 'Resend code'}
         </button>

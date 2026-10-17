@@ -4,7 +4,17 @@ import React, { useState } from 'react'
 import { Eye, EyeOff } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { SocialButtons } from './SocialButtons'
-import { INPUT_CLASS, OrDivider } from './shared'
+import { Button } from '@/components/ui/button'
+import {
+  AuthFooter,
+  FOOTER_ACTION_CLASS,
+  Field,
+  INPUT_CLASS,
+  LINK_CLASS,
+  OrDivider,
+  PASSWORD_TOGGLE_CLASS,
+  SUBMIT_CLASS,
+} from './shared'
 import { authService, isEmailNotVerifiedError } from '@/lib/services/auth.service'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -125,89 +135,61 @@ export function LoginForm({
         <SocialButtons />
         <OrDivider />
 
-        {/* Inputs */}
-        <div className="mb-6 flex flex-col gap-3">
-          <div>
+        <div className="mb-5 flex flex-col gap-4">
+          <Field label="Email" error={errors.email?.message}>
             <Input
               type="email"
-              placeholder="Enter Mail"
+              placeholder="you@example.com"
               className={`${INPUT_CLASS} auth-input`}
               autoComplete="off"
               autoCapitalize="none"
               autoCorrect="off"
               spellCheck={false}
-              aria-label="Email address"
               {...register('email')}
             />
-            {errors.email && (
-              <span className="text-red mt-1 block text-xs font-bold">
-                {errors.email.message}
-              </span>
-            )}
-          </div>
-          <div>
-            <div className="relative">
+          </Field>
+          <Field label="Password" error={errors.password?.message}>
+            <span className="relative block">
               <Input
                 type={showPassword ? 'text' : 'password'}
-                placeholder="Enter Password"
+                placeholder="Your password"
                 className={`${INPUT_CLASS} auth-input pr-10`}
                 autoComplete="new-password"
-                aria-label="Password"
                 {...register('password')}
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
                 aria-label={showPassword ? 'Hide password' : 'Show password'}
-                className="text-se hover:text-muted-foreground/80 absolute top-1/2 right-3 flex -translate-y-1/2 items-center justify-center p-1 transition-colors"
+                className={PASSWORD_TOGGLE_CLASS}
               >
                 {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
               </button>
-            </div>
-            {errors.password && (
-              <span className="text-red mt-1 block text-xs font-bold">
-                {errors.password.message}
-              </span>
-            )}
-          </div>
+            </span>
+          </Field>
         </div>
 
-        {/* CTA */}
-        <div className="border-muted-foreground mb-6 border-b-[0.5px] pb-6">
-          <button
-            type="submit"
-            disabled={isLoading}
-            className="bg-primary hover:bg-primary/90 mb-3 h-[48px] w-full cursor-pointer rounded-[6px] text-base font-bold text-white/95 transition-colors disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            {isLoading ? 'Logging in...' : 'Login'}
+        <Button type="submit" variant="primary" loading={isLoading} className={SUBMIT_CLASS}>
+          Log in
+        </Button>
+        <div className="mt-4 flex items-center justify-between gap-4">
+          <button type="button" onClick={onSwitchToRecover} className={LINK_CLASS}>
+            Forgot password?
           </button>
-          <div className="flex items-center justify-between">
-            <button
-              type="button"
-              onClick={onSwitchToRecover}
-              className="text-primary hover:text-primary/80 cursor-pointer text-xs font-bold underline transition-colors focus:outline-none"
-            >
-              Forgot password?
+          {onSwitchToEmailCode && (
+            <button type="button" onClick={onSwitchToEmailCode} className={LINK_CLASS}>
+              Email me a code
             </button>
-            {onSwitchToEmailCode && (
-              <button
-                type="button"
-                onClick={onSwitchToEmailCode}
-                className="text-primary hover:text-primary/80 cursor-pointer text-xs font-bold underline transition-colors focus:outline-none"
-              >
-                Email me a sign-in code
-              </button>
-            )}
-          </div>
+          )}
         </div>
       </form>
 
-      <button
-        onClick={onSwitchToRegister}
-        className="border-muted-foreground h-[48px] w-full cursor-pointer rounded-[6px] border-[0.78px] bg-transparent text-base font-bold text-white/95 transition-all hover:bg-white/5"
-      >
-        Create New Account
-      </button>
+      <AuthFooter>
+        New here?{' '}
+        <button type="button" onClick={onSwitchToRegister} className={FOOTER_ACTION_CLASS}>
+          Create an account
+        </button>
+      </AuthFooter>
     </>
   )
 }

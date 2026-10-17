@@ -627,7 +627,9 @@
    .glassmorphism: these beat component utility classes so every page follows
    the same roles.
    --------------------------------------------------------------------------- */
-main h1[class] { font-size: 32px; font-weight: 700; line-height: 1.2; letter-spacing: normal; }
+/* Page titles; data-display marks titles that size themselves (e.g. the
+   password reset card, which matches the sign-in modal). */
+main h1[class]:not([data-display]) { font-size: 32px; font-weight: 700; line-height: 1.2; letter-spacing: normal; }
 /* Section titles: 20px on phones, 24px from tablet up. data-display marks the
    bigger titles that size themselves (newsletter, FAQ, About page). */
 main h2[class]:not([data-display]) { font-size: 20px; font-weight: 700; line-height: 24px; letter-spacing: -0.3px; }

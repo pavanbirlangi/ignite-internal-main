@@ -3,7 +3,8 @@
 import React, { useState } from 'react'
 import { Eye, EyeOff } from 'lucide-react'
 import { Input } from '@/components/ui/input'
-import { INPUT_CLASS } from './shared'
+import { Button } from '@/components/ui/button'
+import { Field, INPUT_CLASS, PASSWORD_TOGGLE_CLASS, SUBMIT_CLASS } from './shared'
 import { authService } from '@/lib/services/auth.service'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -79,61 +80,49 @@ export function ResetPasswordForm({ token }: { token: string }) {
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="w-full">
-      <div className="mb-6 flex flex-col gap-4">
-        <div>
-          <div className="relative">
+      <div className="mb-5 flex flex-col gap-4">
+        <Field label="New password" error={errors.password?.message}>
+          <span className="relative block">
             <Input
               type={showPassword ? 'text' : 'password'}
-              placeholder="New Password"
+              placeholder="Create a password"
               className={`${INPUT_CLASS} pr-10`}
               {...register('password')}
             />
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="text-se hover:text-muted-foreground/80 absolute top-1/2 right-3 flex -translate-y-1/2 items-center justify-center p-1 transition-colors"
+              aria-label={showPassword ? 'Hide password' : 'Show password'}
+              className={PASSWORD_TOGGLE_CLASS}
             >
               {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
             </button>
-          </div>
-          {errors.password && (
-            <span className="text-red mt-1 block text-xs font-bold">
-              {errors.password.message}
-            </span>
-          )}
-        </div>
+          </span>
+        </Field>
 
-        <div>
-          <div className="relative">
+        <Field label="Confirm new password" error={errors.confirmPassword?.message}>
+          <span className="relative block">
             <Input
               type={showConfirmPassword ? 'text' : 'password'}
-              placeholder="Confirm New Password"
+              placeholder="Repeat your password"
               className={`${INPUT_CLASS} pr-10`}
               {...register('confirmPassword')}
             />
             <button
               type="button"
               onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-              className="text-se hover:text-muted-foreground/80 absolute top-1/2 right-3 flex -translate-y-1/2 items-center justify-center p-1 transition-colors"
+              aria-label={showConfirmPassword ? 'Hide password' : 'Show password'}
+              className={PASSWORD_TOGGLE_CLASS}
             >
               {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
             </button>
-          </div>
-          {errors.confirmPassword && (
-            <span className="text-red mt-1 block text-xs font-bold">
-              {errors.confirmPassword.message}
-            </span>
-          )}
-        </div>
+          </span>
+        </Field>
       </div>
 
-      <button
-        type="submit"
-        disabled={isLoading}
-        className="bg-primary hover:bg-primary/90 h-12 w-full cursor-pointer rounded-[6px] text-base font-bold text-white/95 transition-colors disabled:cursor-not-allowed disabled:opacity-50"
-      >
-        {isLoading ? 'Resetting Password...' : 'Reset Password'}
-      </button>
+      <Button type="submit" variant="primary" loading={isLoading} className={SUBMIT_CLASS}>
+        Reset password
+      </Button>
     </form>
   )
 }

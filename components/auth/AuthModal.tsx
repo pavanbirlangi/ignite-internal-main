@@ -17,6 +17,17 @@ import { RecoverForm } from './RecoverForm'
 import { RecoverEmailSent } from './RecoverEmailSent'
 import { EmailCodeForm } from './EmailCodeForm'
 import { AuthMode, useAuthModalStore } from '@/store/useAuthModalStore'
+import { AuthFooter, FOOTER_ACTION_CLASS } from './shared'
+
+const TITLES: Record<AuthMode, { title: string; subtitle: string }> = {
+  login: { title: 'Log in', subtitle: 'Welcome back to Increddy' },
+  register: { title: 'Create an account', subtitle: 'Your orders, keys and wishlist in one place' },
+  recover: { title: 'Reset your password', subtitle: "We'll email you a link to set a new one" },
+  'recover-email-sent': { title: 'Check your email', subtitle: 'A reset link is on its way' },
+  'email-sent': { title: 'Check your email', subtitle: 'Confirm your address to finish' },
+  'email-code': { title: 'Sign in with a code', subtitle: 'No password needed' },
+  'verify-email': { title: 'Verify your email', subtitle: 'One last step to finish your account' },
+}
 
 export default function AuthModal({
   children,
@@ -49,20 +60,26 @@ export default function AuthModal({
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent
         showCloseButton={false}
-        className="border-secondary bg-secondary/40 scrollbar-hide no-scrollbar max-h-[90vh] overflow-y-auto p-0 text-white/95 shadow-2xl backdrop-blur-2xl sm:max-w-165 sm:rounded-[30px]"
+        className="border-border bg-card scrollbar-hide no-scrollbar max-h-[90vh] overflow-y-auto p-0 text-white/95 shadow-2xl sm:max-w-105 sm:rounded-2xl"
       >
-        <div className="p-6 sm:p-10">
-          <DialogHeader className="border-secondary mb-6 flex flex-row items-center justify-between border-b pb-4">
-            <DialogTitle className="text-xl font-bold text-white/95 md:text-2xl">
-              {mode === 'login' && 'Login Into Account'}
-              {mode === 'register' && 'Register New Account'}
-              {mode === 'recover' && 'Recover Password'}
-              {mode === 'recover-email-sent' && 'Confirm Registered Mail'}
-              {mode === 'email-code' && 'Sign In With Email Code'}
-              {mode === 'verify-email' && 'Verify Your Email'}
-            </DialogTitle>
-            <DialogClose className="cursor-pointer rounded-full transition-colors hover:bg-white/10">
-              <X className="text-white/65 h-4 w-4" strokeWidth={2.5} />
+        <div className="p-6 sm:p-7">
+          <DialogHeader className="mb-5 flex flex-row items-start justify-between gap-4 text-left">
+            <div>
+              <DialogTitle className="text-xl font-bold text-white/95">
+                {TITLES[mode].title}
+              </DialogTitle>
+              <p className="mt-1 text-sm text-white/65">{TITLES[mode].subtitle}</p>
+            </div>
+            {/* Same close button as the currency picker: round, clear hover,
+                focus ring only for keyboard users. */}
+            <DialogClose
+              aria-label="Close"
+              className="group/close grid size-9 shrink-0 cursor-pointer place-items-center rounded-full bg-white/5 transition-colors outline-none hover:bg-white/10 focus-visible:ring-2 focus-visible:ring-white/40"
+            >
+              <X
+                className="size-[18px] text-white/65 transition-colors group-hover/close:text-white"
+                strokeWidth={2}
+              />
             </DialogClose>
           </DialogHeader>
 
@@ -87,7 +104,20 @@ export default function AuthModal({
               onSuccess={() => setMode('recover-email-sent')}
             />
           )}
-          {mode === 'recover-email-sent' && <RecoverEmailSent />}
+          {mode === 'recover-email-sent' && (
+            <>
+              <RecoverEmailSent />
+              <AuthFooter>
+                <button
+                  type="button"
+                  onClick={() => setMode('login')}
+                  className={FOOTER_ACTION_CLASS}
+                >
+                  Back to log in
+                </button>
+              </AuthFooter>
+            </>
+          )}
           {mode === 'email-code' && (
             <EmailCodeForm
               onSwitchToLogin={() => setMode('login')}

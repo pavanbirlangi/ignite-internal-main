@@ -27,19 +27,18 @@ export default async function ResetPasswordPage({
         }}
       />
       <section className="container mx-auto flex min-h-[70vh] items-center justify-center px-4 py-20">
-        <div className="bg-secondary/40 border-secondary w-full max-w-lg overflow-hidden rounded-[30px] p-6 text-white/95 shadow-2xl backdrop-blur-2xl sm:p-10">
-          <div className="border-secondary mb-8 border-b pb-4">
-            <h1 className="text-xl font-bold text-white/95 md:text-2xl">
-              Reset Your Password
+        {/* Same card as the sign-in modal. */}
+        <div className="bg-card border-border w-full max-w-105 overflow-hidden rounded-2xl border p-6 text-white/95 shadow-2xl sm:p-7">
+          <div className="mb-5">
+            <h1 data-display className="text-xl font-bold text-white/95">
+              Reset your password
             </h1>
-            <p className="text-white/65 mt-2 text-sm">
-              Enter your new password below.
-            </p>
+            <p className="mt-1 text-sm text-white/65">Choose a new password for your account</p>
           </div>
           {token ? (
             <ResetPasswordForm token={decodeURIComponent(token)} />
           ) : (
-            <p className="text-destructive text-sm">
+            <p className="text-red text-sm">
               This reset link is missing its token. Please request a new
               password reset email.
             </p>
