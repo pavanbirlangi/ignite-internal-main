@@ -88,6 +88,8 @@ export function useLibraryModals(): UseLibraryModalsReturn {
       id: libraryItem.productId,
       handle: libraryItem.handle,
       title: libraryItem.title,
+      // Shown at the top of the review modal.
+      featuredImage: libraryItem.featuredImage,
     } as Product
 
     setModals((prev) => ({
