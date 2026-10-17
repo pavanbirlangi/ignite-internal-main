@@ -18,7 +18,7 @@ const StoreHero = ({
   return (
     <div className="relative -mt-30 flex h-100 w-full flex-col overflow-hidden px-4 md:h-105">
       <div className="absolute inset-0 h-full w-full">
-        <div className="absolute inset-0 z-0 h-full w-full transform">
+        <div className="hero-parallax-bg absolute inset-0 z-0 h-full w-full">
           <Image
             src={bannerUrl}
             alt="Hero Background"
@@ -39,7 +39,7 @@ const StoreHero = ({
       </div>
 
       {/* Content */}
-      <div className="relative z-20 mx-auto mb-24 flex h-full max-w-360 flex-col items-start justify-end-safe gap-6 md:w-310">
+      <div className="hero-parallax-text relative z-20 mx-auto mb-24 flex h-full max-w-360 flex-col items-start justify-end-safe gap-6 md:w-310">
         <div className="animate-fade-in-up max-w-150 max-lg:px-4">
           <h1 className="mb-4 text-3xl font-bold text-white/95 md:text-3xl">
             {title}

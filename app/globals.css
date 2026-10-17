@@ -401,6 +401,35 @@
   }
 }
 
+/* Store hero parallax: the banner drifts slower than the page and the heading rises and fades.
+   Scroll-driven CSS (no JS, transform/opacity only, runs off the main thread); browsers without
+   scroll timelines and reduced-motion users keep the static hero. */
+@supports (animation-timeline: scroll()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .hero-parallax-bg {
+      animation: hero-parallax-bg linear both;
+      animation-timeline: scroll(root);
+      animation-range: 0 420px;
+    }
+    .hero-parallax-text {
+      animation: hero-parallax-text linear both;
+      animation-timeline: scroll(root);
+      animation-range: 0 320px;
+    }
+  }
+}
+@keyframes hero-parallax-bg {
+  to {
+    transform: translateY(126px) scale(1.04);
+  }
+}
+@keyframes hero-parallax-text {
+  to {
+    transform: translateY(-48px);
+    opacity: 0;
+  }
+}
+
 /* A soft light that follows the pointer inside a button (position set from
    JS as --pointer-x/--pointer-y), and an edge that lights up near it. */
 .pointer-light::before,
