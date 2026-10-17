@@ -93,7 +93,7 @@ const FilterAccordion: React.FC<FilterAccordionProps> = ({
           )}
 
           <div
-            className={`flex flex-col gap-2 ${hasSearch ? 'custom-scrollbar max-h-37.5 overflow-y-auto pr-1' : ''}`}
+            className={`flex flex-col gap-2 ${hasSearch ? 'max-h-37.5 overflow-y-auto pr-1 [scrollbar-color:rgb(255_255_255/0.18)_transparent] [scrollbar-width:thin] [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-white/18 [&::-webkit-scrollbar-track]:bg-transparent' : ''}`}
           >
             {filteredOptions.map((option) => {
               const idString = getIdString(option.id)
