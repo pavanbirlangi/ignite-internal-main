@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useSyncExternalStore } from 'react'
 import { cn } from '@/lib/utils'
+import { startEpicTypography } from '@/lib/epic-typography'
 
 // Preview toggle so the client can compare our current typography with an
 // Epic Games Store style (Inter, Epic's sizes and weights). The styles live in
@@ -48,12 +49,16 @@ export default function TypographySwitcher() {
     try {
       localStorage.setItem(STORAGE_KEY, typography)
     } catch {}
+    // Snap every other text element to Epic's scale (lib/epic-typography);
+    // switching back restores them.
+    if (typography === 'epic') return startEpicTypography()
   }, [typography, visible])
 
   if (!visible) return null
 
   return (
     <div
+      data-typography-switcher
       role="radiogroup"
       aria-label="Typography preview"
       className="bg-secondary/95 fixed bottom-24 left-1/2 z-[60] flex -translate-x-1/2 gap-1 rounded-full border border-white/15 p-1 shadow-[0_10px_30px_rgba(0,0,0,0.5)] backdrop-blur md:bottom-5"

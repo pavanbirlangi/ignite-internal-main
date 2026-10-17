@@ -641,39 +641,56 @@ html[data-typography='epic'] body *:not(svg):not(path) {
   font-family: var(--font-inter), system-ui, sans-serif !important;
 }
 html[data-typography='epic'] .font-medium { font-weight: 500 !important; }
-html[data-typography='epic'] .font-semibold { font-weight: 600 !important; }
+html[data-typography='epic'] .font-semibold { font-weight: 700 !important; } /* Epic uses 400/500/700 only */
 html[data-typography='epic'] .font-bold { font-weight: 700 !important; }
 /* Inter reports its cap height correctly, so trim to the caps for true centring */
 html[data-typography='epic'] .trim { text-box: trim-both cap alphabetic !important; }
 /* Page-level headline: Epic's largest (32/700); kicker 12/700 spaced caps */
 html[data-typography='epic'] main h1[class] { font-size: 32px !important; font-weight: 700 !important; line-height: 1.2 !important; letter-spacing: normal !important; }
-html[data-typography='epic'] main :has(> h1) > .uppercase { font-size: 12px !important; font-weight: 700 !important; letter-spacing: 1.2px !important; }
+html[data-typography='epic'] main :has(> h1) > .uppercase { font-size: 12px !important; font-weight: 700 !important; letter-spacing: 1.2px !important; line-height: 12px !important; }
 /* Section titles 24/700; the newsletter headline uses the page-title size */
 html[data-typography='epic'] main h2[class] { font-size: 24px !important; font-weight: 700 !important; letter-spacing: normal !important; }
 html[data-typography='epic'] main h2[class].md\:text-\[40px\] { font-size: 32px !important; }
 html[data-typography='epic'] main h2 + a { font-size: 14px !important; font-weight: 500 !important; }
 /* Product cards: titles 16/700, prices 14/500, buttons 14/500, badges 12/500 */
 html[data-typography='epic'] main .rounded-2xl h3[class] { font-size: 16px !important; font-weight: 700 !important; line-height: 19.2px !important; letter-spacing: -0.08px !important; min-height: 38.4px !important; }
-html[data-typography='epic'] .text-\[19px\] { font-size: 14px !important; font-weight: 500 !important; letter-spacing: 0.28px !important; }
-html[data-typography='epic'] .line-through { font-size: 14px !important; font-weight: 500 !important; letter-spacing: 0.28px !important; color: rgb(255 255 255 / 0.65) !important; }
+html[data-typography='epic'] .text-\[19px\] { font-size: 14px !important; font-weight: 500 !important; letter-spacing: 0.28px !important; line-height: 19.6px !important; }
+html[data-typography='epic'] .line-through { font-size: 14px !important; font-weight: 500 !important; letter-spacing: 0.28px !important; line-height: 19.6px !important; color: rgb(255 255 255 / 0.65) !important; }
 html[data-typography='epic'] button[aria-label^='Add '],
-html[data-typography='epic'] button[aria-label^='Buy '] { font-size: 14px !important; font-weight: 500 !important; letter-spacing: 0.28px !important; }
+html[data-typography='epic'] button[aria-label^='Buy '] { font-size: 14px !important; font-weight: 500 !important; letter-spacing: 0.28px !important; line-height: 19.6px !important; }
 html[data-typography='epic'] button[aria-label^='Add '] *,
 html[data-typography='epic'] button[aria-label^='Buy '] * { font-weight: 500 !important; }
 html[data-typography='epic'] main a.bg-primary,
 html[data-typography='epic'] main button.bg-primary { font-weight: 500 !important; letter-spacing: 0.28px !important; }
-html[data-typography='epic'] .bg-deal span { font-size: 12px !important; font-weight: 500 !important; letter-spacing: 0.36px !important; }
+html[data-typography='epic'] .bg-deal span { font-size: 12px !important; font-weight: 500 !important; letter-spacing: 0.36px !important; line-height: 15.6px !important; }
 html[data-typography='epic'] .bg-deal span.uppercase { font-weight: 700 !important; }
 /* Header nav 14/400 */
 html[data-typography='epic'] nav a[href],
 html[data-typography='epic'] nav a[href] *,
-html[data-typography='epic'] nav button[class] { font-size: 14px !important; font-weight: 400 !important; letter-spacing: 0.28px !important; }
+html[data-typography='epic'] nav button[class] { font-size: 14px !important; font-weight: 400 !important; letter-spacing: 0.28px !important; line-height: 19.6px !important; }
 /* FAQ: questions 16/400, answers 16/400 at 26.4px */
 html[data-typography='epic'] [data-slot='accordion-trigger'] { font-size: 16px !important; font-weight: 400 !important; letter-spacing: 0.16px !important; line-height: 24px !important; }
 html[data-typography='epic'] [data-slot='accordion-content'] p,
 html[data-typography='epic'] [data-slot='accordion-content'] .prose { font-size: 16px !important; font-weight: 400 !important; line-height: 26.4px !important; letter-spacing: 0.16px !important; }
-html[data-typography='epic'] main p { letter-spacing: 0.16px !important; }
+html[data-typography='epic'] main p { letter-spacing: 0.16px !important; line-height: 24px !important; }
 /* Footer links 14/400 */
 html[data-typography='epic'] footer a,
 html[data-typography='epic'] footer li,
-html[data-typography='epic'] footer p { font-size: 14px !important; font-weight: 400 !important; letter-spacing: 0.28px !important; }
+html[data-typography='epic'] footer p { font-size: 14px !important; font-weight: 400 !important; letter-spacing: 0.28px !important; line-height: 19.6px !important; }
+
+/* Epic's text colours: primary text white at 95%, secondary at 65%. In the
+   utilities layer with :where() so it beats the base colour classes but hover
+   and open-state colours (e.g. FAQ questions turning white) still win. */
+@layer utilities {
+  :where(html[data-typography='epic']) body { color: rgb(255 255 255 / 0.95); }
+  :where(html[data-typography='epic']) .text-white,
+  :where(html[data-typography='epic']) .text-foreground,
+  :where(html[data-typography='epic']) .text-white\/90,
+  :where(html[data-typography='epic']) .text-white\/85,
+  :where(html[data-typography='epic']) .text-white\/80 { color: rgb(255 255 255 / 0.95); }
+  :where(html[data-typography='epic']) .text-muted-foreground,
+  :where(html[data-typography='epic']) .text-white\/70,
+  :where(html[data-typography='epic']) .text-white\/60,
+  :where(html[data-typography='epic']) .text-white\/50,
+  :where(html[data-typography='epic']) .text-white\/40 { color: rgb(255 255 255 / 0.65); }
+}
