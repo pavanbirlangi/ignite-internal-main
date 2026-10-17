@@ -11,6 +11,7 @@ import {
 } from '@/components/ui/select'
 import { CartProduct } from './types'
 import { formatApiCurrency } from './currency'
+import { getDiscountPercent } from '@/lib/utils/discount'
 
 interface CartItemProps {
   product: CartProduct & { quantity?: number }
@@ -34,8 +35,14 @@ export const CartDrawerItem = ({
     (_, index) => index + 1,
   )
 
+  const discount =
+    typeof product.originalPrice === 'number' && product.originalPrice > product.price
+      ? getDiscountPercent(product.originalPrice, product.price)
+      : 0
+
   return (
-    <div className="bg-card glassmorphism group relative flex flex-col gap-4 rounded-[20px] border px-5 py-3">
+    // Rows split by a thin line rather than boxed cards.
+    <div className="border-border group relative flex flex-col gap-4 border-b py-4 first:pt-0">
       <div className="flex gap-4">
         {/* Image */}
         {productHref ? (
@@ -92,8 +99,8 @@ export const CartDrawerItem = ({
             )}
           </div>
 
-          <div className="mt-2 flex items-center gap-2">
-            <span className="text-sm font-bold text-white/95">
+          <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1">
+            <span className="text-sm font-medium text-white/95">
               {formatApiCurrency(product.price, product.currencyCode)}
             </span>
             {typeof product.originalPrice === 'number' &&
@@ -105,6 +112,14 @@ export const CartDrawerItem = ({
                   )}
                 </span>
               )}
+            {/* Same badge as the product cards. */}
+            {discount > 0 && (
+              <span className="bg-deal flex h-[22px] items-center rounded-[6px] px-2">
+                <span className="trim block text-xs font-medium text-white/95">
+                  -{discount}%
+                </span>
+              </span>
+            )}
           </div>
         </div>
 
@@ -123,11 +138,11 @@ export const CartDrawerItem = ({
             }
           >
             <SelectTrigger
-              className={`bg-background! text-white/95 border-secondary flex h-7.5 min-w-12.5 gap-1 rounded-[6px] border p-2 text-sm font-bold transition-colors focus:ring-0 focus:ring-offset-0 ${isItemLoading || product.availableForSale === false ? 'cursor-not-allowed opacity-50' : 'hover:bg-secondary hover:text-white'}`}
+              className={`bg-card! border-border flex h-8 min-w-12.5 gap-1 rounded-lg border px-2.5 text-sm font-medium text-white/95 transition-colors focus:ring-0 focus:ring-offset-0 data-[state=open]:border-primary/70 ${isItemLoading || product.availableForSale === false ? 'cursor-not-allowed opacity-50' : 'hover:border-white/20 hover:text-white'}`}
             >
               <SelectValue placeholder="1" />
             </SelectTrigger>
-            <SelectContent className="bg-background text-white/95 border-secondary min-w-12.5">
+            <SelectContent className="bg-card border-border min-w-12.5 rounded-xl border p-1 text-white/95">
               {quantityOptions.map((option) => (
                 <SelectItem key={option} value={option.toString()}>
                   {option}
@@ -140,10 +155,10 @@ export const CartDrawerItem = ({
           <button
             onClick={() => onRemove(product.id)}
             disabled={isItemLoading}
-            className={`rounded-md p-1.5 text-(--red-500) transition-colors ${isItemLoading ? 'cursor-not-allowed opacity-50' : 'hover:text-red cursor-pointer hover:bg-white/5'}`}
+            className={`rounded-lg p-1.5 text-white/45 transition-colors ${isItemLoading ? 'cursor-not-allowed opacity-50' : 'hover:text-red cursor-pointer hover:bg-white/5'}`}
             aria-label="Remove item"
           >
-            <Trash2 className="size-6" />
+            <Trash2 className="size-[18px]" />
           </button>
         </div>
       </div>

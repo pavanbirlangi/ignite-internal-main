@@ -1,9 +1,9 @@
-import { ChevronRight } from 'lucide-react'
+import { useTransition } from 'react'
+import { ArrowUpRight, ChevronRight } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { SheetClose } from '@/components/ui/sheet'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
-import StarIcon from '../icons/StarIcon'
 import { useCartStore } from '@/store/useCartStore'
 import { ensureCheckoutAllowed } from '@/lib/utils/checkout-guard'
 import { formatApiCurrency } from './currency'
@@ -17,10 +17,8 @@ interface CartFooterProps {
 export const CartFooter = ({ total, count, currencyCode }: CartFooterProps) => {
   const router = useRouter()
   const cartCmsData = useCartStore((state) => state.cartCmsData)
-  const reviewCount = cartCmsData?.review_count?.trim()
-  // "1 reviews" reads as broken -- the CMS holds a plain string, so the
-  // plural is decided here.
-  const reviewLabel = reviewCount === '1' ? 'review' : 'reviews'
+  // Spins until the checkout page has loaded.
+  const [isOpeningCheckout, startOpeningCheckout] = useTransition()
   const isCartEmpty = count < 1
 
   const handlePayNow = () => {
@@ -31,73 +29,64 @@ export const CartFooter = ({ total, count, currencyCode }: CartFooterProps) => {
 
     if (!ensureCheckoutAllowed()) return
 
-    router.push('/checkout')
+    startOpeningCheckout(() => router.push('/checkout'))
   }
 
   return (
-    <div className="border-muted-foreground bg-background absolute right-0 bottom-0 left-0 z-20 flex w-full flex-col gap-4 px-5 py-4">
-      {/* Total Row */}
-      <div className="flex w-full flex-col gap-1.5">
-        {/* No promotion module exists yet, so a discount line never renders
-            here -- see cart.service.ts. */}
-        <div className="flex w-full items-end justify-between pt-2.5 mt-0.5">
-          <span className="text-xl font-bold text-white/95">Cart Total:</span>
-          <span className="text-xl font-bold text-white/95">
-            {formatApiCurrency(total, currencyCode)}
-          </span>
-        </div>
+    <div className="border-border bg-card absolute right-0 bottom-0 left-0 z-20 flex w-full flex-col gap-4 border-t px-6 pt-4 pb-5">
+      {/* Savings are shown on the cart page; the drawer keeps to the total. */}
+      <div className="flex w-full items-baseline justify-between">
+        <span className="text-base font-medium text-white/65">Cart total</span>
+        <span className="text-xl font-bold text-white/95">
+          {formatApiCurrency(total, currencyCode)}
+        </span>
       </div>
 
-      {/* Action Buttons */}
-      <div className="flex w-full gap-3">
+      <div className="grid w-full grid-cols-2 gap-3">
         <SheetClose asChild>
           <Button
-            onClick={() => {
-              router.push('/cart')
-            }}
-            variant="ghost"
-            className="bg-secondary border-muted-foreground hover:bg-border h-11 flex-1 rounded-[6px] border-[0.78px] px-4 py-3 text-base font-bold text-white/95 transition-colors hover:text-white"
+            onClick={() => router.push('/cart')}
+            variant="secondary"
+            className="border-border h-11 rounded-lg border bg-transparent text-sm font-medium hover:bg-white/5 md:text-sm"
           >
-            Go To Cart ({count})
+            View cart ({count})
           </Button>
         </SheetClose>
 
+        {/* Same hover as the hero's Browse Deals button: a light sweep and
+            a sliding arrow. */}
         <Button
+          variant="primary"
           onClick={handlePayNow}
           disabled={isCartEmpty}
-          className="bg-primary glassmorphism shadow-primary/20 flex h-11 flex-1 items-center justify-center gap-2 rounded-[6px] px-4 py-3 text-base font-bold text-white/95 shadow-lg transition-colors hover:bg-(--primary-dark) disabled:cursor-not-allowed disabled:opacity-50"
+          loading={isOpeningCheckout}
+          className="group/cta relative h-11 overflow-hidden rounded-lg text-sm md:text-sm"
         >
-          Pay Now <ChevronRight className="ml-0.5 h-4 w-4" />
+          <span
+            aria-hidden
+            className="pointer-events-none absolute inset-y-0 -left-1/3 w-1/4 -translate-x-full skew-x-[-20deg] bg-white/25 blur-[2px] transition-transform duration-700 ease-out group-hover/cta:translate-x-[700%] motion-reduce:hidden"
+          />
+          Checkout
+          <ChevronRight className="-mr-1 size-4 transition-transform duration-300 ease-out group-hover/cta:translate-x-1" />
         </Button>
       </div>
 
-      {/* Trustpilot badge -- renders only when the CMS actually has a review
-          count, rather than falling back to a hardcoded figure the way this
-          block originally did. The count and the profile link are both
-          Directus-managed (`/items/cart`). */}
-      {reviewCount && (
-        <div className="flex w-full items-center justify-center gap-1.5 pt-1 text-sm">
-          <span className="font-medium">
-            See our{' '}
-            {cartCmsData?.review_redirect_link ? (
-              <a
-                href={cartCmsData.review_redirect_link}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="font-bold text-white/95 underline transition-opacity hover:opacity-80"
-              >
-                {reviewCount} {reviewLabel}
-              </a>
-            ) : (
-              <span className="font-bold text-white/95">
-                {reviewCount} {reviewLabel}
-              </span>
-            )}{' '}
-            on
-          </span>
-          <StarIcon />
-          <span className="font-medium text-white/95">Trustpilot</span>
-        </div>
+      {/* Text link only (no Trustpilot logo or typed-in review count); same
+          as the footer. The profile link is Directus-managed (/items/cart). */}
+      {cartCmsData?.review_redirect_link && (
+        <a
+          href={cartCmsData.review_redirect_link}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="group/tp flex items-center justify-center gap-1.5 text-xs text-white/65 transition-colors hover:text-white"
+        >
+          <svg viewBox="0 0 24 24" aria-hidden className="size-3.5 shrink-0 fill-(--trustpilot-green)">
+            <path d="M12 2.5l2.9 6.6 7.1.6-5.4 4.7 1.6 7-6.2-3.7-6.2 3.7 1.6-7L2 9.7l7.1-.6z" />
+          </svg>
+          Check out our reviews on{' '}
+          <span className="font-medium text-(--trustpilot-green)">Trustpilot</span>
+          <ArrowUpRight className="size-3 transition-transform group-hover/tp:translate-x-0.5 group-hover/tp:-translate-y-0.5" />
+        </a>
       )}
     </div>
   )

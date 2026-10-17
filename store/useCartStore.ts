@@ -68,7 +68,13 @@ interface CartState {
     intent?: 'RELATED' | 'COMPLEMENTARY'
     limit?: number
   }) => Promise<void>
-  addItem: (merchandiseId: string, quantity: number) => Promise<void>
+  /** `notify: false` skips the Added-to-cart popup, e.g. when adding from
+   *  inside the cart drawer, where the item appears in the list anyway. */
+  addItem: (
+    merchandiseId: string,
+    quantity: number,
+    options?: { notify?: boolean },
+  ) => Promise<void>
   updateItem: (lineId: string, quantity: number) => Promise<void>
   removeItem: (lineIds: string[]) => Promise<void>
   clearCart: () => void
@@ -303,7 +309,7 @@ export const useCartStore = create<CartState>()((set, get) => ({
     }
   },
 
-  addItem: async (merchandiseId: string, quantity: number) => {
+  addItem: async (merchandiseId: string, quantity: number, options) => {
     const { initCart } = get()
 
     let targetCartId = get().cartId || getCartIdFromCookie()
@@ -332,7 +338,7 @@ export const useCartStore = create<CartState>()((set, get) => ({
       syncServiceFee(set, get, updatedCart.id)
       maybeRefreshRecommendations(get, previousCart)
       set({ itemsAdded: get().itemsAdded + 1 })
-      notifyItemAdded(updatedCart, merchandiseId)
+      if (options?.notify !== false) notifyItemAdded(updatedCart, merchandiseId)
     } catch (error: any) {
       const errorMessage = extractApiErrorMessage(
         error,
@@ -363,7 +369,7 @@ export const useCartStore = create<CartState>()((set, get) => ({
           syncServiceFee(set, get, retryCart.id)
           maybeRefreshRecommendations(get, previousCart)
           set({ itemsAdded: get().itemsAdded + 1 })
-          notifyItemAdded(retryCart, merchandiseId)
+          if (options?.notify !== false) notifyItemAdded(retryCart, merchandiseId)
           return
         } catch (retryError) {
           const retryErrorMessage = extractApiErrorMessage(

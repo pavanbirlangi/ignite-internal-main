@@ -157,32 +157,48 @@ export function CartDrawer() {
   const subtotalCurrencyCode = cart?.currencyCode
   const cartCount = cartItems.reduce((acc, item) => acc + item.quantity, 0)
 
-  const recommendationItems = React.useMemo(() => {
-    return recommendations.map((rec: any): CartProduct => {
-      const price = parseAmount(rec?.price?.amount)
-      const compareAtPrice = parseAmount(rec?.compareAtPrice?.amount)
-      const image = rec?.featuredImage?.url || RECOMMENDATION_PLACEHOLDER_IMAGE
-      const discountPercentage = getDiscountPercentage(
-        rec?.discount,
-        compareAtPrice,
-        price,
-      )
+  // Suggestions just added stay on screen briefly so their tick is seen,
+  // even if the list refreshes meanwhile (adding can change the seed product).
+  const [justAdded, setJustAdded] = React.useState<CartProduct[]>([])
 
-      return {
-        id: rec?.id,
-        handle: rec?.handle,
-        merchandiseId: getRecommendationMerchandiseId(rec?.variants),
-        title: rec?.title || 'Recommended Product',
-        platform: Array.isArray(rec?.platform) ? rec.platform.join(' / ') : '',
-        price,
-        currencyCode: rec?.price?.currencyCode || subtotalCurrencyCode,
-        originalPrice: compareAtPrice > price ? compareAtPrice : undefined,
-        discountPercentage,
-        image,
-        availableForSale: rec?.availableForSale ?? true,
-      }
-    })
-  }, [recommendations, subtotalCurrencyCode])
+  const recommendationItems = React.useMemo<CartProduct[]>(() => {
+    // Products already in the cart aren't suggested again.
+    const inCart = new Set(cart?.items?.map((item) => item.handle) ?? [])
+    const held = new Set(justAdded.map((product) => product.id))
+    const items: CartProduct[] = recommendations
+      .filter((rec) => !inCart.has(rec.handle) || held.has(rec.id))
+      .map((rec: any): CartProduct => {
+        const price = parseAmount(rec?.price?.amount)
+        const compareAtPrice = parseAmount(rec?.compareAtPrice?.amount)
+        const image =
+          rec?.featuredImage?.url || RECOMMENDATION_PLACEHOLDER_IMAGE
+        const discountPercentage = getDiscountPercentage(
+          rec?.discount,
+          compareAtPrice,
+          price,
+        )
+
+        return {
+          id: rec?.id,
+          handle: rec?.handle,
+          merchandiseId: getRecommendationMerchandiseId(rec?.variants),
+          title: rec?.title || 'Recommended Product',
+          platform: Array.isArray(rec?.platform)
+            ? rec.platform.join(' / ')
+            : '',
+          price,
+          currencyCode: rec?.price?.currencyCode || subtotalCurrencyCode,
+          originalPrice: compareAtPrice > price ? compareAtPrice : undefined,
+          discountPercentage,
+          image,
+          availableForSale: rec?.availableForSale ?? true,
+        }
+      })
+    const missing = justAdded.filter(
+      (product) => !items.some((item) => item.id === product.id),
+    )
+    return [...missing, ...items]
+  }, [recommendations, subtotalCurrencyCode, cart, justAdded])
 
   const handleRemove = (id: string) => {
     removeItem([id])
@@ -193,19 +209,31 @@ export function CartDrawer() {
     updateItem(id, qty)
   }
 
-  const handleAddToCart = (product: CartProduct) => {
+  const handleAddToCart = async (product: CartProduct) => {
     if (!product.merchandiseId) {
       if (product.handle) {
         setOpen(false)
         router.push(`/${product.handle}`)
-        return
+        return false
       }
 
       toast.error('This item is unavailable to add right now.')
-      return
+      return false
     }
 
-    addItem(product.merchandiseId, 1)
+    // Held before adding: the cart updates before addItem returns, and the
+    // row would otherwise be filtered out (and lose its state) in between.
+    setJustAdded((held) => [...held, product])
+    const release = () =>
+      setJustAdded((held) => held.filter((item) => item.id !== product.id))
+
+    const addedBefore = useCartStore.getState().itemsAdded
+    // No Added-to-cart popup here: the item shows up in the list above.
+    await addItem(product.merchandiseId, 1, { notify: false })
+    const added = useCartStore.getState().itemsAdded > addedBefore
+    if (added) window.setTimeout(release, 1600)
+    else release()
+    return added
   }
 
   return (
@@ -249,22 +277,26 @@ export function CartDrawer() {
         </button>
       </SheetTrigger>
       <SheetContent
-        className="bg-secondary my-auto flex w-full flex-col overflow-hidden rounded-[12px] p-0 text-white/95 focus:outline-none focus-visible:outline-none sm:mr-4 sm:max-h-[95vh] sm:max-w-110"
+        className="bg-card border-border my-auto flex w-full flex-col overflow-hidden rounded-2xl border p-0 text-white/95 focus:outline-none focus-visible:outline-none sm:mr-4 sm:max-h-[95vh] sm:max-w-110"
         showCloseButton={false}
       >
         {/* Header */}
-        <SheetHeader className="borde-muted-foreground flex shrink-0 flex-row items-center justify-between space-y-0 border-b px-6 py-5 text-left">
-          <SheetTitle className="flex items-baseline gap-2 font-sans text-xl font-bold text-white/95 md:text-2xl">
+        <SheetHeader className="border-border flex shrink-0 flex-row items-center justify-between space-y-0 border-b px-6 py-5 text-left">
+          <SheetTitle className="flex items-baseline gap-2 font-sans text-xl font-bold text-white/95">
             Cart{' '}
-            <span className="text-white/65 text-xl font-bold">
+            <span className="text-sm font-medium text-white/65">
               ({cartCount} item{cartCount !== 1 ? 's' : ''})
             </span>
           </SheetTitle>
+          {/* Same close button as the modals. */}
           <SheetClose
             aria-label="Close cart"
-            className="rounded-full p-2 transition-colors hover:bg-white/10"
+            className="group/close grid size-9 shrink-0 cursor-pointer place-items-center rounded-full bg-white/5 transition-colors outline-none hover:bg-white/10 focus-visible:ring-2 focus-visible:ring-white/40"
           >
-            <X className="text-white/65 h-6 w-6" />
+            <X
+              className="size-[18px] text-white/65 transition-colors group-hover/close:text-white"
+              strokeWidth={2}
+            />
           </SheetClose>
         </SheetHeader>
 
@@ -277,13 +309,11 @@ export function CartDrawer() {
           }`}
         >
           {/* Cart Items List */}
-          <div className="flex flex-col gap-4">
+          <div className="flex flex-col">
             {isLoading && cartItems.length === 0 ? (
               <div className="flex flex-col items-center justify-center gap-4 py-20 text-center">
                 <div className="border-muted-foreground h-8 w-8 animate-spin rounded-full border-2 border-t-white" />
-                <p className="text-white/65 text-sm">
-                  Loading your cart...
-                </p>
+                <p className="text-sm text-white/65">Loading your cart...</p>
               </div>
             ) : cartItems.length > 0 ? (
               cartItems.map((item) => (
@@ -300,14 +330,14 @@ export function CartDrawer() {
               ))
             ) : (
               <div className="flex flex-col items-center justify-center gap-4 py-20 text-center">
-                <div className="bg-secondary text-white/65 flex h-16 w-16 items-center justify-center rounded-full">
+                <div className="bg-secondary flex h-16 w-16 items-center justify-center rounded-full text-white/65">
                   <ShoppingCart className="h-8 w-8" />
                 </div>
                 <div className="space-y-1">
                   <h3 className="text-xl font-bold text-white/95">
                     Your cart is empty
                   </h3>
-                  <p className="tex-muted-foreground text-sm">
+                  <p className="text-sm text-white/65">
                     Looks like you haven't added any games yet.
                   </p>
                 </div>
@@ -316,36 +346,40 @@ export function CartDrawer() {
           </div>
 
           {/* Recommendations */}
-          {cartItems.length > 0 && (
-            <div className="flex flex-col gap-4">
-              <h3 className="font-sans text-xl font-bold text-white/95 md:text-2xl">
-                We Also Recommend
-              </h3>
-              <div className="flex flex-col gap-3">
-                {isRecommendationsLoading ? (
-                  <div className="flex flex-col items-center justify-center gap-3 py-6 text-center">
-                    <div className="border-muted-foreground h-7 w-7 animate-spin rounded-full border-2 border-t-white" />
-                    <p className="text-white/65 text-sm">
-                      Loading recommendations...
+          {cartItems.length > 0 &&
+            (isRecommendationsLoading || recommendationItems.length > 0) && (
+              <div className="flex flex-col gap-4">
+                <h3 className="font-sans text-base font-bold text-white/95">
+                  You might also like
+                </h3>
+                <div className="flex flex-col gap-1">
+                  {/* Keep showing the current suggestions while a refresh
+                      loads; the placeholder is only for the first load. */}
+                  {isRecommendationsLoading &&
+                  recommendationItems.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center gap-3 py-6 text-center">
+                      <div className="border-muted-foreground h-7 w-7 animate-spin rounded-full border-2 border-t-white" />
+                      <p className="text-sm text-white/65">
+                        Loading recommendations...
+                      </p>
+                    </div>
+                  ) : recommendationItems.length > 0 ? (
+                    recommendationItems.map((rec) => (
+                      <RecommendationRow
+                        key={rec.id}
+                        product={rec}
+                        onAddToCart={handleAddToCart}
+                        onNavigate={() => setOpen(false)}
+                      />
+                    ))
+                  ) : (
+                    <p className="text-sm text-white/65">
+                      No recommendations available right now.
                     </p>
-                  </div>
-                ) : recommendationItems.length > 0 ? (
-                  recommendationItems.map((rec) => (
-                    <RecommendationRow
-                      key={rec.id}
-                      product={rec}
-                      onAddToCart={handleAddToCart}
-                      onNavigate={() => setOpen(false)}
-                    />
-                  ))
-                ) : (
-                  <p className="text-white/65 text-sm">
-                    No recommendations available right now.
-                  </p>
-                )}
+                  )}
+                </div>
               </div>
-            </div>
-          )}
+            )}
         </div>
 
         {/* Fixed Footer */}
