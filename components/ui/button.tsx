@@ -3,6 +3,7 @@ import { cva, type VariantProps } from 'class-variance-authority'
 import { Slot } from 'radix-ui'
 
 import { cn } from '@/lib/utils'
+import { Spinner } from '@/components/ui/spinner'
 
 const buttonVariants = cva(
   "inline-flex items-center justify-center gap-2 cursor-pointer whitespace-nowrap rounded-md text-base md:text-xl font-bold transition-all duration-200 ease-out motion-reduce:transition-none disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-7 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:ring-ring focus-visible:ring-4 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive select-none",
@@ -60,6 +61,9 @@ export interface ButtonProps
     React.ButtonHTMLAttributes<HTMLButtonElement>,
     VariantProps<typeof buttonVariants> {
   asChild?: boolean
+  /** Shows the same spinner ring as the product cards in place of the label
+   *  (kept invisible so the button keeps its size) and disables the button. */
+  loading?: boolean
 }
 
 function Button({
@@ -68,6 +72,9 @@ function Button({
   size,
   icon,
   asChild,
+  loading = false,
+  disabled,
+  children,
   ...props
 }: ButtonProps) {
   const Comp = asChild ? Slot.Root : 'button'
@@ -77,9 +84,25 @@ function Button({
       data-slot="button"
       data-variant={variant}
       data-size={size}
-      className={cn(buttonVariants({ variant, size, icon, className }))}
+      aria-busy={loading || undefined}
+      disabled={disabled || loading}
+      className={cn(
+        buttonVariants({ variant, size, icon, className }),
+        loading && 'relative disabled:opacity-100',
+      )}
       {...props}
-    />
+    >
+      {loading && !asChild ? (
+        <>
+          <span className="invisible contents">{children}</span>
+          <span className="absolute inset-0 grid place-items-center">
+            <Spinner className="size-5" />
+          </span>
+        </>
+      ) : (
+        children
+      )}
+    </Comp>
   )
 }
 
