@@ -136,11 +136,29 @@ const FilterSidebar: React.FC<FilterSidebarProps> = ({ className = '' }) => {
   }, [])
 
   // Accordion Visibility States
-  const [isProductTypeOpen, setIsProductTypeOpen] = useState(true)
-  const [isPlatformsOpen, setIsPlatformsOpen] = useState(true)
-  const [isGenresOpen, setIsGenresOpen] = useState(true)
-  const [isWorksOnOpen, setIsWorksOnOpen] = useState(false)
-  const [isRegionOpen, setIsRegionOpen] = useState(false)
+  // All sections start collapsed so the column is short enough to stay in view while the
+  // products scroll; a section opens by itself once one of its filters is on (also when the
+  // filters arrive from the URL after the first render). Never closed for the user.
+  const [isProductTypeOpen, setIsProductTypeOpen] = useState(selectedProductTypes.length > 0)
+  const [isPlatformsOpen, setIsPlatformsOpen] = useState(selectedPlatforms.length > 0)
+  const [isGenresOpen, setIsGenresOpen] = useState(selectedGenres.length > 0)
+  const [isWorksOnOpen, setIsWorksOnOpen] = useState(selectedWorksOn.length > 0)
+  const [isRegionOpen, setIsRegionOpen] = useState(selectedRegions.length > 0)
+  React.useEffect(() => {
+    if (selectedProductTypes.length > 0) setIsProductTypeOpen(true)
+  }, [selectedProductTypes.length])
+  React.useEffect(() => {
+    if (selectedPlatforms.length > 0) setIsPlatformsOpen(true)
+  }, [selectedPlatforms.length])
+  React.useEffect(() => {
+    if (selectedGenres.length > 0) setIsGenresOpen(true)
+  }, [selectedGenres.length])
+  React.useEffect(() => {
+    if (selectedWorksOn.length > 0) setIsWorksOnOpen(true)
+  }, [selectedWorksOn.length])
+  React.useEffect(() => {
+    if (selectedRegions.length > 0) setIsRegionOpen(true)
+  }, [selectedRegions.length])
   // Reads a fixed 'USD' until initLocation() has actually resolved a real
   // region client-side, rather than the store's raw `currency` value -- that
   // value comes from `Cookies.get()`, which returns undefined during SSR (no
@@ -210,7 +228,7 @@ const FilterSidebar: React.FC<FilterSidebarProps> = ({ className = '' }) => {
   return (
     <div
       className={cn(
-        'glassmorphism flex min-h-157.75 w-full lg:w-[288px] flex-none grow-0 flex-col items-start overflow-hidden rounded-2xl bg-(--secondary-20) p-0',
+        'glassmorphism flex w-full lg:w-[288px] flex-none grow-0 flex-col items-start overflow-hidden rounded-2xl bg-(--secondary-20) p-0',
         className
       )}
     >

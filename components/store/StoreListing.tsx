@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import FilterBar from './FilterBar'
 import FilterSidebar from './FilterSidebar'
@@ -19,6 +19,7 @@ import { useWorksOn } from '@/hooks/useWorksOn'
 import { GENRES, REGIONS } from '@/data/filterData'
 import type { StoreTranslations } from '@/lib/translations/store'
 import StoreCard from './StoreCard'
+import { cn } from '@/lib/utils'
 
 const staticFilters = [...GENRES, ...REGIONS]
 
@@ -26,7 +27,29 @@ interface StoreListingProps {
   translations?: Partial<StoreTranslations>
 }
 
+// True while the element fits in the window below the scrolled header (112px top + 24px air).
+// Pinning a taller column would hide its bottom until the page ends, so it scrolls instead.
+function useFitsInViewport<T extends HTMLElement>() {
+  const ref = useRef<T>(null)
+  const [fits, setFits] = useState(false)
+  useEffect(() => {
+    const el = ref.current
+    if (!el) return
+    const check = () => setFits(el.offsetHeight <= window.innerHeight - 136)
+    check()
+    const observer = new ResizeObserver(check)
+    observer.observe(el)
+    window.addEventListener('resize', check)
+    return () => {
+      observer.disconnect()
+      window.removeEventListener('resize', check)
+    }
+  }, [])
+  return [ref, fits] as const
+}
+
 const StoreListing = ({ translations }: StoreListingProps) => {
+  const [filterColumnRef, filterColumnFits] = useFitsInViewport<HTMLDivElement>()
   const filters = useStoreFilters()
   const ITEMS_PER_PAGE = 15
   const router = useRouter()
@@ -307,7 +330,13 @@ const StoreListing = ({ translations }: StoreListingProps) => {
       </div>
 
       <div className="flex flex-col gap-6 lg:flex-row">
-        <div className="hidden shrink-0 lg:block">
+        {/* Stays in view while the products scroll (112px = scrolled header 88px + 24px). When
+            several open sections make it taller than the window it scrolls with the page instead,
+            so there is never a second scrollbar. */}
+        <div
+          ref={filterColumnRef}
+          className={cn('hidden shrink-0 lg:block lg:self-start', filterColumnFits && 'lg:sticky lg:top-28')}
+        >
           <FilterSidebar />
         </div>
 
