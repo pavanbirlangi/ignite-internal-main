@@ -57,7 +57,8 @@ const ButtonFace = ({
   icon: React.ReactNode
   iconHover: keyof typeof ICON_HOVER
   label: string
-  doneLabel: string
+  /** Omit for buttons that never show a success state (Buy navigates away). */
+  doneLabel?: string
 }) => (
   <span className="grid place-items-center">
     <span
@@ -66,7 +67,12 @@ const ButtonFace = ({
         state !== 'idle' && cn(FACE_HIDDEN, '-translate-y-2.5'),
       )}
     >
-      <span className={cn('flex motion-reduce:transform-none', ICON_HOVER[iconHover])}>
+      <span
+        className={cn(
+          'flex motion-reduce:transform-none',
+          ICON_HOVER[iconHover],
+        )}
+      >
         {icon}
       </span>
       {/* .trim drops the font's built-in space under the letters, so the
@@ -86,35 +92,37 @@ const ButtonFace = ({
         <span className="animate-icon-breathe flex [&>svg]:size-3">{icon}</span>
       </span>
     </span>
-    <span
-      className={cn(
-        FACE,
-        state !== 'done' && cn(FACE_HIDDEN, 'translate-y-2.5'),
-      )}
-    >
-      {state === 'done' ? (
-        <svg
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth={3}
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          aria-hidden
-          className="size-[15px]"
-        >
-          <path
-            d="M5 12.5l4.5 4.5L19 7.5"
-            pathLength={1}
-            strokeDasharray={1}
-            className="animate-check-draw"
-          />
-        </svg>
-      ) : (
-        <span className="size-[15px]" />
-      )}
-      <span className="trim">{doneLabel}</span>
-    </span>
+    {doneLabel && (
+      <span
+        className={cn(
+          FACE,
+          state !== 'done' && cn(FACE_HIDDEN, 'translate-y-2.5'),
+        )}
+      >
+        {state === 'done' ? (
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth={3}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden
+            className="size-[15px]"
+          >
+            <path
+              d="M5 12.5l4.5 4.5L19 7.5"
+              pathLength={1}
+              strokeDasharray={1}
+              className="animate-check-draw"
+            />
+          </svg>
+        ) : (
+          <span className="size-[15px]" />
+        )}
+        <span className="trim">{doneLabel}</span>
+      </span>
+    )}
   </span>
 )
 
@@ -210,11 +218,13 @@ const StoreCard: React.FC<ProductCardProps> = ({ product, wishlisted }) => {
     setBuyState('loading')
     const addedBefore = useCartStore.getState().itemsAdded
     await Promise.all([addItem(variantId, 1), wait(MIN_SPINNER_MS)])
-    setBuyState(
-      useCartStore.getState().itemsAdded > addedBefore ? 'done' : 'idle',
-    )
+    if (useCartStore.getState().itemsAdded === addedBefore) {
+      setBuyState('idle')
+      return
+    }
     router.push('/cart')
-    // Stays spinning while the cart page loads; reset in case the user stays.
+    // Keeps spinning until the cart page replaces this one; reset in case the
+    // user stays.
     doneTimer.current = setTimeout(() => setBuyState('idle'), 4000)
     // let checkoutUrl = useCartStore.getState().cart?.checkoutUrl
     // if (!checkoutUrl) {
@@ -253,7 +263,10 @@ const StoreCard: React.FC<ProductCardProps> = ({ product, wishlisted }) => {
       // (the same sweep as the hero's Browse Deals button).
       // The border needs ! to beat .glassmorphism, which sits outside Tailwind's layers.
       className="group glassmorphism bg-secondary/20 relative flex h-full w-full transform-gpu flex-col overflow-hidden rounded-2xl transition-[border-color] duration-[450ms] hover:border-white/20! motion-reduce:transition-none"
-      style={{ backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden' }}
+      style={{
+        backfaceVisibility: 'hidden',
+        WebkitBackfaceVisibility: 'hidden',
+      }}
     >
       {wishlisted && (
         <button
@@ -275,12 +288,17 @@ const StoreCard: React.FC<ProductCardProps> = ({ product, wishlisted }) => {
         {/* Image Container */}
         <div
           ref={coverRef}
-          className="relative aspect-[1/1.3] w-full overflow-hidden rounded-t-2xl transform-gpu"
-          style={{ backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden' }}
+          className="relative aspect-[1/1.3] w-full transform-gpu overflow-hidden rounded-t-2xl"
+          style={{
+            backfaceVisibility: 'hidden',
+            WebkitBackfaceVisibility: 'hidden',
+          }}
         >
           <Image
             src={getProxyImageUrl(
-              product.featuredImageMeta?.url || product.featuredImage?.url || ''
+              product.featuredImageMeta?.url ||
+                product.featuredImage?.url ||
+                '',
             )}
             alt={
               product.featuredImageMeta?.altText ||
@@ -299,8 +317,11 @@ const StoreCard: React.FC<ProductCardProps> = ({ product, wishlisted }) => {
             className="group-hover:animate-card-glare pointer-events-none absolute inset-y-[-10%] -left-[60%] z-[3] w-[38%] -skew-x-[20deg] bg-linear-to-r from-transparent via-white/30 to-transparent opacity-0 motion-reduce:hidden"
           />
           <div
-            className="pointer-events-none absolute inset-x-0 bottom-0 h-20 bg-linear-to-t from-black/90 to-transparent transform-gpu"
-            style={{ backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden' }}
+            className="pointer-events-none absolute inset-x-0 -bottom-px h-[calc(5rem+1px)] bg-linear-to-t from-black/90 to-transparent"
+            style={{
+              backfaceVisibility: 'hidden',
+              WebkitBackfaceVisibility: 'hidden',
+            }}
           ></div>
 
           {/* Top-Left Badges (Out of Stock) */}
@@ -360,7 +381,7 @@ const StoreCard: React.FC<ProductCardProps> = ({ product, wishlisted }) => {
             </h3>
 
             {/* Price */}
-            <div className="mt-2 flex flex-col gap-0.5 md:flex-row md:items-center md:gap-2">
+            <div className="mt-2 flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
               <span className="text-sm font-medium text-white/95">
                 {product.priceRange?.minVariantPrice?.amount
                   ? formatCurrency(
@@ -378,7 +399,7 @@ const StoreCard: React.FC<ProductCardProps> = ({ product, wishlisted }) => {
                 (typeof product.compareAtPrice === 'object' &&
                   product.compareAtPrice?.amount &&
                   Number(product.compareAtPrice.amount) > 0)) && (
-                <span className="mt-2 text-sm font-medium text-white/65 line-through decoration-white/20 md:mt-0">
+                <span className="text-sm font-medium text-white/65 line-through decoration-white/20">
                   {product.originalPrice ??
                     (typeof product.compareAtPrice === 'object' &&
                       formatCurrency(
@@ -437,7 +458,6 @@ const StoreCard: React.FC<ProductCardProps> = ({ product, wishlisted }) => {
               icon={<Thunder height={15} width={15} />}
               iconHover="zap"
               label="Buy"
-              doneLabel="Opening cart"
             />
           </button>
         </div>
