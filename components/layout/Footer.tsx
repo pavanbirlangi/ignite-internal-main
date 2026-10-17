@@ -45,7 +45,7 @@ export default function Footer({
                       className="grid size-10 place-items-center rounded-full bg-white/5 text-white/65 transition-colors hover:bg-white/10 hover:text-white"
                     >
                       {hasSocialIcon(socialItem.name) ? (
-                        <SocialIcon name={socialItem.name} className="size-[18px]" />
+                        <SocialIcon name={socialItem.name} className="size-4" />
                       ) : (
                         // Networks without a matching glyph keep the CMS icon, muted.
                         <span
