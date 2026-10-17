@@ -46,7 +46,8 @@ export function Sidebar() {
   const [logoutDialogOpen, setLogoutDialogOpen] = useState(false)
 
   return (
-    <aside className="hidden w-60 shrink-0 lg:block">
+    // Stays in view while the page scrolls: 112px = the scrolled header (88px) + 24px gap.
+    <aside className="hidden w-60 shrink-0 lg:sticky lg:top-28 lg:block">
       <AccountIdentity className="px-1 pb-5" />
       <nav className="flex flex-col gap-0.5">
         {ACCOUNT_NAV_ITEMS.map((item) => {
