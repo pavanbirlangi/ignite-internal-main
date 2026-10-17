@@ -1,5 +1,10 @@
+'use client'
+
 import Link from 'next/link'
-import { Button } from '@/components/ui/button'
+import { ArrowRight } from 'lucide-react'
+import type { AboutCover } from '@/lib/services/about-covers'
+import { CoverFan, CoverFill } from './about-art'
+import styles from './about.module.css'
 
 interface AboutHeroProps {
   title?: string
@@ -7,60 +12,52 @@ interface AboutHeroProps {
   buttonText?: string
   buttonUrl?: string
   showImage?: boolean
+  covers?: AboutCover[]
 }
 
+// First word on its own line, the next two filled with covers ("instant access"), the rest
+// smaller underneath; the cover fan rises in below as the page starts to scroll.
 export default function AboutHero({
   title = 'Powering instant access to digital entertainment.',
-  description = 'Increddy is a modern digital marketplace for games, software, gift cards, and subscriptions — delivering genuine keys instantly, securely, and globally.',
+  description = 'Increddy is a modern digital marketplace for games, software, gift cards, and subscriptions, delivering genuine keys instantly, securely, and globally.',
   buttonText = 'Explore Our Store',
   buttonUrl = '/store',
   showImage = true,
+  covers = [],
 }: AboutHeroProps) {
-  const titleWords = title.trim().split(/\s+/)
+  const words = title.trim().split(/\s+/)
+  const lead = words[0]
+  const highlight = words.slice(1, 3).join(' ')
+  const rest = words.slice(3).join(' ')
 
   return (
-    <section className="bg-background relative -mt-30 pb-16 md:min-h-svh md:pb-0">
-      <img
-        src="/images/about/hero-pattern.png"
-        className="absolute inset-0 z-10 h-full w-full object-cover opacity-15"
-      />
-      <div className="from-background absolute inset-0 z-20 h-full w-full bg-linear-to-t to-[var(--background-0)] object-cover" />
-      <img
-        src="/images/about/hero-glow.png"
-        className="absolute inset-0 z-0 h-full w-full object-cover"
-      />
-      <div className="relative inset-0 z-30 mt-32 flex h-full w-full flex-col items-center justify-center px-4 md:mt-50">
-        <div className="flex flex-col items-center justify-center gap-6 text-center md:gap-10">
-          <h1 className="text-primary max-w-201.25 text-3xl font-bold md:text-3xl">
-            {titleWords.map((word, index) => (
-              <span
-                key={`${word}-${index}`}
-                className={
-                  index === 1 || index === 2 ? 'text-white/95' : undefined
-                }
-              >
-                {index > 0 ? ' ' : ''}
-                {word}
-              </span>
-            ))}
-          </h1>
-          <p className="text-white/65 max-w-148.25 text-base md:text-xl">
-            {description}
-          </p>
-          <Button asChild variant="primary" size="md">
-            <Link href={buttonUrl}>{buttonText}</Link>
-          </Button>
-        </div>
-        {showImage && (
-          <div className="mt-12 flex flex-row items-center justify-center md:mt-26">
-            <img
-              src="/images/about/hero-icons.svg"
-              alt="Gaming Platform Icons"
-              className="w-full max-w-100 md:max-w-none"
-            />
-          </div>
-        )}
+    <section className={`${styles.heroGlow} relative -mt-30 overflow-hidden pt-46 text-center md:pt-52`}>
+      <div className="container [--max-width-container:1240px]">
+        <h1 data-display className={`${styles.headline} mx-auto max-w-275 text-white/95`}>
+          {lead}{' '}
+          {highlight && <CoverFill covers={covers.slice(0, 7)} size={460}>{highlight}</CoverFill>}
+          {rest && <span className={styles.headlineRest}>{rest}</span>}
+        </h1>
+        <p className="mx-auto mt-7 max-w-155 text-base leading-[26px]! text-white/65 md:text-[18px] md:leading-7!">
+          {description}
+        </p>
+        <Link
+          href={buttonUrl}
+          className="group/cta bg-primary relative mt-8 inline-flex h-12 items-center gap-2 overflow-hidden rounded-lg px-5.5 text-sm font-medium text-white shadow-[0_10px_30px_-8px_var(--primary-glow-60)] transition-all hover:-translate-y-px hover:brightness-110"
+        >
+          <span
+            aria-hidden
+            className="absolute inset-y-0 -left-1/2 w-2/5 -skew-x-20 bg-white/25 transition-transform duration-700 group-hover/cta:translate-x-[360%] motion-reduce:hidden"
+          />
+          {buttonText}
+          <ArrowRight className="size-4 transition-transform group-hover/cta:translate-x-1" />
+        </Link>
       </div>
+      {showImage && (
+        <div className={styles.rise}>
+          <CoverFan covers={[covers[9], covers[10], covers[0], covers[8], covers[2]].filter(Boolean)} />
+        </div>
+      )}
     </section>
   )
 }

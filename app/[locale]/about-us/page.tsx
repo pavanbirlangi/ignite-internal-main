@@ -1,5 +1,6 @@
 import { AboutService } from '@/lib/services/about.service'
 import AboutPage from '@/components/about/AboutPage'
+import { getAboutCovers } from '@/lib/services/about-covers'
 import { translateTextsWithLangbly } from '@/lib/services/langbly-translation.service'
 import { translateAboutData } from '@/lib/translations/about'
 import type { Metadata } from 'next'
@@ -43,6 +44,8 @@ export default async function AppAboutPage({
     description: 'Learn more about Increddy.',
   })
 
+  const covers = await getAboutCovers()
+
   try {
     const response = await AboutService.getAboutUsPage()
     const content = response?.data
@@ -56,7 +59,7 @@ export default async function AppAboutPage({
               __html: JSON.stringify(webPageJsonLd),
             }}
           />
-          <AboutPage />
+          <AboutPage covers={covers} />
         </>
       )
     }
@@ -75,7 +78,7 @@ export default async function AppAboutPage({
             __html: JSON.stringify(webPageJsonLd),
           }}
         />
-        <AboutPage translatedContent={translatedContent} />
+        <AboutPage translatedContent={translatedContent} covers={covers} />
       </>
     )
   } catch (error) {
@@ -88,7 +91,7 @@ export default async function AppAboutPage({
             __html: JSON.stringify(webPageJsonLd),
           }}
         />
-        <AboutPage />
+        <AboutPage covers={covers} />
       </>
     )
   }

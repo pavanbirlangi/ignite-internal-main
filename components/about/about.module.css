@@ -1,0 +1,487 @@
+/* About page artwork. Everything that moves animates transform, opacity or background-position
+   only, and all motion stops for reduced-motion users. */
+
+/* Words filled with a slowly panning row of product covers */
+.fill {
+  background-image: var(--strip);
+  background-size: var(--size) auto;
+  background-position: var(--pos);
+  background-repeat: no-repeat;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  -webkit-text-stroke: 1px rgb(255 255 255 / 0.28);
+  filter: saturate(1.35) brightness(1.5) contrast(1.05);
+  animation: pan 46s linear infinite alternate;
+}
+@keyframes pan {
+  to {
+    background-position: var(--pos2);
+  }
+}
+
+/* ---------- Hero ---------- */
+.headline {
+  font-size: 124px;
+  line-height: 112px;
+  font-weight: 700;
+  letter-spacing: -4px;
+}
+.headlineRest {
+  display: block;
+  margin-top: 12px;
+  font-size: 56px;
+  line-height: 62px;
+  letter-spacing: -1.2px;
+}
+@media (max-width: 1100px) {
+  .headline {
+    font-size: 88px;
+    line-height: 84px;
+    letter-spacing: -3px;
+  }
+  .headlineRest {
+    font-size: 44px;
+    line-height: 50px;
+  }
+}
+@media (max-width: 640px) {
+  .headline {
+    font-size: 44px;
+    line-height: 46px;
+    letter-spacing: -1.6px;
+  }
+  .headlineRest {
+    margin-top: 8px;
+    font-size: 30px;
+    line-height: 36px;
+    letter-spacing: -0.6px;
+  }
+}
+
+.heroGlow {
+  background: radial-gradient(50% 40% at 50% 85%, rgb(36 104 223 / 0.3), transparent 70%);
+}
+
+/* The fan rises into place over the first 240px of scrolling */
+@supports (animation-timeline: scroll()) {
+  .rise {
+    animation: rise linear both;
+    animation-timeline: scroll(root);
+    animation-range: 0 240px;
+  }
+}
+@keyframes rise {
+  from {
+    transform: translateY(60px);
+  }
+  to {
+    transform: none;
+  }
+}
+
+/* ---------- 3D cover fan ---------- */
+.fanStage {
+  position: relative;
+  height: 440px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  perspective: 1400px;
+}
+.fan {
+  --spread: 1;
+  position: relative;
+  width: 230px;
+  height: 306px;
+  transform-style: preserve-3d;
+  transform: rotateX(calc(var(--ry, 0) * 1deg)) rotateY(calc(var(--rx, 0) * 1deg));
+  transition: transform 0.25s ease-out;
+}
+.fanStage:hover .fan {
+  --spread: 1.75;
+}
+@media (max-width: 900px) {
+  .fanStage {
+    height: 300px;
+  }
+  .fan {
+    --spread: 0.62;
+    width: 150px;
+    height: 200px;
+  }
+  .fanStage:hover .fan {
+    --spread: 0.9;
+  }
+}
+.cover {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  border-radius: 14px;
+  border: 1px solid rgb(255 255 255 / 0.1);
+  background: var(--card);
+  transition:
+    transform 0.7s cubic-bezier(0.2, 0.8, 0.2, 1),
+    opacity 0.5s,
+    filter 0.5s,
+    box-shadow 0.5s;
+}
+.cover img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.cover::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(115deg, transparent 35%, rgb(255 255 255 / 0.22) 48%, transparent 60%);
+  transform: translateX(calc(var(--gx, 0) * 1%));
+}
+.fan .cover:nth-child(1) {
+  transform: translateX(calc(var(--spread) * -150px)) translateZ(-80px) rotateY(18deg) rotateZ(-6deg);
+}
+.fan .cover:nth-child(2) {
+  transform: translateX(calc(var(--spread) * -76px)) translateZ(-36px) rotateY(9deg) rotateZ(-3deg);
+}
+.fan .cover:nth-child(3) {
+  transform: translateZ(30px);
+  box-shadow: 0 40px 80px -20px rgb(0 0 0 / 0.9);
+}
+.fan .cover:nth-child(4) {
+  transform: translateX(calc(var(--spread) * 76px)) translateZ(-36px) rotateY(-9deg) rotateZ(3deg);
+}
+.fan .cover:nth-child(5) {
+  transform: translateX(calc(var(--spread) * 150px)) translateZ(-80px) rotateY(-18deg) rotateZ(6deg);
+}
+
+/* ---------- How it works: a pinned 3D card driven by the step in view ---------- */
+.stage {
+  position: sticky;
+  top: 112px;
+  height: 520px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  perspective: 1400px;
+  border-radius: 24px;
+  border: 1px solid var(--border);
+  background: radial-gradient(60% 60% at 50% 50%, rgb(36 104 223 / 0.18), transparent 70%), var(--card);
+}
+@media (max-width: 1023px) {
+  .stage {
+    top: 84px;
+    z-index: 4;
+    height: 300px;
+    margin-bottom: 8px;
+    box-shadow: 0 24px 40px -10px var(--background);
+  }
+}
+.scene {
+  --k: 0.72;
+  position: relative;
+  width: 200px;
+  height: 266px;
+  transform-style: preserve-3d;
+}
+@media (max-width: 1023px) {
+  .scene {
+    --k: 0.6;
+    width: 132px;
+    height: 176px;
+  }
+}
+.scene .side:nth-of-type(1) {
+  transform: translateX(calc(var(--k) * -230px)) translateZ(-120px) rotateY(24deg);
+}
+.scene .side:nth-of-type(2) {
+  transform: translateX(calc(var(--k) * -118px)) translateZ(-60px) rotateY(12deg);
+}
+.scene .side:nth-of-type(3) {
+  transform: translateX(calc(var(--k) * 118px)) translateZ(-60px) rotateY(-12deg);
+}
+.scene .side:nth-of-type(4) {
+  transform: translateX(calc(var(--k) * 230px)) translateZ(-120px) rotateY(-24deg);
+}
+.scene[data-step='1'] .side,
+.scene[data-step='2'] .side {
+  opacity: 0;
+  transform: translateZ(-200px) scale(0.8);
+}
+/* Last step: the other covers line up behind as a library shelf */
+.scene[data-step='3'] .side {
+  opacity: 0.45;
+  filter: saturate(0.6);
+}
+.scene[data-step='3'] .side:nth-of-type(1) {
+  transform: translateX(calc(var(--k) * -250px)) translateZ(-160px) scale(0.82);
+}
+.scene[data-step='3'] .side:nth-of-type(2) {
+  transform: translateX(calc(var(--k) * -140px)) translateZ(-110px) scale(0.88);
+}
+.scene[data-step='3'] .side:nth-of-type(3) {
+  transform: translateX(calc(var(--k) * 140px)) translateZ(-110px) scale(0.88);
+}
+.scene[data-step='3'] .side:nth-of-type(4) {
+  transform: translateX(calc(var(--k) * 250px)) translateZ(-160px) scale(0.82);
+}
+
+.flip {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+  transition: transform 0.9s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.scene[data-step='1'] .flip {
+  transform: translateZ(60px) rotateX(6deg);
+}
+.scene[data-step='2'] .flip {
+  transform: translateZ(40px) rotateY(180deg);
+}
+.scene[data-step='3'] .flip {
+  transform: translateZ(70px) rotateY(360deg);
+}
+.face {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  border-radius: 14px;
+  border: 1px solid rgb(255 255 255 / 0.12);
+  backface-visibility: hidden;
+  transition: box-shadow 0.5s;
+}
+.face img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.back {
+  transform: rotateY(180deg);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 10px;
+  padding: 16px;
+  background: var(--background);
+}
+.keyBox {
+  white-space: nowrap;
+  text-align: center;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--card);
+  padding: 10px 8px;
+}
+@media (max-width: 1023px) {
+  .back {
+    gap: 6px;
+    padding: 10px;
+  }
+  .keyBox {
+    font-size: 8px;
+    padding: 6px 4px;
+  }
+}
+.onStep1,
+.onStep2,
+.onStep3 {
+  opacity: 0;
+  transition: opacity 0.5s;
+}
+.scene[data-step='1'] .onStep1,
+.scene[data-step='2'] .onStep2,
+.scene[data-step='3'] .onStep3 {
+  opacity: 1;
+}
+.checkoutTag {
+  position: absolute;
+  left: 50%;
+  bottom: -44px;
+  transform: translateX(-50%);
+  white-space: nowrap;
+}
+.ready {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px;
+  pointer-events: none;
+  border-radius: 0 0 14px 14px;
+  background: linear-gradient(transparent, rgb(0 0 0 / 0.85) 45%);
+  transform: translateZ(72px);
+  transition-delay: 0.5s;
+}
+.readyLabel {
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 500;
+  color: rgb(255 255 255 / 0.65);
+}
+.bar {
+  height: 4px;
+  overflow: hidden;
+  border-radius: 4px;
+  background: rgb(255 255 255 / 0.15);
+}
+.bar i {
+  display: block;
+  height: 100%;
+  width: 0;
+  border-radius: 4px;
+  background: linear-gradient(90deg, #5b9bff, #2468df);
+  transition: width 1.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.activating .bar i,
+.done .bar i {
+  width: 100%;
+}
+.play {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 34px;
+  border-radius: 8px;
+  background: #fff;
+  color: #0c0c0c;
+  font-size: 13px;
+  font-weight: 700;
+  opacity: 0;
+  transform: translateY(6px);
+  transition: all 0.4s;
+}
+.done .play {
+  opacity: 1;
+  transform: none;
+}
+.done .readyLabel {
+  color: #4ade80;
+}
+.done .flip .face:first-child {
+  box-shadow:
+    0 0 0 2px rgb(36 104 223 / 0.8),
+    0 0 60px rgb(36 104 223 / 0.55);
+}
+@media (max-width: 1023px) {
+  .ready {
+    gap: 5px;
+    padding: 8px;
+  }
+  .readyLabel {
+    font-size: 9px;
+  }
+  .play {
+    height: 24px;
+    font-size: 10px;
+  }
+}
+
+/* Steps next to the pinned card */
+.step {
+  min-height: 420px;
+  display: grid;
+  grid-template-columns: 56px 1fr;
+  gap: 20px;
+  align-content: center;
+  opacity: 0.35;
+  transition: opacity 0.4s;
+}
+.stepActive {
+  opacity: 1;
+}
+.stepNumber {
+  width: 56px;
+  height: 56px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: var(--card);
+  font-size: 14px;
+  font-weight: 700;
+  color: rgb(255 255 255 / 0.65);
+  transition: all 0.4s;
+}
+.stepActive .stepNumber {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #fff;
+  box-shadow: 0 0 30px rgb(36 104 223 / 0.5);
+}
+@media (max-width: 1023px) {
+  /* Text sits in the lower part of each step so it stays clear of the pinned card */
+  .step {
+    min-height: 470px;
+    grid-template-columns: 44px 1fr;
+    gap: 14px;
+    align-content: end;
+    padding-bottom: 8px;
+  }
+  .stepNumber {
+    width: 44px;
+    height: 44px;
+  }
+}
+
+/* ---------- Values: tiles that tilt with the pointer ---------- */
+.tiles {
+  perspective: 1200px;
+}
+.tile {
+  position: relative;
+  overflow: hidden;
+  transform: rotateX(calc(var(--ry, 0) * 1deg)) rotateY(calc(var(--rx, 0) * 1deg));
+  transition:
+    transform 0.25s ease-out,
+    border-color 0.3s;
+}
+.tile::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  pointer-events: none;
+  background: radial-gradient(240px circle at var(--mx, 50%) var(--my, 0%), rgb(36 104 223 / 0.18), transparent 60%);
+  transition: opacity 0.3s;
+}
+.tile:hover::before {
+  opacity: 1;
+}
+.tileWord {
+  font-size: 84px;
+  line-height: 88px;
+  font-weight: 700;
+  letter-spacing: -3px;
+}
+@media (max-width: 640px) {
+  .tileWord {
+    font-size: 60px;
+    line-height: 64px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fill,
+  .rise {
+    animation: none;
+  }
+  .fan,
+  .cover,
+  .flip,
+  .bar i,
+  .tile,
+  .play {
+    transition: none;
+  }
+}

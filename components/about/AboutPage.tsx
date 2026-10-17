@@ -5,12 +5,14 @@ import HowItWorks from './HowItWorks'
 import Features from './Features'
 import { useAboutUs } from '@/hooks/useAboutUs'
 import type { AboutUsData } from '@/lib/services/about.service'
+import type { AboutCover } from '@/lib/services/about-covers'
 
 interface AboutPageProps {
   translatedContent?: AboutUsData
+  covers?: AboutCover[]
 }
 
-export default function AboutPage({ translatedContent }: AboutPageProps) {
+export default function AboutPage({ translatedContent, covers = [] }: AboutPageProps) {
   const { data: response, isLoading, isError } = useAboutUs()
 
   // Use pre-translated content from server if available, otherwise use client-fetched data
@@ -38,9 +40,9 @@ export default function AboutPage({ translatedContent }: AboutPageProps) {
   if (!content || (!translatedContent && isError)) {
     return (
       <main className="bg-background flex min-h-screen w-full flex-col">
-        <AboutHero />
-        <HowItWorks />
-        <Features />
+        <AboutHero covers={covers} />
+        <HowItWorks covers={covers} />
+        <Features covers={covers} />
       </main>
     )
   }
@@ -53,15 +55,18 @@ export default function AboutPage({ translatedContent }: AboutPageProps) {
         buttonText={content.btn_text}
         buttonUrl={content.btn_url}
         showImage={content.show_img}
+        covers={covers}
       />
       <HowItWorks
         title={content.section1_title}
         blocks={content.section1_blocks}
+        covers={covers}
       />
       <Features
         title={content.section2_title}
         description={content.section2_description}
         blocks={content.section2_blocks}
+        covers={covers}
       />
     </main>
   )
