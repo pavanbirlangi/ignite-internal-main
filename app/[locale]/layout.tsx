@@ -140,7 +140,7 @@ export default async function RootLayout({
           <main className="flex flex-col gap-24">{children}</main>
           <ConditionalFooter footerData={footerData} translations={footerTranslations} />
           <MobileNav />
-          <Toaster richColors position="top-center" />
+          <Toaster position="top-center" />
         </QueryProvider>
         {process.env.NODE_ENV === 'production' &&
           process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID && (
