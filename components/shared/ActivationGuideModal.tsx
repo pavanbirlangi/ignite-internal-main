@@ -8,7 +8,7 @@ import {
   DialogClose,
   DialogTitle,
 } from '@/components/ui/dialog'
-import { VisuallyHidden } from 'radix-ui'
+import { ACCOUNT_PRIMARY_BUTTON_CLASS } from '@/components/library/account-ui'
 import { ExternalLink, XIcon } from 'lucide-react'
 
 export function ActivationGuideModal({
@@ -31,63 +31,61 @@ export function ActivationGuideModal({
       {children && <DialogTrigger asChild>{children}</DialogTrigger>}
       <DialogContent
         showCloseButton={false}
-        className="bg-secondary h-auto max-h-[calc(100dvh-1.5rem)] w-[92vw] max-w-[920px] overflow-hidden rounded-2xl border border-white/10 p-0 shadow-2xl backdrop-blur-2xl sm:max-h-[92dvh] sm:w-[90vw] sm:rounded-[30px]"
+        aria-describedby={undefined}
+        className="bg-card border-border flex max-h-[calc(100dvh-1.5rem)] w-[calc(100vw-2rem)] max-w-180 flex-col gap-0 overflow-hidden rounded-2xl border p-0 text-white/95 shadow-2xl sm:max-h-[86dvh]"
       >
-        <VisuallyHidden.Root>
-          <DialogTitle>Activation Guide</DialogTitle>
-        </VisuallyHidden.Root>
-        <div className="flex h-full max-h-[calc(100dvh-1.5rem)] flex-col sm:max-h-[92dvh]">
-          {/* Header */}
-          <div className="border-secondary relative flex h-auto min-h-[48px] shrink-0 items-center border-b px-4 pt-6 sm:px-10 md:pt-10">
-            <h2 className="text-xl font-bold text-white/95 sm:text-3xl">
-              Activation Guide
-            </h2>
-            <DialogClose className="absolute top-1/2 right-2 flex h-7.75 w-[31px] -translate-y-1/2 items-center focus:outline-none justify-center text-white/95 transition-colors hover:border-white hover:bg-white/10">
-              <XIcon
-                color="var(--muted-foreground)"
-                className="text-white/65 h-5 w-5 "
-                strokeWidth={2.5}
-              />
-            </DialogClose>
+        {/* Header */}
+        <div className="border-border flex shrink-0 items-center justify-between gap-4 border-b py-4 pr-5 pl-6">
+          <div className="min-w-0">
+            <DialogTitle className="text-xl font-bold">Activation guide</DialogTitle>
+            {title && <p className="mt-0.5 text-xs! leading-4! font-medium text-white/65">{title}</p>}
           </div>
+          <DialogClose
+            aria-label="Close"
+            className="grid size-9 shrink-0 cursor-pointer place-items-center rounded-full bg-white/5 text-white/65 transition-colors outline-none hover:bg-white/10 hover:text-white focus-visible:ring-2 focus-visible:ring-white/40"
+          >
+            <XIcon className="size-4.5" />
+          </DialogClose>
+        </div>
 
-          {/* Content Body */}
-          <div className="no-scrollbar mx-auto flex w-full max-w-[880px] flex-1 flex-col gap-6 overflow-y-auto px-4 pt-4 pb-6 text-white/95 sm:gap-8 sm:px-10 sm:pt-[8px] sm:pb-10">
-            {/* <h3 className="text-xl font-bold sm:text-2xl">
-              {title ?? 'How to Activate a Steam Game Key'}
-            </h3> */}
+        {/* Steps: a thin dark scrollbar instead of the browser's white one */}
+        <div className="min-h-0 flex-1 overflow-y-auto px-6 py-5 [scrollbar-color:rgb(255_255_255/0.18)_transparent] [scrollbar-width:thin] [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-white/18 [&::-webkit-scrollbar-track]:bg-transparent">
+          {/* No placeholder/sample steps in the empty case on purpose: this
+              previously rendered hardcoded dummy instructions ("Instruction
+              line with some bold text here"), which a real customer would
+              see on any product whose activation_guide_html hasn't been
+              filled in yet -- same trap as the fake review badge removed
+              earlier. An honest empty state is better than invented steps
+              for a key the customer actually paid for. */}
+          {guideHtml ? (
+            <div
+              className="dynamicText max-w-none text-white/95 [&_a]:font-medium [&_a]:text-[#7DB0FF] [&_a]:no-underline! [&_a:hover]:underline! [&_img]:mt-1 [&_img]:mb-4.5 [&_img]:h-auto [&_img]:max-w-full [&_img]:rounded-[10px] [&_img]:border [&_img]:border-border [&_p]:mb-3 [&_p]:text-[15px] [&_p]:leading-6 [&_p]:text-white/95 [&_u]:no-underline [&_video]:rounded-[10px]"
+              dangerouslySetInnerHTML={{ __html: guideHtml }}
+            />
+          ) : (
+            <p className="text-sm text-white/65">
+              Activation steps for this product aren&apos;t available yet. If
+              you need help redeeming your key, please contact support.
+            </p>
+          )}
+        </div>
 
-            {/* No placeholder/sample steps in the empty case on purpose: this
-                previously rendered hardcoded dummy instructions ("Instruction
-                line with some bold text here"), which a real customer would
-                see on any product whose activation_guide_html hasn't been
-                filled in yet -- same trap as the fake review badge removed
-                earlier. An honest empty state is better than invented steps
-                for a key the customer actually paid for. */}
-            {guideLink && (
-              <a
-                href={guideLink}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-primary inline-flex w-fit items-center gap-1.5 text-sm font-bold underline hover:opacity-80"
-              >
-                View the publisher&apos;s own guide
-                <ExternalLink className="size-3.5" />
-              </a>
-            )}
-
-            {guideHtml ? (
-              <div
-                className="dynamicText prose-invert prose-lg max-w-none text-white/95 [&_img]:h-auto [&_img]:max-w-full [&_img]:rounded-xl [&_video]:rounded-xl"
-                dangerouslySetInnerHTML={{ __html: guideHtml }}
-              />
-            ) : !guideLink ? (
-              <p className="text-white/65 text-sm">
-                Activation steps for this product aren&apos;t available yet. If
-                you need help redeeming your key, please contact support.
-              </p>
-            ) : null}
-          </div>
+        {/* Footer */}
+        <div className="border-border flex shrink-0 items-center justify-between gap-4 border-t px-6 py-3.5">
+          {guideLink ? (
+            <a
+              href={guideLink}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 text-sm font-medium text-white/65 transition-colors hover:text-white"
+            >
+              <ExternalLink className="size-3.5" />
+              Publisher&apos;s guide
+            </a>
+          ) : (
+            <span />
+          )}
+          <DialogClose className={ACCOUNT_PRIMARY_BUTTON_CLASS}>Done</DialogClose>
         </div>
       </DialogContent>
     </Dialog>
