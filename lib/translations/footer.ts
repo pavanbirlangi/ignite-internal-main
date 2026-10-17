@@ -8,12 +8,15 @@ import { type FooterData } from '@/lib/services/footer.service'
 export interface FooterTranslations {
   locationTitle: string
   getInTheGame: string
+  reviewsOn: string
 }
 
 /** Default English strings */
 const defaultStrings: FooterTranslations = {
   locationTitle: 'Location',
   getInTheGame: 'Get in the game:',
+  // Followed by the brand name "Trustpilot", which isn't translated.
+  reviewsOn: 'Check out our reviews on',
 }
 
 export function getDefaultFooterTranslations(): FooterTranslations {
@@ -24,7 +27,9 @@ export function getDefaultFooterTranslations(): FooterTranslations {
 const getTranslatedPlainTexts = (locale: string, texts: string[]) =>
   unstable_cache(
     async () => translateTextsWithLangbly(texts, locale),
-    [`footer-plain-${locale}`],
+    // Bump the version when the list of strings changes: results are
+    // matched back by position, and the cache outlives deploys.
+    [`footer-plain-v2-${locale}`],
     { revalidate: 3600 },
   )()
 

@@ -40,7 +40,7 @@ export default function FooterV2({
         <div className="grid gap-10 py-12 lg:grid-cols-[1.3fr_1fr_1fr_1fr_1.2fr] lg:gap-12">
           <div className="flex flex-col gap-6">
             <div className="flex flex-col gap-2">
-              <h3 className="text-white/65 text-base font-bold">
+              <h3 className="text-base font-bold text-white/95">
                 {translations.locationTitle}
               </h3>
               {footerData.location && (
@@ -52,7 +52,7 @@ export default function FooterV2({
             </div>
 
             <div className="flex flex-col gap-4">
-              <span className="text-white/65 text-base font-bold">
+              <span className="text-base font-bold text-white/95">
                 {translations.getInTheGame}
               </span>
               <div className="flex items-center">
@@ -61,7 +61,7 @@ export default function FooterV2({
                     key={socialItem.name}
                     href={socialItem.url}
                     aria-label={socialItem.name}
-                    className="flex h-12 w-12 items-center justify-center rounded-full transition-opacity hover:opacity-90"
+                    className="flex h-12 w-12 items-center justify-center rounded-full opacity-65 grayscale transition-[filter,opacity] duration-200 hover:opacity-100 hover:grayscale-0"
                     dangerouslySetInnerHTML={{ __html: socialItem.logo }}
                   />
                 ))}
@@ -71,7 +71,7 @@ export default function FooterV2({
 
           {footerData.links?.map((section) => (
             <div key={section.label} className="flex flex-col gap-4">
-              <h3 className="text-white/65 text-base font-bold">
+              <h3 className="text-base font-bold text-white/95">
                 {section.label}
               </h3>
               <ul className="flex flex-col gap-2">
@@ -79,7 +79,7 @@ export default function FooterV2({
                   <li key={link.name}>
                     <Link
                       href={link.to}
-                      className="text-white/95 hover:text-foreground/70 text-sm transition-colors"
+                      className="text-sm text-white/65 transition-colors hover:text-white"
                     >
                       {link.name}
                     </Link>
