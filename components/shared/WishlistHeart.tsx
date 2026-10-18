@@ -30,7 +30,9 @@ export default function WishlistHeart({ filled, size = 20, className }: Wishlist
   return (
     <span aria-hidden className={cn('relative inline-grid place-items-center', className)} style={{ width: size, height: size }}>
       <svg
-        key={burst?.key}
+        // Remounting replays the animation. The keys differ from the burst's: siblings with the
+        // same key left a stale heart behind after a quick re-click.
+        key={`heart-${burst?.key ?? 0}`}
         viewBox="0 0 24 24"
         width={size}
         height={size}
@@ -51,7 +53,7 @@ export default function WishlistHeart({ filled, size = 20, className }: Wishlist
         />
       </svg>
       {burst?.kind === 'pop' && (
-        <span key={burst.key} className="pointer-events-none absolute inset-0">
+        <span key={`burst-${burst.key}`} className="pointer-events-none absolute inset-0">
           <span className="border-wishlist motion-safe:animate-heart-ring absolute inset-0 rounded-full border-2 opacity-0" />
           {SPARK_ANGLES.map((angle) => (
             <span
