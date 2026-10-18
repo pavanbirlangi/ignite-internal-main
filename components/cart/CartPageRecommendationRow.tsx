@@ -1,97 +1,102 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import { useState } from 'react'
-import { Button } from '@/components/ui/button'
+import { ShoppingCart } from 'lucide-react'
 import { CartProduct } from './types'
-import CartPlusIcon from '../icons/CartPlusIcon'
 import { formatApiCurrency } from './currency'
-import { getProxyImageUrl } from '@/lib/utils'
+import { cn, getProxyImageUrl } from '@/lib/utils'
+import { Spinner } from '@/components/ui/spinner'
 
 interface CartPageRecommendationRowProps {
   product: CartProduct
-  onAddToCart: (product: CartProduct) => Promise<unknown> | unknown
+  /** Resolves true once the item is in the cart. */
+  onAddToCart: (product: CartProduct) => Promise<boolean>
 }
 
-export function CartPageRecommendationRow({
-  product,
-  onAddToCart,
-}: CartPageRecommendationRowProps) {
-  const [isAdding, setIsAdding] = useState(false)
-  const isAddDisabled =
-    !product.merchandiseId || product.availableForSale === false
+// A suggestion line: cover, title and price, and an Add button that spins while adding and then
+// draws a tick (same feedback as the product cards and the quick cart).
+export function CartPageRecommendationRow({ product, onAddToCart }: CartPageRecommendationRowProps) {
+  const [addState, setAddState] = useState<'idle' | 'loading' | 'done'>('idle')
+  const isAddDisabled = !product.merchandiseId || product.availableForSale === false
   const productHref = product.handle ? `/${product.handle}` : null
 
-  const handleAddToCart = async () => {
-    if (isAddDisabled || isAdding) return
-
-    setIsAdding(true)
-    try {
-      await Promise.resolve(onAddToCart(product))
-    } finally {
-      setIsAdding(false)
+  const handleAdd = async () => {
+    if (addState !== 'idle') return
+    setAddState('loading')
+    const [added] = await Promise.all([
+      onAddToCart(product),
+      new Promise((resolve) => setTimeout(resolve, 450)),
+    ])
+    if (!added) {
+      setAddState('idle')
+      return
     }
+    setAddState('done')
+    window.setTimeout(() => setAddState('idle'), 1600)
   }
 
+  const cover = (
+    <Image src={getProxyImageUrl(product.image)} alt={product.title} fill sizes="48px" className="object-cover" />
+  )
+
   return (
-    <div className="group bg-secondary/20 flex items-center gap-2 rounded-[12px] border border-transparent px-3 py-2 transition-colors sm:gap-3 sm:px-4 sm:py-2.5">
+    <div className="flex items-center gap-3.5 px-4 py-3">
       {productHref ? (
-        <Link
-          href={productHref}
-          className="relative h-16 w-12 shrink-0 overflow-hidden rounded-md"
-        >
-          <Image
-            src={getProxyImageUrl(product.image)}
-            alt={product.title}
-            fill
-            className="object-cover"
-          />
+        <Link href={productHref} className="bg-secondary relative aspect-[3/4] w-12 shrink-0 overflow-hidden rounded-lg">
+          {cover}
         </Link>
       ) : (
-        <div className="relative h-16 w-12 shrink-0 overflow-hidden rounded-md">
-          <Image
-            src={getProxyImageUrl(product.image)}
-            alt={product.title}
-            fill
-            className="object-cover"
-          />
-        </div>
+        <div className="bg-secondary relative aspect-[3/4] w-12 shrink-0 overflow-hidden rounded-lg">{cover}</div>
       )}
 
-      <div className="flex flex-1 flex-col justify-center gap-2">
+      <div className="flex min-w-0 flex-1 flex-col gap-0.5">
         {productHref ? (
-          <Link href={productHref} className="w-fit">
-            <h4 className="line-clamp-2 font-bold text-white/95 hover:underline sm:text-sm">
-              {product.title}
-            </h4>
+          <Link href={productHref} className="line-clamp-2 text-sm leading-5 font-bold wrap-break-word text-white/95 hover:underline">
+            {product.title}
           </Link>
         ) : (
-          <h4 className="line-clamp-2 font-bold text-white/95 sm:text-sm">
-            {product.title}
-          </h4>
+          <h4 className="line-clamp-2 text-sm leading-5 font-bold wrap-break-word text-white/95">{product.title}</h4>
         )}
-
-        <div className="flex items-center gap-1.5">
-          <span className="text-xs font-bold text-white/95 sm:text-sm">
-            {formatApiCurrency(product.price, product.currencyCode)}
-          </span>
+        <div className="flex flex-wrap items-center gap-x-2 text-sm">
+          <span className="whitespace-nowrap text-white/65">{formatApiCurrency(product.price, product.currencyCode)}</span>
+          {typeof product.originalPrice === 'number' && product.originalPrice > product.price && (
+            <span className="text-[13px] whitespace-nowrap text-white/45 line-through">
+              {formatApiCurrency(product.originalPrice, product.currencyCode)}
+            </span>
+          )}
         </div>
-
-        {product.availableForSale === false && (
-          <span className="text-red text-xs font-bold sm:text-xs">
-            Out of stock
-          </span>
-        )}
+        {product.availableForSale === false && <span className="text-xs font-bold text-[#FF6B76]">Out of stock</span>}
       </div>
 
-      <Button
-        size="icon"
-        variant="ghost"
-        onClick={handleAddToCart}
-        disabled={isAddDisabled || isAdding}
-        className="border-muted-foreground h-8 w-8 rounded-lg border bg-transparent text-white/95 transition-all duration-200 hover:border-white hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-50 sm:h-9 sm:w-9"
+      <button
+        type="button"
+        onClick={handleAdd}
+        disabled={isAddDisabled || addState !== 'idle'}
+        aria-label={`Add ${product.title} to cart`}
+        aria-busy={addState === 'loading' || undefined}
+        className={cn(
+          'bg-secondary border-border relative inline-flex h-9.5 min-w-19 shrink-0 cursor-pointer items-center justify-center rounded-[10px] border px-3 text-[13px] font-medium text-white/95 transition-all duration-200 outline-none hover:-translate-y-px hover:border-white/25 hover:bg-white/10 focus-visible:ring-2 focus-visible:ring-white/40 disabled:cursor-default disabled:hover:translate-y-0',
+          addState === 'done' && 'border-[#22C55E]/40 bg-[#22C55E]/14 text-[#4ADE80] hover:bg-[#22C55E]/14',
+          isAddDisabled && 'opacity-50',
+        )}
       >
-        <CartPlusIcon className="size-4 sm:size-5" />
-      </Button>
+        <span className={cn('inline-flex items-center gap-1.5', addState !== 'idle' && 'invisible')}>
+          <ShoppingCart className="size-4" />
+          Add
+        </span>
+        {addState === 'loading' && (
+          <span className="absolute inset-0 grid place-items-center">
+            <Spinner className="size-4.5" />
+          </span>
+        )}
+        {addState === 'done' && (
+          <span className="absolute inset-0 grid place-items-center">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={3} strokeLinecap="round" strokeLinejoin="round" aria-hidden className="size-4">
+              <path d="M5 12.5l4.5 4.5L19 7.5" pathLength={1} strokeDasharray={1} className="animate-check-draw" />
+            </svg>
+          </span>
+        )}
+      </button>
     </div>
   )
 }

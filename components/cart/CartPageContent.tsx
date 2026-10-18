@@ -126,6 +126,11 @@ export function CartPageContent() {
   const summaryCurrency =
     subtotalCurrencyCode || items[0]?.currencyCode || 'USD'
   const itemCount = items.reduce((sum, item) => sum + (item.quantity || 1), 0)
+  const savings = items.reduce(
+    (sum, item) =>
+      sum + (item.originalPrice ? (item.originalPrice - item.price) * (item.quantity || 1) : 0),
+    0,
+  )
 
   const recommendationItems = React.useMemo(() => {
     return recommendations.slice(0, MAX_RECOMMENDATIONS).map((rec: any) => {
@@ -164,23 +169,64 @@ export function CartPageContent() {
     removeItem([id])
   }
 
-  const handleAddToCart = (product: any) => {
+  // Suggestions already in the cart are hidden. While one is being added the list is held still:
+  // adding can change the cart's first item, which reloads the suggestions and would otherwise
+  // replace the row before its tick shows.
+  const [heldRecommendations, setHeldRecommendations] = React.useState<typeof recommendationItems | null>(null)
+  const cartHandles = React.useMemo(() => new Set(items.map((item) => item.handle)), [items])
+  const shownRecommendations =
+    heldRecommendations ?? recommendationItems.filter((rec) => !cartHandles.has(rec.handle))
+
+  const handleAddToCart = async (product: any): Promise<boolean> => {
     if (!product.merchandiseId) {
       if (product.handle) {
         router.push(`/${product.handle}`)
-        return
+        return false
       }
       toast.error('This item is unavailable to add right now.')
-      return
+      return false
     }
-    return addItem(product.merchandiseId, 1)
+    setHeldRecommendations(shownRecommendations)
+    const addedBefore = useCartStore.getState().itemsAdded
+    // No Added-to-cart popup: the item appears in the list above.
+    await addItem(product.merchandiseId, 1, { notify: false })
+    const added = useCartStore.getState().itemsAdded > addedBefore
+    window.setTimeout(() => setHeldRecommendations(null), added ? 1700 : 0)
+    return added
   }
 
-  const handleCheckout = () => {
-    if (!ensureCheckoutAllowed()) return
+  const handleCheckout = () => ensureCheckoutAllowed()
+  const openCheckout = () => router.push('/checkout')
 
-    router.push('/checkout')
-  }
+  const recommendationsBlock = (
+    <div className="flex flex-col gap-4">
+      <h2 data-display className="text-xl leading-6 font-bold text-white/95 md:text-2xl md:leading-[30px]">
+        Recommended for You
+      </h2>
+      {isRecommendationsLoading && shownRecommendations.length === 0 ? (
+        <div className="bg-card border-border divide-border divide-y rounded-2xl border">
+          {Array.from({ length: 3 }).map((_, index) => (
+            <div key={`recommendation-skeleton-${index}`} className="flex animate-pulse items-center gap-3.5 px-4 py-3">
+              <div className="aspect-[3/4] w-12 shrink-0 rounded-lg bg-white/10" />
+              <div className="flex flex-1 flex-col gap-2">
+                <div className="h-3 w-3/4 rounded bg-white/10" />
+                <div className="h-3 w-1/3 rounded bg-white/10" />
+              </div>
+              <div className="h-9.5 w-19 rounded-[10px] bg-white/10" />
+            </div>
+          ))}
+        </div>
+      ) : shownRecommendations.length > 0 ? (
+        <div className="bg-card border-border divide-border divide-y rounded-2xl border">
+          {shownRecommendations.map((rec) => (
+            <CartPageRecommendationRow key={rec.id} product={rec} onAddToCart={handleAddToCart} />
+          ))}
+        </div>
+      ) : (
+        <p className="py-4 text-sm text-white/65">No recommendations available right now.</p>
+      )}
+    </div>
+  )
 
   return (
     <div className="bg-background min-h-screen pb-20 font-sans">
@@ -191,10 +237,10 @@ export function CartPageContent() {
         <div className="relative grid grid-cols-1 gap-6 lg:grid-cols-12 lg:gap-8">
           {/* Left Column: Cart Items & Recommendations */}
           <div className={itemCount > 0 ? 'lg:col-span-8' : 'lg:col-span-12'}>
-            <h1 className="mb-5 text-xl font-bold text-white/95 md:text-xl">
+            <h1 data-display className="mb-4 text-2xl leading-[30px] font-bold text-white/95 md:text-3xl md:leading-[38px]">
               My Cart
             </h1>
-            <div className="flex flex-col gap-4 sm:gap-4">
+            <div>
               {isLoading && items.length === 0 ? (
                 <div className="flex flex-col items-center justify-center gap-4 py-16 text-center">
                   <div className="border-muted-foreground h-8 w-8 animate-spin rounded-full border-2 border-t-white" />
@@ -203,7 +249,8 @@ export function CartPageContent() {
                   </p>
                 </div>
               ) : items.length > 0 ? (
-                items.map((item) => (
+                <div className="bg-card border-border divide-border divide-y rounded-2xl border">
+                {items.map((item) => (
                   <CartItemRow
                     key={item.id}
                     item={item}
@@ -214,7 +261,8 @@ export function CartPageContent() {
                       .getState()
                       .loadingItems.includes(item.id)}
                   />
-                ))
+                ))}
+                </div>
               ) : (
                 <div className="flex flex-col items-center justify-center gap-4 py-16 text-center">
                   <div className="bg-secondary text-white/65 flex h-14 w-14 items-center justify-center rounded-full">
@@ -232,93 +280,26 @@ export function CartPageContent() {
               )}
             </div>
 
-            {items.length > 0 && (
-              <div className="mt-4 hidden flex-col gap-4 md:flex lg:col-span-8 lg:mt-16">
-                <h2 className="text-xl font-bold text-white/95 md:text-xl">
-                  Recommended for You
-                </h2>
-                <div className="flex flex-col gap-3">
-                  {isRecommendationsLoading ? (
-                    Array.from({ length: 3 }).map((_, index) => (
-                      <div
-                        key={`recommendation-skeleton-${index}`}
-                        className="bg-secondary/20 flex animate-pulse items-center gap-2 rounded-[12px] border border-transparent px-3 py-2 sm:gap-3 sm:px-4 sm:py-2.5"
-                      >
-                        <div className="h-16 w-12 shrink-0 rounded-md bg-white/10" />
-                        <div className="flex flex-1 flex-col gap-2">
-                          <div className="h-3 w-3/4 rounded bg-white/10" />
-                          <div className="h-3 w-1/2 rounded bg-white/10" />
-                        </div>
-                        <div className="h-8 w-8 rounded-lg bg-white/10 sm:h-9 sm:w-9" />
-                      </div>
-                    ))
-                  ) : recommendationItems.length > 0 ? (
-                    recommendationItems.map((rec) => (
-                      <CartPageRecommendationRow
-                        key={rec.id}
-                        product={rec}
-                        onAddToCart={handleAddToCart}
-                      />
-                    ))
-                  ) : (
-                    <p className="text-white/65 py-4 text-sm">
-                      No recommendations available right now.
-                    </p>
-                  )}
-                </div>
-              </div>
-            )}
+            {items.length > 0 && <div className="mt-12 hidden lg:block">{recommendationsBlock}</div>}
           </div>
 
           {/* Right Column: Order Summary */}
           {itemCount > 0 && (
             <div className="relative lg:col-span-4">
               <OrderSummary
-                basePrice={basePrice}
+                subtotal={basePrice}
+                savings={savings}
                 total={subtotal}
+                itemCount={itemCount}
                 currency={summaryCurrency}
                 onCheckout={handleCheckout}
+                onNavigate={openCheckout}
               />
             </div>
           )}
 
-          {/* Recommendations Section - After Order Summary on Mobile */}
-          {items.length > 0 && (
-            <div className="mt-4 flex flex-col gap-4 md:hidden lg:col-span-8 lg:mt-10">
-              <h2 className="text-xl font-bold text-white/95 md:text-xl">
-                Recommended for You
-              </h2>
-              <div className="flex flex-col gap-3">
-                {isRecommendationsLoading ? (
-                  Array.from({ length: 3 }).map((_, index) => (
-                    <div
-                      key={`recommendation-skeleton-${index}`}
-                      className="bg-secondary/20 flex animate-pulse items-center gap-2 rounded-[12px] border border-transparent px-3 py-2 sm:gap-3 sm:px-4 sm:py-2.5"
-                    >
-                      <div className="h-16 w-12 shrink-0 rounded-md bg-white/10" />
-                      <div className="flex flex-1 flex-col gap-2">
-                        <div className="h-3 w-3/4 rounded bg-white/10" />
-                        <div className="h-3 w-1/2 rounded bg-white/10" />
-                      </div>
-                      <div className="h-8 w-8 rounded-lg bg-white/10 sm:h-9 sm:w-9" />
-                    </div>
-                  ))
-                ) : recommendationItems.length > 0 ? (
-                  recommendationItems.map((rec) => (
-                    <CartPageRecommendationRow
-                      key={rec.id}
-                      product={rec}
-                      onAddToCart={handleAddToCart}
-                    />
-                  ))
-                ) : (
-                  <p className="text-white/65 py-4 text-sm">
-                    No recommendations available right now.
-                  </p>
-                )}
-              </div>
-            </div>
-          )}
+          {/* Recommendations after the summary on phones and tablets */}
+          {items.length > 0 && <div className="mt-4 lg:hidden">{recommendationsBlock}</div>}
         </div>
       </main>
     </div>

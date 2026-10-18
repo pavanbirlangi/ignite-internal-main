@@ -2,9 +2,9 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { Trash2, Minus, Plus } from 'lucide-react'
 import { CartProduct } from './types'
-import { Badge } from '@/components/ui/badge'
 import { formatApiCurrency } from './currency'
-import { getProxyImageUrl } from '@/lib/utils'
+import { cn, getProxyImageUrl } from '@/lib/utils'
+import { getDiscountPercent } from '@/lib/utils/discount'
 
 interface CartItemRowProps {
   item: CartProduct
@@ -14,6 +14,11 @@ interface CartItemRowProps {
   isItemLoading?: boolean
 }
 
+const QTY_BUTTON_CLASS =
+  'grid size-8.5 cursor-pointer place-items-center text-white/65 transition-colors outline-none hover:text-white focus-visible:text-white disabled:pointer-events-none disabled:opacity-40'
+
+// One line in the cart panel: cover, title and tags, then remove + quantity on the left and the
+// price (with the discount and old price) on the right. Rows are separated by the panel's dividers.
 export function CartItemRow({
   item,
   quantity,
@@ -22,163 +27,118 @@ export function CartItemRow({
   isItemLoading = false,
 }: CartItemRowProps) {
   const productHref = item.handle ? `/${item.handle}` : undefined
+  const soldOut = item.availableForSale === false
+  const hasDiscount = typeof item.originalPrice === 'number' && item.originalPrice > item.price
+  const discount = hasDiscount ? getDiscountPercent(item.originalPrice as number, item.price) : 0
+
+  const cover = (
+    <Image
+      src={getProxyImageUrl(item.image)}
+      alt={item.title}
+      fill
+      className="object-cover"
+      sizes="(max-width: 640px) 72px, 88px"
+    />
+  )
+  const coverClass = cn(
+    'bg-secondary relative block aspect-[3/4] w-18 shrink-0 overflow-hidden rounded-[10px] sm:w-22',
+    soldOut ? 'opacity-50 grayscale' : 'transition-opacity hover:opacity-90',
+  )
 
   return (
-    <div className="group bg-secondary/20 relative flex flex-row gap-2 rounded-[12px] border border-transparent p-2 transition-all hover:border-white/5 sm:gap-3 sm:p-3">
-      {/* Product Image */}
+    <div className={cn('flex gap-3.5 p-4 sm:gap-4 sm:p-5', isItemLoading && 'opacity-60')}>
       {productHref ? (
-        <Link
-          href={productHref}
-          className={`relative block h-24 w-18 shrink-0 overflow-hidden rounded-lg transition-opacity sm:h-40 sm:w-32 ${
-            item.availableForSale === false
-              ? 'opacity-50 grayscale'
-              : 'hover:opacity-90'
-          }`}
-        >
-          <Image
-            src={getProxyImageUrl(item.image)}
-            alt={item.title}
-            fill
-            className="object-cover"
-            sizes="(max-width: 640px) 72px, 128px"
-            priority={false}
-          />
+        <Link href={productHref} className={coverClass}>
+          {cover}
         </Link>
       ) : (
-        <div
-          className={`relative h-24 w-18 shrink-0 overflow-hidden rounded-lg transition-opacity sm:h-40 sm:w-32 ${
-            item.availableForSale === false ? 'opacity-50 grayscale' : ''
-          }`}
-        >
-          <Image
-            src={getProxyImageUrl(item.image)}
-            alt={item.title}
-            fill
-            className="object-cover"
-            sizes="(max-width: 640px) 72px, 128px"
-          />
-        </div>
+        <div className={coverClass}>{cover}</div>
       )}
 
-      {/* Content Container */}
-      <div className="flex flex-1 flex-col justify-between py-1 sm:py-1.5">
-        {/* Title & Header */}
-        <div className="flex flex-col gap-1.5 sm:gap-2.5">
-          {productHref ? (
-            <Link
-              href={productHref}
-              className="line-clamp-2 max-w-full font-bold text-white/95 transition-colors hover:text-white/80 hover:underline sm:text-base"
-            >
-              {item.title}
-            </Link>
-          ) : (
-            <h3 className="line-clamp-2 max-w-full font-bold text-white/95 sm:text-base">
-              {item.title}
-            </h3>
-          )}
-          {/* {item.platform && (
-            <p className="text-white/65 text-xs font-medium sm:text-xs">
-              {item.platform}
-            </p>
-          )} */}
+      <div className="flex min-w-0 flex-1 flex-col gap-2.5">
+        {productHref ? (
+          <Link
+            href={productHref}
+            className="line-clamp-2 text-sm leading-5 font-bold wrap-break-word text-white/95 hover:underline sm:text-base sm:leading-[22px]"
+          >
+            {item.title}
+          </Link>
+        ) : (
+          <h3 className="line-clamp-2 text-sm leading-5 font-bold wrap-break-word text-white/95 sm:text-base sm:leading-[22px]">
+            {item.title}
+          </h3>
+        )}
 
-          {/* Badges */}
-          <div className="flex flex-wrap gap-1.5 sm:gap-2">
-            {item.availableForSale === false && (
-              <Badge className="bg-red/10 text-red hover:bg-red/20 rounded-sm border-0 px-1.5 py-0.5 text-xs font-bold uppercase sm:text-xs">
-                Out of Stock
-              </Badge>
-            )}
-            {item.badges &&
-              item.badges.length > 0 &&
-              item.badges.map((badge) => (
-                <Badge
-                  key={badge}
-                  className="bg-primary hover:bg-primary rounded-sm border-0 px-1.5 py-0.5 text-xs font-bold text-white/95 uppercase sm:text-xs"
-                >
-                  {badge}
-                </Badge>
-              ))}
-          </div>
-
-          {/* Mobile Price */}
-          <div className="mt-1 flex items-center gap-2 sm:hidden">
-            {item.availableForSale === false ? (
-              <span className="text-red text-xs font-bold">
+        {(soldOut || (item.badges && item.badges.length > 0)) && (
+          <div className="flex flex-wrap gap-1.5">
+            {soldOut && (
+              <span className="bg-deal inline-flex h-5.5 items-center rounded-md px-2 text-xs font-bold text-white uppercase">
                 Out of Stock
               </span>
-            ) : (
-              <>
-                <span className="text-sm font-bold text-white/95">
-                  {formatApiCurrency(item.price, item.currencyCode)}
-                </span>
-              </>
             )}
+            {item.badges?.map((badge) => (
+              <span
+                key={badge}
+                className="inline-flex h-5.5 max-w-full items-center truncate rounded-md bg-white/8 px-2 text-xs font-medium text-white/65"
+              >
+                {badge}
+              </span>
+            ))}
           </div>
-        </div>
+        )}
 
-        {/* Bottom Actions Row */}
-        <div className="border-secondary mt-2 flex flex-col justify-between gap-2.5 border-t pt-2 sm:mt-0 sm:flex-row sm:items-center sm:gap-3">
-          {/* Left: Trash & Quantity */}
-          <div
-            className="flex w-full items-center justify-between gap-2.5 sm:w-auto sm:justify-start sm:gap-3.5"
-            onClick={(event) => event.stopPropagation()}
-          >
+        {/* Wraps onto two lines on narrow phones instead of overflowing the panel */}
+        <div className="mt-auto flex flex-wrap items-end justify-between gap-x-3 gap-y-2">
+          <div className="flex items-center gap-1.5" onClick={(event) => event.stopPropagation()}>
             <button
+              type="button"
               onClick={() => onRemove(item.id)}
               disabled={isItemLoading}
-              className={`inline-flex items-center justify-center rounded-lg transition-colors ${
-                isItemLoading
-                  ? 'cursor-not-allowed opacity-50'
-                  : 'text-red hover:bg-red/10 hover:text-red active:bg-red/20'
-              }`}
               title="Remove from cart"
               aria-label="Remove item"
+              className="grid size-9 cursor-pointer place-items-center rounded-[10px] text-white/45 transition-colors outline-none hover:bg-[#F04452]/10 hover:text-[#F04452] focus-visible:ring-2 focus-visible:ring-white/40 disabled:pointer-events-none disabled:opacity-40"
             >
-              <Trash2 className="h-4 w-4 sm:h-5 sm:w-5" />
+              <Trash2 className="size-4" />
             </button>
-
-            {/* Quantity Selector */}
-            <div className="inline-flex items-center gap-1.5 sm:gap-2.5">
+            <div className="bg-background border-border inline-flex h-9 items-center rounded-[10px] border">
               <button
-                onClick={() =>
-                  onUpdateQuantity(item.id, Math.max(1, quantity - 1))
-                }
-                disabled={isItemLoading || item.availableForSale === false}
-                className="border-secondary bg-secondary hover:bg-secondary/80 flex h-7 w-6 items-center justify-center rounded-md border transition-colors disabled:opacity-50 sm:h-7.5 sm:w-8"
+                type="button"
+                onClick={() => onUpdateQuantity(item.id, Math.max(1, quantity - 1))}
+                disabled={isItemLoading || soldOut || quantity <= 1}
                 title="Decrease quantity"
                 aria-label="Decrease quantity"
+                className={QTY_BUTTON_CLASS}
               >
-                <Minus className="h-3 w-3" />
+                <Minus className="size-3.5" />
               </button>
-
-              <div className="bg-background border-secondary flex h-7 w-8 items-center justify-center rounded-md border text-center text-xs font-bold text-white/95 sm:w-9 sm:text-sm">
-                {quantity}
-              </div>
-
+              <span className="min-w-7 text-center text-sm font-medium text-white/95">{quantity}</span>
               <button
+                type="button"
                 onClick={() => onUpdateQuantity(item.id, quantity + 1)}
-                disabled={isItemLoading || item.availableForSale === false}
-                className="border-secondary bg-secondary hover:bg-secondary/80 flex h-7 w-6 items-center justify-center rounded-md border transition-colors disabled:opacity-50 sm:h-7.5 sm:w-8"
+                disabled={isItemLoading || soldOut}
                 title="Increase quantity"
                 aria-label="Increase quantity"
+                className={QTY_BUTTON_CLASS}
               >
-                <Plus className="h-3 w-3" />
+                <Plus className="size-3.5" />
               </button>
             </div>
           </div>
 
-          {/* Right: Price (Desktop Only) */}
-          <div className="hidden flex-col items-end gap-0.5 sm:flex">
-            {item.availableForSale === false ? (
-              <span className="text-red text-sm font-bold sm:text-base">
-                Out of Stock
-              </span>
-            ) : (
-              <span className="text-sm font-bold text-white/95 sm:text-base">
-                {formatApiCurrency(item.price, item.currencyCode)}
-              </span>
+          <div className="ml-auto flex flex-col items-end gap-1">
+            {hasDiscount && !soldOut && (
+              <div className="flex items-center gap-2">
+                <span className="bg-deal inline-flex h-5.5 items-center rounded-md px-1.5 text-xs font-medium whitespace-nowrap text-white">
+                  -{discount}%
+                </span>
+                <span className="text-[13px] whitespace-nowrap text-white/45 line-through">
+                  {formatApiCurrency(item.originalPrice as number, item.currencyCode)}
+                </span>
+              </div>
             )}
+            <span className="text-base font-bold whitespace-nowrap text-white/95 sm:text-lg">
+              {soldOut ? 'Out of Stock' : formatApiCurrency(item.price, item.currencyCode)}
+            </span>
           </div>
         </div>
       </div>
