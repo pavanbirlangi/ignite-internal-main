@@ -5,6 +5,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { UserMenu } from '../layout/navbar/UserMenu'
 import { CartDrawer } from './CartDrawer'
+import { Check } from 'lucide-react'
 
 interface CartNavbarProps {
   currentStep?: number
@@ -56,12 +57,12 @@ export function CartNavbar({
                 className={`flex items-center gap-2 rounded-md transition-colors`}
               >
                 <span
-                  className={`flex size-9 items-center justify-center rounded-[6px] px-2 py-1 text-xs font-bold sm:px-3 sm:py-2.5 sm:text-base ${isActive ? 'bg-primary text-white/95' : 'text-white/65 bg-secondary'}`}
+                  className={`flex size-9 items-center justify-center rounded-[6px] px-2 py-1 text-xs font-bold sm:px-3 sm:py-2.5 sm:text-base ${isActive ? 'bg-primary text-white/95' : isCompleted ? 'bg-[#22C55E]/16 text-[#4ADE80]' : 'text-white/65 bg-secondary'}`}
                 >
-                  {step.number}
+                  {isCompleted ? <Check className="size-4" strokeWidth={3} aria-label="Done" /> : step.number}
                 </span>
                 <span
-                  className={`text-xs sm:text-base ${isActive ? 'font-bold text-white/95' : 'text-white/65 font-medium'}`}
+                  className={`text-xs sm:text-base ${isActive ? 'font-bold text-white/95' : isCompleted ? 'font-medium text-white/95' : 'text-white/65 font-medium'}`}
                 >
                   {step.label}
                 </span>
@@ -70,18 +71,14 @@ export function CartNavbar({
               {isNext && (
                 <div
                   className={`hidden h-px w-10 sm:block sm:w-40 ${
-                    isActive || isCompleted
-                      ? 'bg-primary-foreground'
-                      : 'bg-muted-foreground'
+                    isCompleted ? 'bg-[#22C55E]/50' : 'bg-border'
                   }`}
                 />
               )}
               {isNext && (
                 <div
                   className={`block h-px w-4 sm:hidden ${
-                    isActive || isCompleted
-                      ? 'bg-primary-foreground'
-                      : 'bg-muted-foreground'
+                    isCompleted ? 'bg-[#22C55E]/50' : 'bg-border'
                   }`}
                 />
               )}
