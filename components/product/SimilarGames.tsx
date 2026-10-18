@@ -16,9 +16,7 @@ interface SimilarGamesProps {
   title?: string
 }
 
-const ARROW_CLASS =
-  'static size-9 translate-y-0 border-none bg-white/6 text-white/65 hover:bg-white/12 hover:text-white/95 [&>svg]:size-4.5'
-
+// Same carousel, card widths and side arrows as the home page game rows.
 export default function SimilarGames({ products, title }: SimilarGamesProps) {
   if (!products.length) {
     return null
@@ -26,26 +24,27 @@ export default function SimilarGames({ products, title }: SimilarGamesProps) {
 
   return (
     <section className={PRODUCT_CONTAINER_CLASS}>
-      <Carousel opts={{ align: 'start', loop: true }} className="w-full">
-        <div className="mb-5 flex items-end justify-between gap-4">
-          <h2 className="text-xl leading-[26px] font-bold text-white/95 md:text-2xl md:leading-[30px]">
-            {title ?? 'Similar to this'}
-          </h2>
-          <div className="hidden gap-2 md:flex">
-            <CarouselPrevious className={ARROW_CLASS} />
-            <CarouselNext className={ARROW_CLASS} />
-          </div>
-        </div>
-        <CarouselContent className="-ml-3.5">
+      <h2 className="mb-5 text-xl leading-[26px] font-bold text-white/95 md:text-2xl md:leading-[30px]">
+        {title ?? 'Similar to this'}
+      </h2>
+      <Carousel
+        opts={{ align: 'start', loop: true }}
+        className="group/carousel w-full"
+      >
+        <CarouselContent>
           {products.map((product) => (
             <CarouselItem
               key={product.id}
-              className="basis-[60%] pl-3.5 sm:basis-[40%] md:basis-1/3 lg:basis-1/5"
+              className="basis-[58%] sm:basis-[38%] md:basis-1/3 lg:basis-1/5"
             >
               <StoreCard product={product} />
             </CarouselItem>
           ))}
         </CarouselContent>
+        <div className="hidden lg:block">
+          <CarouselPrevious className="absolute top-1/2 -left-14 -translate-y-1/2" />
+          <CarouselNext className="absolute top-1/2 -right-14 -translate-y-1/2" />
+        </div>
       </Carousel>
     </section>
   )
