@@ -6,26 +6,25 @@ import type { Product } from '@/types/product'
  * All translatable UI labels for the product page.
  */
 export interface ProductPageTranslations {
+  // Hero
+  instantDeliveryBadge: string
+  onSaleBadge: string
+  reviewCountOne: string
+  reviewCount: string
+  activationGuide: string
+  // Buy panel and buy bar
+  priceNotFinal: string
+  priceNotFinalTip: string
+  buyNow: string
+  addToCart: string
+  outOfStock: string
+  notAvailable: string
   // ProductDescription component
   productDescriptionHeading: string
   readMore: string
   readLess: string
-  // ProductDetails component
-  instantDeliveryBadge: string
-  onSaleBadge: string
-  digitalKeyBadge: string
-  activationGuide: string
-  inStock: string
-  outOfStock: string
-  digitalDownload: string
-  buyNow: string
-  // FeatureRow
-  instant: string
-  delivery: string
-  secure: string
   // WarningBox
   importantNotice: string
-  warningText: string
   // SystemRequirements
   systemRequirementsHeading: string
   minimumSystemRequirements: string
@@ -36,7 +35,7 @@ export interface ProductPageTranslations {
   galleryHeading: string
   // RatingReviews
   ratingReviewsHeading: string
-  outOf5: string
+  basedOnOneReview: string
   basedOnReviews: string
   writeAReview: string
   failedToLoadReviews: string
@@ -46,32 +45,31 @@ export interface ProductPageTranslations {
 }
 
 const defaultLabels: ProductPageTranslations = {
-  productDescriptionHeading: 'Product Description',
+  instantDeliveryBadge: 'Instant delivery',
+  onSaleBadge: 'On sale',
+  reviewCountOne: '(1 review)',
+  reviewCount: '({count} reviews)',
+  activationGuide: 'Activation guide',
+  priceNotFinal: 'Price not final',
+  priceNotFinalTip:
+    'A small service fee and any taxes are added at checkout, depending on the payment method you choose.',
+  buyNow: 'Buy now',
+  addToCart: 'Add to cart',
+  outOfStock: 'Out of stock',
+  notAvailable: 'Not available',
+  productDescriptionHeading: 'About this game',
   readMore: 'Read more',
   readLess: 'Read less',
-  instantDeliveryBadge: 'INSTANT DELIVERY',
-  onSaleBadge: 'ON SALE',
-  digitalKeyBadge: 'DIGITAL KEY',
-  activationGuide: 'Activation Guide',
-  inStock: 'In Stock',
-  outOfStock: 'Out of Stock',
-  digitalDownload: 'Digital Download',
-  buyNow: 'Buy Now',
-  instant: 'Instant',
-  delivery: 'Delivery',
-  secure: 'Secure',
-  importantNotice: 'Important Notice:',
-  warningText:
-    'Works with both the OLD and NEW Xbox accounts as long as there is no active subscription. The product is only available in countries where XBOX LIVE service is available. You cannot extend your current subscription with this product. To redeem your key, your current subscription must first expire.',
-  systemRequirementsHeading: 'System Requirements',
-  minimumSystemRequirements: 'Minimum System Requirements',
-  recommendedSystemRequirements: 'Recommended System Requirements',
-  similarToThis: 'Similar to This',
-  galleryHeading: 'Gallery',
-  ratingReviewsHeading: 'Rating & Reviews',
-  outOf5: 'Out of 5',
-  basedOnReviews: 'based on {count} reviews',
-  writeAReview: 'Write a Review',
+  importantNotice: 'Important notice:',
+  systemRequirementsHeading: 'System requirements',
+  minimumSystemRequirements: 'Minimum',
+  recommendedSystemRequirements: 'Recommended',
+  similarToThis: 'Similar to this',
+  galleryHeading: 'Trailer & screenshots',
+  ratingReviewsHeading: 'Ratings & reviews',
+  basedOnOneReview: 'Based on 1 review',
+  basedOnReviews: 'Based on {count} reviews',
+  writeAReview: 'Write a review',
   failedToLoadReviews: 'Failed to load reviews.',
   noReviewsYet: 'No reviews yet for this product.',
   loadMoreReviews: 'Load more reviews',

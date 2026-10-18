@@ -1,8 +1,10 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { ChevronUp, ChevronDown } from 'lucide-react'
+import { ChevronDown } from 'lucide-react'
 import type { Product } from '@/types/product'
+import { PRODUCT_CONTAINER_CLASS } from '@/components/product/hero-section/ProductHero'
+import { cn } from '@/lib/utils'
 
 interface ProductDescriptionProps {
   product: Product
@@ -15,115 +17,76 @@ interface ProductDescriptionProps {
   translatedDescriptionHtml?: string
 }
 
-export default function ProductDescription({
-  product,
-  labels,
-  translatedDescriptionHtml,
-}: ProductDescriptionProps) {
+const COLLAPSED_HEIGHT = 200
+
+export default function ProductDescription({ product, labels, translatedDescriptionHtml }: ProductDescriptionProps) {
   const [isExpanded, setIsExpanded] = useState(false)
-  const [areTagsExpanded, setAreTagsExpanded] = useState(false)
   const [shouldShowToggle, setShouldShowToggle] = useState(false)
   const descriptionRef = useRef<HTMLDivElement>(null)
 
-  const heading = labels?.heading ?? 'Product Description'
-  const readMore = labels?.readMore ?? 'Read more'
-  const readLess = labels?.readLess ?? 'Read less'
   const descriptionHtml = translatedDescriptionHtml ?? product.descriptionHtml
-  const tags = product.tags ?? []
-  const visibleTags = areTagsExpanded ? tags : tags.slice(0, 5)
-  const hasHiddenTags = tags.length > 5
+  const genres = product.genre ?? []
 
   useEffect(() => {
     const element = descriptionRef.current
     if (!element) return
-
-    const collapsedHeight = 128
-
-    const updateOverflowState = () => {
-      setShouldShowToggle(element.scrollHeight > collapsedHeight + 1)
-    }
-
-    updateOverflowState()
-
-    const observer = new ResizeObserver(updateOverflowState)
+    const update = () => setShouldShowToggle(element.scrollHeight > COLLAPSED_HEIGHT + 1)
+    update()
+    const observer = new ResizeObserver(update)
     observer.observe(element)
-
     return () => observer.disconnect()
   }, [descriptionHtml])
 
-  useEffect(() => {
-    if (!shouldShowToggle && isExpanded) {
-      setIsExpanded(false)
-    }
-  }, [isExpanded, shouldShowToggle])
+  // A product without a description (several still have none) gets no empty section.
+  if (!descriptionHtml?.replace(/<[^>]*>/g, '').trim()) return null
+
+  const isCollapsed = shouldShowToggle && !isExpanded
 
   return (
-    <div className="max-w-container text-white/65 mx-auto w-full px-4 md:px-0">
-      {/* Section Header */}
-      <h2 className="text-white/65 mb-2 text-xl font-bold md:text-xl">
-        {heading}
+    <section className={PRODUCT_CONTAINER_CLASS}>
+      <h2 className="mb-5 text-xl leading-[26px] font-bold text-white/95 md:text-2xl md:leading-[30px]">
+        {labels?.heading ?? 'About this game'}
       </h2>
 
-      {/* Main Title */}
-      <h3 className="mt-3 mb-4 text-xl font-bold text-white/95 md:text-xl">
-        {product.title}
-      </h3>
-
-      {/* Platform Tags */}
-      {tags.length > 0 && (
-        <div className="mb-6 flex flex-wrap gap-2">
-          {visibleTags.map((tag) => (
+      {genres.length > 0 && (
+        <div className="mb-4 flex flex-wrap gap-2">
+          {genres.map((genre) => (
             <span
-              key={tag}
-              className="border-muted-foreground text-white/65 cursor-default rounded-md border px-2 py-1.5 text-xs transition-colors hover:border-white/40"
+              key={genre}
+              className="inline-flex h-7 items-center rounded-full bg-white/7 px-3 text-xs font-medium text-white/65"
             >
-              {tag}
+              {genre}
             </span>
           ))}
-          {hasHiddenTags && (
-            <button
-              type="button"
-              onClick={() => setAreTagsExpanded((prev) => !prev)}
-              className="border-muted-foreground text-white/65 rounded-md border px-2 py-1.5 text-xs transition-colors hover:border-white/40 hover:text-white"
-              aria-label={areTagsExpanded ? 'Hide extra tags' : 'Show more tags'}
-            >
-              ...
-            </button>
-          )}
         </div>
       )}
 
-      {/* Description (HTML from API) */}
-      <div
-        ref={descriptionRef}
-        className={`prose prose-invert prose-sm prose-h2:text-xl prose-h3:text-base prose-h3:font-bold prose-strong:font-bold text-white/65 mb-8 max-w-none overflow-hidden transition-all duration-300 ${
-          isExpanded ? 'max-h-none' : 'max-h-44'
-        }`}
-        dangerouslySetInnerHTML={{ __html: descriptionHtml }}
-      />
+      <div className="relative max-w-190">
+        <div
+          ref={descriptionRef}
+          style={isCollapsed ? { maxHeight: COLLAPSED_HEIGHT } : undefined}
+          className="prose prose-invert prose-h2:text-base prose-h2:font-bold prose-h3:text-base prose-h3:font-bold prose-headings:text-white/95 prose-headings:mt-5 prose-headings:mb-1.5 prose-strong:font-bold max-w-none overflow-hidden text-sm leading-[22px] text-white/65 md:text-base md:leading-[26px]"
+          dangerouslySetInnerHTML={{ __html: descriptionHtml }}
+        />
+        {isCollapsed && (
+          <div
+            aria-hidden
+            className="from-background pointer-events-none absolute inset-x-0 bottom-0 h-22 bg-gradient-to-t to-transparent"
+          />
+        )}
+      </div>
 
-      {/* Toggle Button */}
       {shouldShowToggle && (
-        <div className="flex w-full justify-center border-t border-white/5 pt-4">
-          <button
-            type="button"
-            onClick={() => setIsExpanded(!isExpanded)}
-            className="hover:text-muted-foreground flex cursor-pointer items-center gap-2 text-sm font-bold text-white/95 transition-colors"
-          >
-            {isExpanded ? (
-              <>
-                {readLess}
-                <ChevronUp size={16} />
-              </>
-            ) : (
-              <>
-                {readMore}
-                <ChevronDown size={16} />
-              </>
-            )}
-          </button>
-        </div>
+        <button
+          type="button"
+          onClick={() => setIsExpanded((value) => !value)}
+          aria-expanded={isExpanded}
+          className="mt-3.5 inline-flex cursor-pointer items-center gap-1.5 text-sm font-medium text-white/95 transition-colors hover:text-white/65"
+        >
+          {isExpanded ? (labels?.readLess ?? 'Read less') : (labels?.readMore ?? 'Read more')}
+          <ChevronDown className={cn('size-4 transition-transform duration-200', isExpanded && 'rotate-180')} />
+        </button>
       )}
-    </div>
+    </section>
   )
 }

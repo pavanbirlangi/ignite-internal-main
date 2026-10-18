@@ -30,6 +30,8 @@ export interface ProductVariant {
   selectedOptions: ProductSelectedOption[]
   image: ProductVariantImage
   discount: ProductVariantDiscount | null
+  // False when the admin hasn't priced the variant yet; `price` is then a 0 placeholder.
+  priced?: boolean
 }
 
 export interface ProductOption {
@@ -122,6 +124,8 @@ export interface Product {
   featured: boolean
   platform: string[]
   region?: string[]
+  worksOn?: string[]
+  genre?: string[]
   systemRequirements?: ProductSystemRequirement[]
   minimumRequirements?: ProductSystemRequirementItem[]
   backgroundImage?: ProductVariantImage | null
@@ -132,6 +136,7 @@ export interface Product {
   } | null
   featuredImage?: ProductVariantImage | null
   rating: ProductRating | null
+  ratingCount?: number
   inStock: boolean
   stockQuantity: number
   price?: ProductVariantPrice

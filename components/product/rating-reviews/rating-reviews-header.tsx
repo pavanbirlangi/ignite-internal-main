@@ -1,68 +1,20 @@
-import { Button } from '@/components/ui/button'
-import {
-  formatReviewCount,
-  getRatingPercentage,
-  REVIEW_STROKE_LENGTH,
-} from '@/lib/reviews/review-formatters'
+import { formatReviewCount } from '@/lib/reviews/review-formatters'
 import type { RatingReviewsHeaderProps } from '@/types/RatingReviewTypes'
+import { StarRating } from './star-rating'
 
-export function RatingReviewsHeader({
-  averageRating,
-  totalReviews,
-  onWriteReview,
-  labels,
-}: RatingReviewsHeaderProps) {
-  const ratingPercentage = getRatingPercentage(averageRating)
-
+// The average as a number with its stars and how many reviews it comes from.
+export function RatingReviewsHeader({ averageRating, totalReviews, labels }: RatingReviewsHeaderProps) {
   return (
-    <div className="mb-8 flex flex-col items-start justify-between gap-6 md:flex-row md:items-end">
-      <div className="flex items-center gap-4">
-        <div className="relative flex h-16 w-16 items-center justify-center">
-          <svg className="h-full w-full -rotate-90">
-            <circle
-              cx="32"
-              cy="32"
-              r="28"
-              className="stroke-secondary"
-              strokeWidth="6"
-              fill="none"
-            />
-            <circle
-              cx="32"
-              cy="32"
-              r="28"
-              className="stroke-accent"
-              strokeWidth="6"
-              fill="none"
-              strokeDasharray={REVIEW_STROKE_LENGTH}
-              strokeDashoffset={
-                REVIEW_STROKE_LENGTH -
-                REVIEW_STROKE_LENGTH * (ratingPercentage / 100)
-              }
-              strokeLinecap="round"
-            />
-          </svg>
-          <span className="text-accent absolute text-xl font-bold">
-            {averageRating.toFixed(1)}
-          </span>
-        </div>
-
-        <div className="flex flex-col">
-          <span className="text-xl font-medium text-white/95 md:text-2xl">
-            {labels?.outOf5 ?? 'Out of 5'}
-          </span>
-          <span className="text-white/65 text-base font-medium md:text-xl">
-            {(labels?.basedOnReviews ?? 'based on {count} reviews').replace(
-              '{count}',
-              formatReviewCount(totalReviews),
-            )}
-          </span>
-        </div>
+    <div className="flex items-center gap-3.5">
+      <span className="text-[32px] leading-[38px] font-bold text-white/95">{averageRating.toFixed(1)}</span>
+      <div className="flex flex-col gap-1">
+        <StarRating rating={averageRating} />
+        <span className="text-sm text-white/65">
+          {totalReviews === 1
+            ? (labels?.basedOnOneReview ?? 'Based on 1 review')
+            : (labels?.basedOnReviews ?? 'Based on {count} reviews').replace('{count}', formatReviewCount(totalReviews))}
+        </span>
       </div>
-
-      <Button className="px-4 py-6" variant="outline" onClick={onWriteReview}>
-        {labels?.writeAReview ?? 'Write a Review'}
-      </Button>
     </div>
   )
 }

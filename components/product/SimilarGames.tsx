@@ -9,11 +9,15 @@ import {
 } from '@/components/ui/carousel'
 import type { ProductListItem } from '@/types/product'
 import StoreCard from '../store/StoreCard'
+import { PRODUCT_CONTAINER_CLASS } from '@/components/product/hero-section/ProductHero'
 
 interface SimilarGamesProps {
   products: ProductListItem[]
   title?: string
 }
+
+const ARROW_CLASS =
+  'static size-9 translate-y-0 border-none bg-white/6 text-white/65 hover:bg-white/12 hover:text-white/95 [&>svg]:size-4.5'
 
 export default function SimilarGames({ products, title }: SimilarGamesProps) {
   if (!products.length) {
@@ -21,41 +25,28 @@ export default function SimilarGames({ products, title }: SimilarGamesProps) {
   }
 
   return (
-    <div className="bg-background mb-16 w-full py-6 md:mt-12 md:mb-20 md:py-10">
-      <div className="max-w-container mx-auto w-full px-4 md:px-0">
-        {/* Header */}
-        <h2 className="mb-8 pl-1 text-xl font-bold text-white/65 md:text-2xl">
-          {title ?? 'Similar to This'}
-        </h2>
-
-        {/* Carousel Container */}
-        <div className="relative w-full">
-          <Carousel
-            opts={{
-              align: 'start',
-              loop: true,
-            }}
-            className="group/carousel w-full"
-          >
-            <CarouselContent className="-ml-3 md:-ml-4">
-              {products.map((product) => (
-                <CarouselItem
-                  key={product.id}
-                  className="basis-[60%] sm:basis-[40%] md:basis-[32%] lg:basis-[19.5%]"
-                >
-                  <StoreCard product={product} />
-                </CarouselItem>
-              ))}
-            </CarouselContent>
-
-            {/* Navigation Arrows */}
-            <div className="hidden lg:block">
-              <CarouselPrevious className="bg-secondary hover:bg-secondary absolute top-1/2 -left-16 h-11 w-11 -translate-y-1/2 border-none text-white/65 transition-all hover:text-white [&>svg]:h-5 [&>svg]:w-5" />
-              <CarouselNext className="bg-secondary hover:bg-secondary absolute top-1/2 -right-16 h-11 w-11 -translate-y-1/2 border-none text-white/65 transition-all hover:text-white [&>svg]:h-5 [&>svg]:w-5" />
-            </div>
-          </Carousel>
+    <section className={PRODUCT_CONTAINER_CLASS}>
+      <Carousel opts={{ align: 'start', loop: true }} className="w-full">
+        <div className="mb-5 flex items-end justify-between gap-4">
+          <h2 className="text-xl leading-[26px] font-bold text-white/95 md:text-2xl md:leading-[30px]">
+            {title ?? 'Similar to this'}
+          </h2>
+          <div className="hidden gap-2 md:flex">
+            <CarouselPrevious className={ARROW_CLASS} />
+            <CarouselNext className={ARROW_CLASS} />
+          </div>
         </div>
-      </div>
-    </div>
+        <CarouselContent className="-ml-3.5">
+          {products.map((product) => (
+            <CarouselItem
+              key={product.id}
+              className="basis-[60%] pl-3.5 sm:basis-[40%] md:basis-1/3 lg:basis-1/5"
+            >
+              <StoreCard product={product} />
+            </CarouselItem>
+          ))}
+        </CarouselContent>
+      </Carousel>
+    </section>
   )
 }

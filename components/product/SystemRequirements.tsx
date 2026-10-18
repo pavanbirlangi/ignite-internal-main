@@ -1,21 +1,15 @@
 'use client'
 
 import { useState } from 'react'
-import OS from '../icons/system/OS'
-import Processor from '../icons/system/Processor'
-import Memory from '../icons/system/Memory'
-import Graphics from '../icons/system/Graphics'
-import Storage from '../icons/system/Storage'
 import type {
   Product,
-  ProductSystemRequirementItem,
   ProductSystemRequirementDetail,
 } from '@/types/product'
 import type { CmsMappedSystemRequirement } from '@/lib/services/cms-product.service'
+import { PRODUCT_CONTAINER_CLASS } from '@/components/product/hero-section/ProductHero'
 
 // Types for requirement items
 interface RequirementItem {
-  icon: React.ElementType
   label: string
   value: string
 }
@@ -64,19 +58,19 @@ export default function SystemRequirements({
     const items: RequirementItem[] = []
 
     if (details.os) {
-      items.push({ icon: OS, label: 'OS', value: details.os })
+      items.push({ label: 'OS', value: details.os })
     }
     if (details.processor) {
-      items.push({ icon: Processor, label: 'Processor', value: details.processor })
+      items.push({ label: 'Processor', value: details.processor })
     }
     if (details.memory) {
-      items.push({ icon: Memory, label: 'Memory', value: details.memory })
+      items.push({ label: 'Memory', value: details.memory })
     }
     if (details.graphics) {
-      items.push({ icon: Graphics, label: 'Graphics', value: details.graphics })
+      items.push({ label: 'Graphics', value: details.graphics })
     }
     if (details.storage) {
-      items.push({ icon: Storage, label: 'Storage', value: details.storage })
+      items.push({ label: 'Storage', value: details.storage })
     }
 
     return items
@@ -90,12 +84,11 @@ export default function SystemRequirements({
     const items: RequirementItem[] = []
 
     if (details.os) {
-      items.push({ icon: OS, label: 'OS', value: details.os.name })
+      items.push({ label: 'OS', value: details.os.name })
     }
     // Note: The new API structure has processors as an array
     if (details.processors && details.processors.length > 0) {
       items.push({
-        icon: Processor,
         label: 'Processor',
         value: details.processors[0]._handle.replace(/-/g, ' '),
       })
@@ -103,14 +96,12 @@ export default function SystemRequirements({
     // Note: The new API structure has graphics as an array
     if (details.graphics && details.graphics.length > 0) {
       items.push({
-        icon: Graphics,
         label: 'Graphics',
         value: details.graphics[0].graphics_card,
       })
     }
     if (details.storage) {
       items.push({
-        icon: Storage,
         label: 'Storage',
         value: details.storage.storage,
       })
@@ -142,80 +133,58 @@ export default function SystemRequirements({
     )
   }
 
+  const column = (title: string, items: RequirementItem[]) =>
+    items.length > 0 && (
+      <div className="bg-card border-border rounded-[14px] border px-5 pt-1.5 pb-2">
+        <h3 className="pt-3.5 pb-1.5 text-xs font-medium tracking-[0.6px] text-white/65 uppercase">{title}</h3>
+        <dl>
+          {items.map((req) => (
+            <div
+              key={req.label}
+              className="grid grid-cols-[96px_minmax(0,1fr)] gap-3 border-t border-white/7 py-3 text-sm leading-5 first:border-t-0 sm:grid-cols-[110px_minmax(0,1fr)]"
+            >
+              <dt className="text-white/65">{req.label}</dt>
+              <dd className="text-white/95">{req.value}</dd>
+            </div>
+          ))}
+        </dl>
+      </div>
+    )
+
   return (
-    <div className="max-w-container mx-auto mt-8 mb-16 w-full px-4 md:mt-12 md:mb-20 md:px-0">
-      <h2 className="text-white/65 mb-6 text-xl font-bold md:text-xl">
-        {labels?.heading ?? 'System Requirements'}
+    <section id="system-requirements" className={`${PRODUCT_CONTAINER_CLASS} scroll-mt-28`}>
+      <h2 className="mb-5 text-xl leading-[26px] font-bold text-white/95 md:text-2xl md:leading-[30px]">
+        {labels?.heading ?? 'System requirements'}
       </h2>
 
-      {/* Tabs */}
-      <div className="mb-12 flex gap-2.5">
-        {platforms.map((tab) => (
-          <button
-            key={tab}
-            onClick={() => setActiveTab(tab)}
-            className={`cursor-pointer rounded-[6px] border px-3 py-2 text-sm font-bold transition-all duration-300 ${activeTab === tab
-              ? 'border-primary text-primary bg-primary/5'
-              : 'border-border text-white/65 hover:border-white/20 hover:text-white/60'
+      {/* Platform pills: a choice only when there is more than one platform. */}
+      <div className="mb-4 flex flex-wrap gap-2">
+        {platforms.map((tab) =>
+          platforms.length > 1 ? (
+            <button
+              key={tab}
+              type="button"
+              onClick={() => setActiveTab(tab)}
+              aria-pressed={activeTab === tab}
+              className={`inline-flex h-8 cursor-pointer items-center rounded-full px-3.5 text-sm font-medium transition-colors ${
+                activeTab === tab ? 'bg-white text-[#111]' : 'bg-white/6 text-white/65 hover:bg-white/10 hover:text-white/95'
               }`}
-          >
-            {tab}
-          </button>
-        ))}
+            >
+              {tab}
+            </button>
+          ) : (
+            <span key={tab} className="inline-flex h-8 items-center rounded-full bg-white px-3.5 text-sm font-medium text-[#111]">
+              {tab}
+            </span>
+          ),
+        )}
       </div>
 
-      {/* Minimum Section */}
-      {minimumRequirements.length > 0 && (
-        <div className="mb-12">
-          <h3 className="text-white/65 mb-8 text-base font-bold">
-            {labels?.minimum ?? 'Minimum System Requirements'}
-          </h3>
-          <div className="grid w-full grid-cols-1 justify-between gap-x-8 gap-y-8 sm:grid-cols-2 lg:flex">
-            {minimumRequirements.map((req, index) => (
-              <div key={index} className="flex flex-row items-start gap-4">
-                <div className="mt-0.5 shrink-0">
-                  <req.icon />
-                </div>
-                <div className="flex flex-col gap-1">
-                  <span className="text-white/65 text-xs font-bold">
-                    {req.label}
-                  </span>
-                  <span className="text-sm font-medium text-white/95 md:max-w-48">
-                    {req.value}
-                  </span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Recommended Section */}
-      {recommendedRequirements.length > 0 && (
-        <div>
-          <h3 className="text-white/65 mb-8 text-base font-bold">
-            {labels?.recommended ?? 'Recommended System Requirements'}
-          </h3>
-          <div className="grid w-full grid-cols-1 justify-between gap-x-8 gap-y-8 sm:grid-cols-2 lg:flex">
-            {recommendedRequirements.map((req, index) => (
-              <div key={index} className="flex flex-row items-start gap-4">
-                <div className="mt-0.5 shrink-0">
-                  <req.icon />
-                </div>
-                <div className="flex flex-col gap-1">
-                  <span className="text-white/65 text-xs font-bold">
-                    {req.label}
-                  </span>
-                  <span className="text-sm font-medium text-white/95 md:max-w-48">
-                    {req.value}
-                  </span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-    </div>
+      <div className="grid gap-4 md:grid-cols-2">
+        {column(labels?.minimum ?? 'Minimum', minimumRequirements)}
+        {column(labels?.recommended ?? 'Recommended', recommendedRequirements)}
+      </div>
+    </section>
   )
 }
 

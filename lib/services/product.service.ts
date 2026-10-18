@@ -36,13 +36,6 @@ export interface GetProductRecommendationsParams {
   limit?: number
 }
 
-export interface ProductFeatures {
-  instantText?: string
-  secureText?: string
-  rating?: number
-  ratingCount?: number
-}
-
 export interface GetCollectionProductsParams {
   first?: number
   after?: string
@@ -158,6 +151,7 @@ function mapVariant(
     selectedOptions,
     image,
     discount,
+    priced: Boolean(calc),
   }
 }
 
@@ -318,13 +312,17 @@ function mapProductDetail(
     featured: metaBool(metadata, 'featured'),
     platform: metaStringArray(metadata, 'platform'),
     region: metaStringArray(metadata, 'region'),
+    worksOn: metaStringArray(metadata, 'works_on'),
+    genre: metaStringArray(metadata, 'genre'),
     backgroundImage: backgroundImageUrl
       ? { url: backgroundImageUrl, altText: raw.title ?? null }
       : (images[0] ?? featuredImage),
     featuredImage,
-    rating: ratingSummary
+    // No rating until a review exists, so the page (and the JSON-LD) never shows a 0 rating.
+    rating: ratingSummary && ratingSummary.count > 0
       ? { scale_min: '0', scale_max: '5', value: String(ratingSummary.average_rating) }
       : null,
+    ratingCount: ratingSummary?.count ?? 0,
     inStock,
     stockQuantity: totalStock,
     price: firstVariant?.price,
@@ -769,17 +767,6 @@ export const ProductService = {
   getProductsByIds: async (ids: string[]): Promise<ProductListItem[]> => {
     const regionId = await getClientRegionId()
     return _fetchProductsByIds(ids, regionId, await getDisplayCurrency())
-  },
-
-  /**
-   * Fetches product features. No backend equivalent exists (was folded into
-   * product metadata / rating per the migration plan) -- returns null so
-   * callers' existing null-handling renders nothing rather than erroring.
-   */
-  getProductFeatures: async (
-    _handle: string,
-  ): Promise<ProductFeatures | null> => {
-    return null
   },
 
   getCollectionProductsByHandle: cache(

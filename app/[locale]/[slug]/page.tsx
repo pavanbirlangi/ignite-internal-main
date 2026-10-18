@@ -1,13 +1,12 @@
 import type { Metadata } from 'next'
 import { notFound, permanentRedirect } from 'next/navigation'
 import { RedirectService } from '@/lib/services/redirect.service'
-import Image from 'next/image'
 
 import Gallery from '@/components/product/Gallery'
-import FeatureRow from '@/components/product/hero-section/feature-row'
+import ProductBuyBar from '@/components/product/ProductBuyBar'
 import ProductDescription from '@/components/product/hero-section/ProductDescription'
 import ProductDetails from '@/components/product/hero-section/ProductDetails'
-import ProductImage from '@/components/product/hero-section/ProductImage'
+import ProductHero, { PRODUCT_CONTAINER_CLASS } from '@/components/product/hero-section/ProductHero'
 import WarningBox from '@/components/product/hero-section/WarningBox'
 import RatingReviews from '@/components/product/rating-reviews/rating-reviews'
 import SimilarGames from '@/components/product/SimilarGames'
@@ -32,7 +31,7 @@ import { translateTextsWithLangbly } from '@/lib/services/langbly-translation.se
 import { generateSeoMetadata } from '@/lib/seo'
 import { getCountryForCurrency } from '@/lib/region-data'
 import { formatPrice } from '@/lib/currency'
-import { getProxyImageUrl, stripHtml, localizedHref } from '@/lib/utils'
+import { stripHtml, localizedHref } from '@/lib/utils'
 
 interface PageProps {
   params: Promise<{
@@ -238,7 +237,6 @@ export default async function ProductPage({ params }: PageProps) {
     recommendationsResult,
     cmsResult,
     reviewsResult,
-    featuresResult,
     faqResult,
   ] = await Promise.allSettled([
     ProductService.getProductRecommendations(slug, {
@@ -247,7 +245,6 @@ export default async function ProductPage({ params }: PageProps) {
     }),
     CmsProductService.getProductCmsData(slug),
     reviewService.getReviews({ productId: product.id, perPage: 1 }),
-    ProductService.getProductFeatures(slug),
     FaqService.getForProduct(slug),
   ])
 
@@ -258,9 +255,6 @@ export default async function ProductPage({ params }: PageProps) {
 
   const cmsData: CmsProductResult | null =
     cmsResult.status === 'fulfilled' ? cmsResult.value : null
-
-  const featuresData =
-    featuresResult.status === 'fulfilled' ? featuresResult.value : null
 
   let faqItems: FaqItem[] =
     faqResult.status === 'fulfilled' ? faqResult.value : []
@@ -285,20 +279,6 @@ export default async function ProductPage({ params }: PageProps) {
       labels = result.labels
       productData = result.productData
 
-      if (featuresData) {
-        const textsToTranslate = []
-        if (featuresData.instantText) textsToTranslate.push(featuresData.instantText)
-        if (featuresData.secureText) textsToTranslate.push(featuresData.secureText)
-        
-        if (textsToTranslate.length > 0) {
-          const translatedFeatures = await translateTextsWithLangbly(textsToTranslate, locale)
-          
-          let i = 0
-          if (featuresData.instantText) featuresData.instantText = translatedFeatures[i++]
-          if (featuresData.secureText) featuresData.secureText = translatedFeatures[i++]
-        }
-      }
-
       if (faqItems.length > 0) {
         faqItems = await translateFaqItems(faqItems, locale)
       }
@@ -322,8 +302,17 @@ export default async function ProductPage({ params }: PageProps) {
     product.gallery.find((item) => item.type === 'IMAGE')?.altText ??
     product.title
 
+  const cmsSystemRequirements = cmsData?.systemRequirements ?? []
+  const hasSystemRequirements =
+    cmsSystemRequirements.length > 0 || (product.systemRequirements?.length ?? 0) > 0
+  const buyLabels = {
+    buyNow: labels.buyNow,
+    outOfStock: labels.outOfStock,
+    notAvailable: labels.notAvailable,
+  }
+
   return (
-    <main className="min-h-screen overflow-x-hidden">
+    <main className="min-h-screen overflow-x-clip">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
@@ -332,118 +321,98 @@ export default async function ProductPage({ params }: PageProps) {
           ),
         }}
       />
-      {/* Background Hero Image */}
-      <div className="absolute top-0 left-0 z-0 h-[300px] w-full md:h-[420px]">
-        <div className="h-full w-full shadow-[inset_0px_102px_105px_0px_var(--black-90)]">
-          <Image
-            src={getProxyImageUrl(coverImage)}
-            alt={`${product.title} background`}
-            fill
-            className="object-cover object-top"
-            priority
+      <ProductHero
+        product={product}
+        coverImage={featuredImage}
+        coverAlt={coverAlt}
+        backgroundImage={coverImage}
+        cmsDropdownOptions={cmsData?.dropdownOptions}
+        hasSystemRequirements={hasSystemRequirements}
+        labels={{
+          instantDeliveryBadge: labels.instantDeliveryBadge,
+          onSaleBadge: labels.onSaleBadge,
+          reviewCountOne: labels.reviewCountOne,
+          reviewCount: labels.reviewCount,
+          activationGuide: labels.activationGuide,
+          systemRequirements: labels.systemRequirementsHeading,
+        }}
+        buyPanel={
+          <ProductDetails
+            product={product}
+            cmsDropdownOptions={cmsData?.dropdownOptions}
+            locale={locale}
+            labels={{
+              ...buyLabels,
+              priceNotFinal: labels.priceNotFinal,
+              priceNotFinalTip: labels.priceNotFinalTip,
+              addToCart: labels.addToCart,
+            }}
           />
-        </div>
-      </div>
+        }
+      />
 
-      <div className="relative z-10">
-        {/* Main Content Container */}
-        <div className="mx-auto flex max-w-[950px] flex-col gap-6 px-4 pt-20 pb-16 md:pt-32 md:pb-20">
-          <div className="flex flex-col items-start gap-8 md:flex-row lg:h-[480px]">
-            {/* Left Column (Image) */}
-            <div className="mx-auto flex h-[330px] w-[230px] shrink-0 flex-col gap-4 lg:h-full lg:w-auto">
-              <ProductImage src={featuredImage} alt={coverAlt} />
-            </div>
-
-            {/* Right Column (Details + Features) */}
-            <div className="flex w-full flex-col gap-[20px] md:gap-[27px] lg:h-full">
-              <ProductDetails
-                product={product}
-                cmsDropdownOptions={cmsData?.dropdownOptions}
-                locale={locale}
-                labels={{
-                  instantDeliveryBadge: labels.instantDeliveryBadge,
-                  onSaleBadge: labels.onSaleBadge,
-                  digitalKeyBadge: labels.digitalKeyBadge,
-                  activationGuide: labels.activationGuide,
-                  inStock: labels.inStock,
-                  outOfStock: labels.outOfStock,
-                  digitalDownload: labels.digitalDownload,
-                  buyNow: labels.buyNow,
-                }}
-              />
-              <FeatureRow
-                product={product}
-                features={featuresData}
-                labels={{
-                  instant: labels.instant,
-                  delivery: labels.delivery,
-                  secure: labels.secure,
-                }}
-              />
-            </div>
-          </div>
-          {product.importantNotice && (
+      <div className="flex flex-col gap-16 pt-8 pb-20 md:gap-18 lg:pt-4">
+        {product.importantNotice && (
+          <div className={PRODUCT_CONTAINER_CLASS}>
             <WarningBox
               warningText={product.importantNotice}
-              labels={{
-                importantNotice: labels.importantNotice,
-                warningText: labels.warningText,
-              }}
+              labels={{ importantNotice: labels.importantNotice }}
             />
-          )}
-        </div>
+          </div>
+        )}
+        <ProductDescription
+          product={product}
+          labels={{
+            heading: labels.productDescriptionHeading,
+            readMore: labels.readMore,
+            readLess: labels.readLess,
+          }}
+          translatedDescription={productData?.description}
+          translatedDescriptionHtml={productData?.descriptionHtml}
+        />
+        <SystemRequirements
+          product={product}
+          cmsSystemRequirements={cmsSystemRequirements}
+          labels={{
+            heading: labels.systemRequirementsHeading,
+            minimum: labels.minimumSystemRequirements,
+            recommended: labels.recommendedSystemRequirements,
+          }}
+        />
+        <Gallery
+          featuredImage={featuredImage}
+          product={
+            cmsData?.gallery?.length
+              ? { ...product, gallery: cmsData.gallery }
+              : product
+          }
+          heading={labels.galleryHeading}
+        />
+        <RatingReviews
+          product={product}
+          labels={{
+            heading: labels.ratingReviewsHeading,
+            basedOnOneReview: labels.basedOnOneReview,
+            basedOnReviews: labels.basedOnReviews,
+            writeAReview: labels.writeAReview,
+            failedToLoad: labels.failedToLoadReviews,
+            noReviews: labels.noReviewsYet,
+            loadMore: labels.loadMoreReviews,
+            loading: labels.loadingReviews,
+          }}
+        />
+        <SimilarGames
+          products={recommendedProducts.filter((item) => item.handle !== slug)}
+          title={labels.similarToThis}
+        />
+        {faqItems.length > 0 && (
+          <div className={PRODUCT_CONTAINER_CLASS}>
+            <FaqSection headline title="Frequently Asked Questions" items={faqItems} />
+          </div>
+        )}
       </div>
 
-      <ProductDescription
-        product={product}
-        labels={{
-          heading: labels.productDescriptionHeading,
-          readMore: labels.readMore,
-          readLess: labels.readLess,
-        }}
-        translatedDescription={productData?.description}
-        translatedDescriptionHtml={productData?.descriptionHtml}
-      />
-      <SystemRequirements
-        product={product}
-        cmsSystemRequirements={cmsData?.systemRequirements}
-        labels={{
-          heading: labels.systemRequirementsHeading,
-          minimum: labels.minimumSystemRequirements,
-          recommended: labels.recommendedSystemRequirements,
-        }}
-      />
-      <Gallery
-        featuredImage={featuredImage}
-        product={
-          cmsData?.gallery?.length
-            ? { ...product, gallery: cmsData.gallery }
-            : product
-        }
-        heading={labels.galleryHeading}
-      />
-      <RatingReviews
-        product={product}
-        labels={{
-          heading: labels.ratingReviewsHeading,
-          outOf5: labels.outOf5,
-          basedOnReviews: labels.basedOnReviews,
-          writeAReview: labels.writeAReview,
-          failedToLoad: labels.failedToLoadReviews,
-          noReviews: labels.noReviewsYet,
-          loadMore: labels.loadMoreReviews,
-          loading: labels.loadingReviews,
-        }}
-      />
-      <SimilarGames
-        products={recommendedProducts.filter((item) => item.handle !== slug)}
-        title={labels.similarToThis}
-      />
-      {faqItems.length > 0 && (
-        <div className="max-w-container mx-auto mt-8 mb-16 w-full px-4 md:mt-12 md:mb-20 md:px-0">
-          <FaqSection headline title="Frequently Asked Questions" items={faqItems} />
-        </div>
-      )}
+      <ProductBuyBar product={product} coverImage={featuredImage} labels={buyLabels} />
     </main>
   )
 }

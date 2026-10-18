@@ -8,16 +8,15 @@ export interface RatingReviewsProps {
 export interface RatingReviewsHeaderProps {
   averageRating: number
   totalReviews: number
-  onWriteReview: () => void
   labels?: {
-    outOf5?: string
+    basedOnOneReview?: string
     basedOnReviews?: string
-    writeAReview?: string
   }
 }
 
 export interface StarRatingProps {
   rating: number
+  size?: number
 }
 
 export interface ReviewCardProps {

@@ -1,6 +1,6 @@
 export function ReviewCardSkeleton() {
   return (
-    <div className="bg-secondary flex h-full flex-col rounded-2xl border border-white/5 p-5 md:min-h-55">
+    <div className="bg-card border-border flex h-full min-h-35 flex-col rounded-[14px] border p-5">
       <div className="mb-4 flex flex-col items-start justify-between gap-3 md:flex-row">
         <div className="flex items-center gap-3">
           <div className="h-10 w-10 animate-pulse rounded-full bg-white/10" />
