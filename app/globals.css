@@ -47,6 +47,54 @@
   --animate-icon-zap: icon-zap 600ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
   /* Product cards: one band of light across the cover on hover. */
   --animate-card-glare: card-glare 900ms cubic-bezier(0.4, 0, 0.2, 1) 50ms;
+  /* Wishlist heart: pops in with a ring and sparks when saved, squeezes when removed. */
+  --animate-heart-pop: heart-pop 450ms cubic-bezier(0.2, 1.6, 0.4, 1);
+  --animate-heart-squeeze: heart-squeeze 250ms ease;
+  --animate-heart-ring: heart-ring 500ms ease-out both;
+  --animate-heart-spark: heart-spark 550ms ease-out both;
+
+  @keyframes heart-pop {
+    0% {
+      transform: scale(0.6);
+    }
+    60% {
+      transform: scale(1.25);
+    }
+    100% {
+      transform: scale(1);
+    }
+  }
+
+  @keyframes heart-squeeze {
+    50% {
+      transform: scale(0.8);
+    }
+  }
+
+  @keyframes heart-ring {
+    from {
+      transform: scale(0.4);
+      opacity: 0.9;
+      border-width: 6px;
+    }
+    to {
+      transform: scale(1.9);
+      opacity: 0;
+      border-width: 1px;
+    }
+  }
+
+  /* Each spark sets --spark-angle; --spark-distance scales the burst to the heart's size. */
+  @keyframes heart-spark {
+    from {
+      transform: rotate(var(--spark-angle)) translateY(0) scale(1);
+      opacity: 1;
+    }
+    to {
+      transform: rotate(var(--spark-angle)) translateY(var(--spark-distance, -22px)) scale(0.3);
+      opacity: 0;
+    }
+  }
 
   @keyframes spinner-rotate {
     to {
@@ -248,7 +296,7 @@
   --border: #E5E5E5;
   --input: #E5E5E5;
   --ring: #FFFFFF;
-  --wishlist: #FE15B1;
+  --wishlist: #E5193F;
 
   /* Alpha + effects */
   --background-0: #17171700;
@@ -258,7 +306,7 @@
   --background-80-rgb: #171717CC;
   --secondary-20: #2B2B2B33;
   --secondary-40: #2B2B2B66;
-  --wishlist-soft: #FE15B1;
+  --wishlist-soft: #E5193F1F;
   --primary-glow: #2468DF66;
   --primary-glow-60: #2468DF99;
   --primary-glow-soft: #2468DF33;
@@ -319,7 +367,7 @@
   --input: #2E2E2E;
   --ring: #FFFFFF;
 
-  --wishlist: #FE15B1;
+  --wishlist: #E5193F;
 
   --background-0: #0C0C0C00;
   --background-20: #0C0C0C33;
@@ -328,7 +376,7 @@
   --background-80-rgb: #0C0C0CCC;
   --secondary-20: #21212133;
   --secondary-40: #21212166;
-  --wishlist-soft: #F767C71A;
+  --wishlist-soft: #E5193F1F;
   --primary-glow: #2468DF66;
   --primary-glow-60: #2468DF99;
   --primary-glow-soft: #2468DF33;

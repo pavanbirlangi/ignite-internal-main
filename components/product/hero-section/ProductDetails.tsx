@@ -3,7 +3,7 @@
 import { useMemo, useState } from 'react'
 import { ChevronDown } from 'lucide-react'
 import { useRouter } from 'next/navigation'
-import HeartIcon from '@/components/icons/HeartIcon'
+import WishlistHeart from '@/components/shared/WishlistHeart'
 import type { Product } from '@/types/product'
 import { useUserStore } from '@/store/useUserStore'
 import { useAuthModalStore } from '@/store/useAuthModalStore'
@@ -41,8 +41,10 @@ export default function ProductDetails({ product, cmsDropdownOptions = [], local
   const { data: statusData, isLoading: isStatusLoading } = useWishlistStatus(product.id, isAuthenticated)
   const { mutate: addToWishlist, isPending: isAdding } = useAddToWishlist()
   const { mutate: removeFromWishlist, isPending: isRemoving } = useRemoveFromWishlist()
-  const isInWishlist = !!statusData?.isInWishlist
-  const isWishlistLoading = isStatusLoading || isAdding || isRemoving
+  // The heart follows the click straight away and only goes back if saving fails.
+  const [wishlistOverride, setWishlistOverride] = useState<boolean | null>(null)
+  const isInWishlist = wishlistOverride ?? !!statusData?.isInWishlist
+  const isWishlistBusy = isAdding || isRemoving
 
   const { variant, isPriced, canBuy, price, compareAtPrice, discountPercent, addState, addToCart, buyNow, isOpening } =
     useProductPurchase(product)
@@ -71,8 +73,12 @@ export default function ProductDetails({ product, cmsDropdownOptions = [], local
       openModal('login')
       return
     }
-    if (isInWishlist) removeFromWishlist(product.id)
-    else addToWishlist(product.id)
+    if (isStatusLoading || isWishlistBusy) return
+    const next = !isInWishlist
+    setWishlistOverride(next)
+    const revert = { onError: () => setWishlistOverride(!next) }
+    if (next) addToWishlist(product.id, revert)
+    else removeFromWishlist(product.id, revert)
   }
 
   const buyLabel = canBuy ? labels.buyNow : !isPriced ? labels.notAvailable : labels.outOfStock
@@ -170,12 +176,12 @@ export default function ProductDetails({ product, cmsDropdownOptions = [], local
         <button
           type="button"
           onClick={toggleWishlist}
-          disabled={isWishlistLoading}
           aria-label={isInWishlist ? 'Remove from wishlist' : 'Add to wishlist'}
           aria-pressed={isInWishlist}
-          className="inline-flex size-12 shrink-0 cursor-pointer items-center justify-center rounded-[10px] border border-white/10 bg-white/6 text-white/95 transition-all duration-200 outline-none hover:-translate-y-px hover:border-white/20 hover:bg-white/10 focus-visible:ring-2 focus-visible:ring-white/40 disabled:opacity-60 [&_svg]:size-5"
+          aria-busy={isWishlistBusy || undefined}
+          className="inline-flex size-12 shrink-0 cursor-pointer items-center justify-center rounded-[10px] border border-white/10 bg-white/6 text-white/95 transition-all duration-200 outline-none hover:-translate-y-px hover:border-white/20 hover:bg-white/10 focus-visible:ring-2 focus-visible:ring-white/40"
         >
-          <HeartIcon filled={isInWishlist} />
+          <WishlistHeart filled={isInWishlist} />
         </button>
       </div>
     </div>

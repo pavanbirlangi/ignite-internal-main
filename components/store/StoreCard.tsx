@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import HeartIcon from '../icons/HeartIcon'
+import WishlistHeart from '@/components/shared/WishlistHeart'
 import CartPlusIcon from '../icons/CartPlusIcon'
 import Thunder from '../icons/Thunder'
 import { Spinner } from '@/components/ui/spinner'
@@ -157,6 +157,10 @@ const StoreCard: React.FC<ProductCardProps> = ({ product, wishlisted }) => {
   const { openModal } = useAuthModalStore()
 
   const isWishlistLoading = isAdding || isRemoving
+  // On the wishlist page the heart empties straight away and the card fades while it is
+  // removed (the list refetch then takes it out); a failed request brings it back.
+  const [isRemovingCard, setIsRemovingCard] = useState(false)
+  const isHeartFilled = Boolean(wishlisted) && !isRemovingCard
   const firstVariant = Array.isArray(product.variants)
     ? product.variants[0]
     : product.variants?.edges?.[0]?.node
@@ -249,8 +253,10 @@ const StoreCard: React.FC<ProductCardProps> = ({ product, wishlisted }) => {
       return
     }
 
+    if (isWishlistLoading) return
     if (wishlisted) {
-      removeFromWishlist(product.id)
+      setIsRemovingCard(true)
+      removeFromWishlist(product.id, { onError: () => setIsRemovingCard(false) })
     } else {
       addToWishlist(product.id)
     }
@@ -262,7 +268,10 @@ const StoreCard: React.FC<ProductCardProps> = ({ product, wishlisted }) => {
       // Hover: the cover slowly zooms and one band of light sweeps across it
       // (the same sweep as the hero's Browse Deals button).
       // The border needs ! to beat .glassmorphism, which sits outside Tailwind's layers.
-      className="group glassmorphism bg-secondary/20 relative flex h-full w-full transform-gpu flex-col overflow-hidden rounded-2xl transition-[border-color] duration-[450ms] hover:border-white/20! motion-reduce:transition-none"
+      className={cn(
+        'group glassmorphism bg-secondary/20 relative flex h-full w-full transform-gpu flex-col overflow-hidden rounded-2xl transition-[border-color,opacity,scale] duration-[450ms] hover:border-white/20! motion-reduce:transition-none',
+        isRemovingCard && 'pointer-events-none scale-[0.97] opacity-40',
+      )}
       style={{
         backfaceVisibility: 'hidden',
         WebkitBackfaceVisibility: 'hidden',
@@ -271,14 +280,11 @@ const StoreCard: React.FC<ProductCardProps> = ({ product, wishlisted }) => {
       {wishlisted && (
         <button
           onClick={handleWishlistToggle}
-          disabled={isWishlistLoading}
-          aria-label={wishlisted ? 'Remove from wishlist' : 'Add to wishlist'}
-          className="glassmorphism absolute top-3 right-3 z-10 flex size-8 cursor-pointer items-center justify-center rounded-full bg-(--wishlist-soft) transition-transform hover:scale-110 disabled:opacity-50"
+          aria-label={isHeartFilled ? 'Remove from wishlist' : 'Add to wishlist'}
+          aria-pressed={isHeartFilled}
+          className="glassmorphism absolute top-3 right-3 z-10 flex size-8 cursor-pointer items-center justify-center rounded-full bg-(--wishlist-soft) text-white/95 transition-transform hover:scale-110"
         >
-          <HeartIcon
-            filled={wishlisted}
-            className={`size-4 ${wishlisted ? 'animate-in zoom-in-50 duration-300' : 'text-white/65'}`}
-          />
+          <WishlistHeart filled={isHeartFilled} size={16} />
         </button>
       )}
       <Link
