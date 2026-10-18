@@ -2,7 +2,8 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Mail, Pencil } from 'lucide-react'
+import { Lock, Mail, Pencil } from 'lucide-react'
+import { Spinner } from '@/components/ui/spinner'
 import {
   loadStripe,
   type Appearance,
@@ -18,7 +19,6 @@ import {
   useStripe,
   useElements,
 } from '@stripe/react-stripe-js'
-import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import {
   checkoutService,
@@ -184,7 +184,7 @@ function EmailStep({
       <h2 className="mb-4 text-xl font-bold text-white/95 md:text-xl">
         Email
       </h2>
-      <div className="bg-secondary/20 flex items-center justify-between gap-3 rounded-lg border border-white/10 px-4 py-3">
+      <div className="bg-card border-border flex min-h-14 items-center justify-between gap-3 rounded-xl border py-2 pr-2 pl-4">
         {isEditing ? (
           <Input
             type="email"
@@ -198,28 +198,27 @@ function EmailStep({
             className="border-0 bg-transparent px-0"
           />
         ) : (
-          <span className="flex items-center gap-2 text-base font-medium text-white/95">
-            <Mail className="text-primary size-4 shrink-0" />
-            {email}
+          <span className="flex min-w-0 items-center gap-2.5 text-sm font-medium text-white/95 sm:text-base">
+            <Mail className="size-4 shrink-0 text-white/45" />
+            <span className="truncate">{email}</span>
           </span>
         )}
 
-        <Button
+        <button
           type="button"
-          variant="secondary"
-          size="sm"
           onClick={isEditing ? save : startEditing}
-          className="shrink-0"
+          className="bg-secondary border-border inline-flex h-9 shrink-0 cursor-pointer items-center gap-1.5 rounded-lg border px-3 text-[13px] font-medium text-white/95 transition-colors outline-none hover:border-white/25 hover:bg-white/10 focus-visible:ring-2 focus-visible:ring-white/40"
         >
           {isEditing ? (
             'Save'
           ) : (
             <>
               <Pencil className="size-3.5" />
-              Edit email
+              <span className="max-sm:sr-only">Edit email</span>
+              <span className="sm:hidden">Edit</span>
             </>
           )}
-        </Button>
+        </button>
       </div>
       {error ? (
         <p className="text-red mt-2 text-xs font-bold">{error}</p>
@@ -511,15 +510,27 @@ function CheckoutFormInner({
         <p className="text-red text-sm font-bold">{errorMessage}</p>
       )}
 
-      <Button
+      {/* Same hover and loading as the cart's Proceed button */}
+      <button
         type="submit"
-        variant="primary"
-        size="md"
-        disabled={!stripe || submitting || switchingMethod}
-        className="w-full"
+        disabled={!stripe || switchingMethod || submitting}
+        aria-busy={submitting || undefined}
+        className="group/cta bg-primary relative flex h-13 w-full cursor-pointer items-center justify-center overflow-hidden rounded-[10px] text-[15px] font-medium text-white shadow-[0_10px_30px_-8px_var(--primary-glow-60)] transition-all duration-200 outline-none hover:-translate-y-px hover:brightness-110 focus-visible:ring-2 focus-visible:ring-white/40 active:translate-y-0 disabled:cursor-default disabled:hover:translate-y-0 disabled:hover:brightness-100"
       >
-        {submitting ? 'Processing...' : 'Pay now'}
-      </Button>
+        <span
+          aria-hidden
+          className="pointer-events-none absolute inset-y-0 -left-1/3 w-1/4 -translate-x-full skew-x-[-20deg] bg-white/25 blur-[2px] transition-transform duration-700 ease-out group-hover/cta:translate-x-[700%] motion-reduce:hidden"
+        />
+        <span className={submitting ? 'invisible inline-flex items-center gap-2' : 'inline-flex items-center gap-2'}>
+          <Lock className="size-4" />
+          Pay now
+        </span>
+        {submitting && (
+          <span className="absolute inset-0 grid place-items-center">
+            <Spinner className="size-5.5" />
+          </span>
+        )}
+      </button>
     </form>
   )
 }

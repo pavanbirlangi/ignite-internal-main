@@ -38,12 +38,12 @@ export function CheckoutSummary({ cart, charge, onCartChanged }: CheckoutSummary
   const showCharge = charge.currency.toLowerCase() !== currency.toLowerCase()
 
   return (
-    <div className="static w-full lg:sticky lg:top-40">
+    <div className="static w-full lg:sticky lg:top-28">
       <h2 className="mb-5 text-xl font-bold text-white/95 md:text-xl">
         Order Summary
       </h2>
 
-      <Card className="bg-secondary/20 overflow-hidden rounded-[12px] border-0">
+      <Card className="bg-card border-border overflow-hidden rounded-2xl border">
         <CardHeader className="px-6 py-4">
           <div className="flex flex-col gap-4">
             {cart.items.map((item) => (

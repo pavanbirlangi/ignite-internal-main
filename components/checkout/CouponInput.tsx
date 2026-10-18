@@ -58,7 +58,7 @@ export function CouponInput({ onCartChanged }: CouponInputProps) {
 
   if (appliedCode) {
     return (
-      <div className="bg-secondary/40 flex items-center justify-between rounded-md px-3 py-2.5">
+      <div className="bg-background border-border flex h-11 items-center justify-between rounded-lg border px-3">
         <span className="flex items-center gap-2 text-sm font-medium text-white/95">
           <Tag className="text-primary size-3.5" />
           {appliedCode}
@@ -85,7 +85,7 @@ export function CouponInput({ onCartChanged }: CouponInputProps) {
       <button
         type="button"
         onClick={() => setExpanded(true)}
-        className="text-primary flex items-center gap-1.5 text-sm font-bold"
+        className="flex cursor-pointer items-center gap-1.5 rounded text-sm font-medium text-white/65 transition-colors outline-none hover:text-white focus-visible:ring-2 focus-visible:ring-white/40"
       >
         <Tag className="size-3.5" />
         Have a coupon?
@@ -96,7 +96,7 @@ export function CouponInput({ onCartChanged }: CouponInputProps) {
 
   return (
     <div className="flex flex-col gap-2">
-      <div className="bg-background/40 focus-within:border-primary/60 flex items-center gap-2 rounded-md border border-white/10 px-3 py-2.5 transition-colors">
+      <div className="bg-background border-border focus-within:border-primary/70 flex h-11 items-center gap-2 rounded-lg border px-3 transition-colors hover:border-white/20">
         <Tag className="text-white/65 size-3.5 shrink-0" />
         <input
           type="text"
@@ -117,7 +117,7 @@ export function CouponInput({ onCartChanged }: CouponInputProps) {
           type="button"
           onClick={handleApply}
           disabled={submitting || !code.trim()}
-          className="text-primary shrink-0 text-sm font-bold disabled:cursor-not-allowed disabled:opacity-50"
+          className="shrink-0 cursor-pointer text-sm font-medium text-[#7DB0FF] transition-colors hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
         >
           {submitting ? <Loader2 className="size-4 animate-spin" /> : 'Apply'}
         </button>
