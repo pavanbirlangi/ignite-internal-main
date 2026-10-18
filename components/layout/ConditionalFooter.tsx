@@ -23,7 +23,7 @@ export default function ConditionalFooter({ footerData, translations }: Conditio
   // switching currency mid-checkout doesn't touch the cart/Stripe session
   // already in flight, so all currency decisions need to be made before
   // checkout is reached.
-  const hideFooterRoutes = ['cart', 'dashboard', 'checkout']
+  const hideFooterRoutes = ['cart', 'dashboard', 'checkout', 'order']
 
   // English carries no locale prefix, every other locale does -- strip it if present so the
   // first real route segment lands in the same place regardless of locale.

@@ -107,9 +107,11 @@ export default function Navbar({
     onSearchAll: navigateToStore,
   })
 
-  // The cart and checkout pages render their own navbar, so this one is hidden there.
+  // The cart, checkout and order confirmation pages render their own step navbar.
   const navHidden =
-    pathname?.includes('/cart') || pathname?.includes('/checkout')
+    pathname?.includes('/cart') ||
+    pathname?.includes('/checkout') ||
+    pathname?.includes('/order/confirmation')
 
   const openSearch = useCallback(() => {
     resetActive()

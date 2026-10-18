@@ -53,7 +53,7 @@ function TransactionItem({
 
 // Receipt-style order summary: grey labels, white values, the total in bold.
 export function TransactionDetails({
-  transactionNumber = '-',
+  transactionNumber,
   paymentMode = '-',
   subtotal = '-',
   discount,
@@ -71,7 +71,9 @@ export function TransactionDetails({
     <div className={cn(ACCOUNT_CARD_CLASS, 'p-5', className)}>
       <h2 data-display className={cn(ACCOUNT_SECTION_LABEL_CLASS, 'mb-2')}>Summary</h2>
       <div className="flex flex-col">
-        <TransactionItem label="Transaction Number" value={transactionNumber} />
+        {transactionNumber && (
+          <TransactionItem label="Transaction Number" value={transactionNumber} />
+        )}
         <TransactionItem label="Payment Method" value={paymentMode} />
         <TransactionItem label="Subtotal" value={subtotal} />
         {discount && <TransactionItem label="Discount" value={discount} />}
