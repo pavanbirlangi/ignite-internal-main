@@ -6,6 +6,7 @@ import { authService } from '@/lib/services/auth.service'
 import { useUserStore } from '@/store/useUserStore'
 import { useCartStore } from '@/store/useCartStore'
 import { useAuthModalStore } from '@/store/useAuthModalStore'
+import { OAUTH_RETURN_KEY } from '@/lib/auth/oauth-return'
 
 import GoogleIcon from '../icons/GoogleIcon'
 import FacebookIcon from '../icons/FacebookIcon'
@@ -97,25 +98,28 @@ export function SocialButtons() {
   }, [])
 
   const handleGoogleLogin = async () => {
+    const width = Math.min(500, window.outerWidth - 20)
+    const height = Math.min(600, window.outerHeight - 20)
+    const left = Math.max(0, window.screenX + (window.outerWidth - width) / 2)
+    const top = Math.max(0, window.screenY + (window.outerHeight - height) / 2)
+
+    // Opened on the tap itself: phone browsers block a popup opened after an await. It gets
+    // Google's address once the backend replies.
+    const popup = window.open('', 'google-oauth', `width=${width},height=${height},left=${left},top=${top}`)
+    try {
+      // If the popup is blocked the whole tab goes to Google; the callback comes back here.
+      sessionStorage.setItem(OAUTH_RETURN_KEY, window.location.pathname + window.location.search)
+    } catch {
+      // Storage blocked: the callback falls back to the home page.
+    }
+
     try {
       const callbackUrl = `${window.location.origin}/api/auth/google/callback`
       const { location } = await authService.googleAuthInit(callbackUrl)
-
-      const width = Math.min(500, window.outerWidth - 20)
-      const height = Math.min(600, window.outerHeight - 20)
-      const left = Math.max(0, window.screenX + (window.outerWidth - width) / 2)
-      const top = Math.max(0, window.screenY + (window.outerHeight - height) / 2)
-
-      const popup = window.open(
-        location,
-        'Google OAuth',
-        `width=${width},height=${height},left=${left},top=${top}`,
-      )
-
-      if (!popup) {
-        window.location.href = location
-      }
+      if (popup && !popup.closed) popup.location.href = location
+      else window.location.href = location
     } catch (err) {
+      popup?.close()
       console.error('Failed to start Google login:', err)
       toast.error('Could not start Google sign-in. Please try again.')
     }

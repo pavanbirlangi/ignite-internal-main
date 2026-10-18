@@ -6,6 +6,7 @@ import GoogleAnalytics from '@/components/GoogleAnalytics'
 import AttributionTracker from '@/components/AttributionTracker'
 import { cn } from '@/lib/utils'
 import MobileNav from '@/components/layout/MobileNav'
+import GoogleSignInReturn from '@/components/auth/GoogleSignInReturn'
 import { Toaster } from 'sonner'
 import QueryProvider from '@/components/providers/QueryProvider'
 import NextTopLoader from 'nextjs-toploader'
@@ -141,6 +142,7 @@ export default async function RootLayout({
           <ConditionalFooter footerData={footerData} translations={footerTranslations} />
           <MobileNav />
           <Toaster position="top-center" />
+          <GoogleSignInReturn />
         </QueryProvider>
         {process.env.NODE_ENV === 'production' &&
           process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID && (
