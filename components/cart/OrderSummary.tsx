@@ -59,8 +59,8 @@ export function OrderSummary({
           </div>
         )}
 
-        {/* The service fee and tax are only final once a payment method is picked at checkout, so
-            the total is the products total and flagged as not final. */}
+        {/* The service fee and tax are added at checkout, so the total here is the products total
+            and flagged as not final. */}
         <div className="border-border mt-2 flex items-start justify-between gap-3 border-t pt-3.5">
           <span className="text-lg leading-7 font-bold text-white/95">Your cart total</span>
           <div className="flex flex-col items-end gap-1">
@@ -89,8 +89,7 @@ export function OrderSummary({
                   tipOpen ? 'translate-y-0 opacity-100' : 'translate-y-1 opacity-0',
                 )}
               >
-                A small service fee and any taxes are added at checkout, depending on the payment method you
-                choose.
+                A small service fee and any taxes are added at checkout.
               </span>
             </span>
           </div>

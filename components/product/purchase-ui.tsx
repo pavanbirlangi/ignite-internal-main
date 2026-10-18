@@ -41,7 +41,7 @@ export function ProductPrice({
   )
 }
 
-// Same note and wording as the cart summary: the service fee depends on the payment method.
+// Same note and wording as the cart summary: the service fee and taxes are added at checkout.
 export function PriceNotFinal({ label, tip }: { label: string; tip: string }) {
   const [open, setOpen] = useState(false)
   return (

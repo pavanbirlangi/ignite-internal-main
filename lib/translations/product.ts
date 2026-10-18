@@ -51,8 +51,7 @@ const defaultLabels: ProductPageTranslations = {
   reviewCount: '({count} reviews)',
   activationGuide: 'Activation guide',
   priceNotFinal: 'Price not final',
-  priceNotFinalTip:
-    'A small service fee and any taxes are added at checkout, depending on the payment method you choose.',
+  priceNotFinalTip: 'A small service fee and any taxes are added at checkout.',
   buyNow: 'Buy now',
   addToCart: 'Add to cart',
   outOfStock: 'Out of stock',
