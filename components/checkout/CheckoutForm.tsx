@@ -195,7 +195,7 @@ function EmailStep({
             aria-label="Email address"
             autoComplete="email"
             autoFocus
-            className="border-0 bg-transparent px-0"
+            className="h-10 min-w-0 border-0 bg-transparent px-0 text-sm! font-medium text-white/95 shadow-none placeholder:text-white/45 focus-visible:ring-0 sm:text-base! md:text-base!"
           />
         ) : (
           <span className="flex min-w-0 items-center gap-2.5 text-sm font-medium text-white/95 sm:text-base">
