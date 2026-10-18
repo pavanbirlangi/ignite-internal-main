@@ -35,9 +35,9 @@ function mapSystemRequirement(
   item: CmsSystemRequirement,
 ): CmsMappedSystemRequirement {
   const minimum =
-    item.requirements.find((r) => r.type === 'minimum') ?? null
+    item.requirements?.find((r) => r.type === 'minimum') ?? null
   const recommended =
-    item.requirements.find((r) => r.type === 'recommended') ?? null
+    item.requirements?.find((r) => r.type === 'recommended') ?? null
 
   return {
     platform: item.platform,
@@ -114,7 +114,7 @@ function mapDropdownGroup(
     .map((groupOption) => groupOption.group_options_id)
     .filter(
       (option) =>
-        option.status === 'published' &&
+        option?.status === 'published' &&
         typeof option.label === 'string' &&
         option.label.trim() &&
         typeof option.slug === 'string' &&
@@ -161,15 +161,20 @@ const _fetchProductCmsData = async (
     const product = response.data.data?.[0]
     if (!product) return null
 
+    // Directus keeps a link row after its item is deleted, and returns that
+    // link as null. Skip those, or one dead link drops all of the product's
+    // CMS data (gallery, system requirements and dropdowns).
     const gallery = (product.gallery ?? [])
+      .filter((g) => g.product_gallery_id)
       .map((g) => mapGalleryItem(g.product_gallery_id))
       .filter((item): item is ProductGalleryItem => item !== null)
 
     const systemRequirements = (product.system_requirements ?? [])
-      .filter((s) => s.system_requirements_id.status === 'published')
+      .filter((s) => s.system_requirements_id?.status === 'published')
       .map((s) => mapSystemRequirement(s.system_requirements_id))
 
     const dropdownOptions = (product.dropdown_options ?? [])
+      .filter((item) => item.dropdown_options_id)
       .map((item) => mapDropdownGroup(item.dropdown_options_id, slug))
       .filter((item): item is CmsMappedDropdownGroup => item !== null)
 
