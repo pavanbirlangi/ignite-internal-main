@@ -42,24 +42,34 @@ export default function ProductBuyBar({ product, coverImage, labels }: ProductBu
         visible ? 'translate-y-0' : 'pointer-events-none translate-y-[calc(100%+4.5rem)] md:translate-y-full',
       )}
     >
-      <div className="max-w-container mx-auto flex h-19 w-full items-center gap-4 px-4 xl:px-0">
-        <div className="relative hidden aspect-[3/4] w-10 shrink-0 overflow-hidden rounded-md md:block">
+      {/* Cover, name and price on every screen; on phones the name may take two lines and the
+          price sits under it. */}
+      <div className="max-w-container mx-auto flex h-19 w-full items-center gap-3 px-4 md:gap-4 xl:px-0">
+        <div className="relative aspect-[3/4] w-10 shrink-0 overflow-hidden rounded-md ring-1 ring-white/10">
           <Image src={getProxyImageUrl(coverImage)} alt="" fill sizes="40px" className="object-cover object-top" />
         </div>
-        <div className="hidden min-w-0 flex-1 md:block">
-          <p className="truncate text-base font-medium text-white/95">{product.title}</p>
-          {facts && <p className="truncate text-xs text-white/65">{facts}</p>}
+        <div className="min-w-0 flex-1">
+          <p className="line-clamp-2 text-sm leading-[18px] font-medium text-white/95 md:line-clamp-1 md:text-base md:leading-6">{product.title}</p>
+          {price ? (
+            <p className="mt-0.5 flex items-baseline gap-1.5 overflow-hidden whitespace-nowrap md:hidden">
+              <span className="text-base leading-5 font-bold text-white/95">{price}</span>
+              {compareAtPrice && <span className="text-xs text-white/45 line-through">{compareAtPrice}</span>}
+            </p>
+          ) : null}
+          {facts && <p className="hidden truncate text-xs text-white/65 md:block">{facts}</p>}
         </div>
-        <div className="flex min-w-0 flex-1 flex-col md:flex-none md:flex-row md:items-baseline md:gap-2">
-          {price && <span className="text-lg leading-6 font-bold whitespace-nowrap text-white/95 md:text-xl">{price}</span>}
-          {compareAtPrice && <span className="text-xs whitespace-nowrap text-white/45 line-through md:text-sm">{compareAtPrice}</span>}
-        </div>
+        {price && (
+          <div className="hidden shrink-0 items-baseline gap-2 md:flex">
+            <span className="text-xl leading-6 font-bold whitespace-nowrap text-white/95">{price}</span>
+            {compareAtPrice && <span className="text-sm whitespace-nowrap text-white/45 line-through">{compareAtPrice}</span>}
+          </div>
+        )}
         <BuyNowButton
           label={buyLabel}
           disabled={!variant || !canBuy}
           busy={isOpening}
           onClick={buyNow}
-          className="h-11 w-auto shrink-0 px-5 text-sm md:h-11.5 md:w-50 md:text-[15px]"
+          className="h-11 w-auto shrink-0 px-4.5 text-sm md:h-11.5 md:w-50 md:px-0 md:text-[15px]"
         />
       </div>
     </div>
