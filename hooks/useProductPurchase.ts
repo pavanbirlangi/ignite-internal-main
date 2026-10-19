@@ -4,9 +4,19 @@ import { useMemo, useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { useCartStore } from '@/store/useCartStore'
 import { formatPrice } from '@/lib/currency'
+import { prepareCartFlight } from '@/lib/fly-to-cart'
 import type { Product, ProductVariant } from '@/types/product'
 
 export type AddState = 'idle' | 'loading' | 'done'
+
+// The hero cover flies to the cart after an add, like the product cards; when it has scrolled
+// out of view the cart just hops.
+const visibleCover = () => {
+  const image = document.querySelector<HTMLImageElement>('[data-product-cover] img')
+  if (!image) return null
+  const rect = image.getBoundingClientRect()
+  return rect.bottom > 0 && rect.top < window.innerHeight ? image : null
+}
 
 // Buy now / Add to cart for the product page. The buy panel and the sliding buy bar both use
 // it, so they always agree on price, stock and what happens on click.
@@ -38,13 +48,16 @@ export function useProductPurchase(product: Product) {
   const addToCart = async () => {
     if (!variant || !canBuy || addState !== 'idle') return
     setAddState('loading')
+    const flight = prepareCartFlight()
     const before = useCartStore.getState().itemsAdded
     await Promise.all([addItem(variant.id, 1), new Promise((resolve) => setTimeout(resolve, 450))])
     if (useCartStore.getState().itemsAdded === before) {
+      flight.cancel()
       setAddState('idle')
       return
     }
     setAddState('done')
+    flight.launch(visibleCover())
     window.setTimeout(() => setAddState('idle'), 1600)
   }
 

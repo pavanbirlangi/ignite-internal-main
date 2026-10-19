@@ -94,7 +94,10 @@ export default function ProductHero({
         className={`${PRODUCT_CONTAINER_CLASS} relative grid gap-5 pt-50 lg:min-h-170 lg:grid-cols-[minmax(0,1fr)_380px] lg:items-end lg:gap-14 lg:pt-36 lg:pb-14`}
       >
         <div className="grid grid-cols-[104px_minmax(0,1fr)] items-center gap-x-4 gap-y-3.5 [grid-template-areas:'top_top'_'cover_title'_'meta_meta'] lg:grid-cols-[150px_minmax(0,1fr)] lg:grid-rows-[1fr_auto_auto] lg:items-end lg:gap-x-7 lg:[grid-template-areas:'cover_top'_'cover_title'_'cover_meta']">
-          <div className="relative aspect-[3/4] overflow-hidden rounded-xl shadow-[0_30px_60px_-20px_rgb(0_0_0/0.8)] ring-1 ring-white/10 [grid-area:cover]">
+          <div
+            data-product-cover
+            className="relative aspect-[3/4] overflow-hidden rounded-xl shadow-[0_30px_60px_-20px_rgb(0_0_0/0.8)] ring-1 ring-white/10 [grid-area:cover]"
+          >
             <Image
               src={getProxyImageUrl(coverImage)}
               alt={coverAlt}
