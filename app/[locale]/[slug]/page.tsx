@@ -11,10 +11,7 @@ import WarningBox from '@/components/product/hero-section/WarningBox'
 import RatingReviews from '@/components/product/rating-reviews/rating-reviews'
 import SimilarGames from '@/components/product/SimilarGames'
 import SystemRequirements from '@/components/product/SystemRequirements'
-import FaqSection from '@/components/faq/FaqSection'
 import { ProductService } from '@/lib/services/product.service'
-import { FaqService, type FaqItem } from '@/lib/services/faq.service'
-import { translateFaqItems } from '@/lib/translations/faq'
 import {
   CmsProductService,
   type CmsProductResult,
@@ -237,7 +234,6 @@ export default async function ProductPage({ params }: PageProps) {
     recommendationsResult,
     cmsResult,
     reviewsResult,
-    faqResult,
   ] = await Promise.allSettled([
     ProductService.getProductRecommendations(slug, {
       intent: 'RELATED',
@@ -245,7 +241,6 @@ export default async function ProductPage({ params }: PageProps) {
     }),
     CmsProductService.getProductCmsData(slug),
     reviewService.getReviews({ productId: product.id, perPage: 1 }),
-    FaqService.getForProduct(slug),
   ])
 
   const recommendedProducts: ProductListItem[] =
@@ -255,9 +250,6 @@ export default async function ProductPage({ params }: PageProps) {
 
   const cmsData: CmsProductResult | null =
     cmsResult.status === 'fulfilled' ? cmsResult.value : null
-
-  let faqItems: FaqItem[] =
-    faqResult.status === 'fulfilled' ? faqResult.value : []
 
   let totalReviews = 0
   if (reviewsResult.status === 'fulfilled') {
@@ -278,10 +270,6 @@ export default async function ProductPage({ params }: PageProps) {
       const result = await translateProductPageData(product, locale)
       labels = result.labels
       productData = result.productData
-
-      if (faqItems.length > 0) {
-        faqItems = await translateFaqItems(faqItems, locale)
-      }
     } catch (error) {
       console.error('[ProductPage] Translation failed, using defaults:', error)
     }
@@ -405,11 +393,6 @@ export default async function ProductPage({ params }: PageProps) {
           products={recommendedProducts.filter((item) => item.handle !== slug)}
           title={labels.similarToThis}
         />
-        {faqItems.length > 0 && (
-          <div className={PRODUCT_CONTAINER_CLASS}>
-            <FaqSection headline title="Frequently Asked Questions" items={faqItems} />
-          </div>
-        )}
       </div>
 
       <ProductBuyBar product={product} coverImage={featuredImage} labels={buyLabels} />
