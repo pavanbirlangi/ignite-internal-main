@@ -81,6 +81,9 @@ const getDiscountPercentage = (
   return undefined
 }
 
+// A short list under the cart items, like the cart page.
+const MAX_RECOMMENDATIONS = 5
+
 export function CartDrawer() {
   const [open, setOpen] = React.useState(false)
 
@@ -197,7 +200,7 @@ export function CartDrawer() {
     const missing = justAdded.filter(
       (product) => !items.some((item) => item.id === product.id),
     )
-    return [...missing, ...items]
+    return [...missing, ...items].slice(0, MAX_RECOMMENDATIONS)
   }, [recommendations, subtotalCurrencyCode, cart, justAdded])
 
   const handleRemove = (id: string) => {
