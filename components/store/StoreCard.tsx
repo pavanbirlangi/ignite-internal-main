@@ -169,6 +169,8 @@ const StoreCard: React.FC<ProductCardProps> = ({ product, wishlisted }) => {
   const gameLogoName = product.gameLogo?.name || product.title
   const variantId = firstVariant?.id
   const isInStock = firstVariant?.availableForSale ?? true
+  // Unpriced products can't be bought either; they say so instead of "Out of stock".
+  const hasPrice = Number(product.priceRange?.minVariantPrice?.amount ?? (typeof product.price === 'object' ? product.price?.amount : 0)) > 0
   const router = useRouter()
 
   const handleAddToCart = async () => {
@@ -418,7 +420,7 @@ const StoreCard: React.FC<ProductCardProps> = ({ product, wishlisted }) => {
       <div className="mt-1 rounded-b-2xl px-2 pt-0 pb-3 transition-colors">
         {!isInStock ? (
           // Sold out: one status in place of Add and Buy (the cover is greyed too).
-          <SoldOutStatus label="Out of stock" size="sm" />
+          <SoldOutStatus label={hasPrice ? 'Out of stock' : 'Not available'} size="sm" />
         ) : (
           <div className="border-border group-hover:border-border mt-auto grid grid-cols-2 gap-2">
             {/* Add Button */}

@@ -172,6 +172,33 @@ async function fetchDigitalAvailability(
   }
 }
 
+// Stock for many products in one call (`GET /store/digital-availability`, up to 100 ids per
+// request), keyed by variant id. Products the call can't answer are left out, so callers keep
+// their default.
+async function fetchDigitalAvailabilityBatch(
+  productIds: string[],
+): Promise<Map<string, DigitalAvailability>> {
+  const map = new Map<string, DigitalAvailability>()
+  const ids = [...new Set(productIds.filter(Boolean))]
+  const chunks: string[][] = []
+  for (let i = 0; i < ids.length; i += 100) chunks.push(ids.slice(i, i + 100))
+  await Promise.all(
+    chunks.map(async (chunk) => {
+      try {
+        const { data } = await medusaClient.get('/store/digital-availability', {
+          params: { product_id: chunk.join(',') },
+        })
+        for (const product of data.products ?? []) {
+          for (const v of product.variants ?? []) map.set(v.variant_id, v)
+        }
+      } catch {
+        // Unknown stock: the cards and cart keep treating the product as buyable.
+      }
+    }),
+  )
+  return map
+}
+
 async function fetchRatingSummary(
   productId: string,
 ): Promise<{ average_rating: number; count: number } | null> {
@@ -484,29 +511,25 @@ const getClientRegionId = async (): Promise<string | undefined> => {
 const PRODUCT_FIELDS =
   '*variants.calculated_price,+metadata,+images,+options.values,+variants.options.value,+variants.allow_backorder'
 
-// List cards show "Out of Stock" when a variant can't be bought. A variant with "Allow backorders"
-// on always can (the order waits for a manual key award); for the others, only the backend's
-// digital-availability route knows whether an unused key is left, so it's asked once per such
-// product. Sets `purchasable` on each raw variant for mapProductListItem.
+// List cards show "Out of stock" when a variant can't be bought. The backend's `purchasable` is
+// the one answer (an unused key, "Allow backorders", and a USD price all count), so one batch
+// call asks for every listed product. Sets `purchasable` on each raw variant for
+// mapProductListItem; a product the call can't answer keeps the default (buyable).
 type StockCheckProduct = {
   id: string
   variants?: { id: string; allow_backorder?: boolean; purchasable?: boolean }[]
 }
 
 async function attachListStock(rawProducts: StockCheckProduct[]): Promise<void> {
-  const unsure = rawProducts.filter((p) =>
-    (p?.variants ?? []).some((v) => v?.allow_backorder !== true),
-  )
-  const availability = await Promise.all(
-    unsure.map((p) => fetchDigitalAvailability(p.id)),
-  )
-  unsure.forEach((product, i) => {
+  const listed = rawProducts.filter((p) => p?.id && (p.variants ?? []).length > 0)
+  if (listed.length === 0) return
+  const availability = await fetchDigitalAvailabilityBatch(listed.map((p) => p.id))
+  for (const product of listed) {
     for (const variant of product.variants ?? []) {
-      if (variant?.allow_backorder === true) continue
-      const purchasable = availability[i].get(variant.id)?.purchasable
+      const purchasable = availability.get(variant.id)?.purchasable
       if (typeof purchasable === 'boolean') variant.purchasable = purchasable
     }
-  })
+  }
 }
 
 // Products are priced in USD only; prices in the visitor's display currency are the USD amounts
