@@ -19,6 +19,7 @@ import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
 
 import { useCartStore } from '@/store/useCartStore'
+import { isInStock, useCartStock } from '@/hooks/useCartStock'
 import { getDiscountPercent } from '@/lib/utils/discount'
 import { setCartDrawerOpen } from '@/components/cart/AddedToCartToast'
 import { isCartFlightPending } from '@/lib/fly-to-cart'
@@ -105,6 +106,8 @@ export function CartDrawer() {
     addItem,
   } = useCartStore()
 
+  const { stock, soldOutCount } = useCartStock(cart?.items)
+
   React.useEffect(() => {
     initCart()
   }, [initCart])
@@ -146,10 +149,10 @@ export function CartDrawer() {
         image:
           item.thumbnail ||
           'https://placehold.co/64x80/1a1a1a/555555?text=No+Image',
-        availableForSale: true,
+        availableForSale: isInStock(stock, item.variantId),
       }
     })
-  }, [cart])
+  }, [cart, stock])
 
   // The footer's "Cart Total" is the products only, like the cart page: the
   // service fee and tax are shown and charged at checkout, not in the cart.
@@ -391,6 +394,7 @@ export function CartDrawer() {
             total={itemsSubtotal}
             count={cartCount}
             currencyCode={subtotalCurrencyCode}
+            blockedReason={soldOutCount > 0 ? 'Remove sold-out items to continue.' : undefined}
           />
         )}
       </SheetContent>

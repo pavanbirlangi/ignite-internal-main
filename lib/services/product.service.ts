@@ -787,6 +787,19 @@ export const ProductService = {
    * (confirmed live) and needs the same enrichment `getProducts` already
    * does for the store grid. Runs client-side, no cache wrapper involved.
    */
+  /**
+   * Whether each variant of these products can be bought right now, keyed by variant id
+   * (`GET /store/digital-availability`). Used by the cart to mark sold-out lines.
+   */
+  getVariantStock: async (productIds: string[]): Promise<Record<string, boolean>> => {
+    const availability = await fetchDigitalAvailabilityBatch(productIds)
+    return Object.fromEntries(
+      [...availability]
+        .filter(([, v]) => typeof v.purchasable === 'boolean')
+        .map(([variantId, v]) => [variantId, v.purchasable as boolean]),
+    )
+  },
+
   getProductsByIds: async (ids: string[]): Promise<ProductListItem[]> => {
     const regionId = await getClientRegionId()
     return _fetchProductsByIds(ids, regionId, await getDisplayCurrency())

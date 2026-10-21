@@ -11,6 +11,7 @@ import { ensureCheckoutAllowed } from '@/lib/utils/checkout-guard'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { getDiscountPercent } from '@/lib/utils/discount'
+import { isInStock, useCartStock } from '@/hooks/useCartStock'
 
 const RECOMMENDATION_PLACEHOLDER_IMAGE =
   'https://placehold.co/205x262/png?text=No+Image'
@@ -79,6 +80,7 @@ export function CartPageContent() {
     addItem,
   } = useCartStore()
   const router = useRouter()
+  const { stock, soldOutCount } = useCartStock(cart?.items)
 
   React.useEffect(() => {
     initCart()
@@ -108,10 +110,10 @@ export function CartPageContent() {
           'https://placehold.co/205x262/1a1a1a/555555?text=No+Image',
         badges: item.tags,
         originalPrice,
-        availableForSale: true,
+        availableForSale: isInStock(stock, item.variantId),
       }
     })
-  }, [cart])
+  }, [cart, stock])
 
   // No promotion module exists yet (confirmed live) -- "Your cart total"
   // deliberately shows the plain products subtotal, matching Base Price.
@@ -294,6 +296,7 @@ export function CartPageContent() {
                 currency={summaryCurrency}
                 onCheckout={handleCheckout}
                 onNavigate={openCheckout}
+                blockedReason={soldOutCount > 0 ? 'Remove sold-out items to continue.' : undefined}
               />
             </div>
           )}

@@ -12,9 +12,11 @@ interface CartFooterProps {
   total: number
   count: number
   currencyCode?: string
+  /** Shown above the buttons, and Checkout is disabled (e.g. a sold-out item is in the cart). */
+  blockedReason?: string
 }
 
-export const CartFooter = ({ total, count, currencyCode }: CartFooterProps) => {
+export const CartFooter = ({ total, count, currencyCode, blockedReason }: CartFooterProps) => {
   const router = useRouter()
   const cartCmsData = useCartStore((state) => state.cartCmsData)
   // Spins until the checkout page has loaded.
@@ -42,6 +44,12 @@ export const CartFooter = ({ total, count, currencyCode }: CartFooterProps) => {
         </span>
       </div>
 
+      {blockedReason && (
+        <p role="alert" className="-my-1 text-[13px] leading-[18px] font-medium text-[#FF7088]">
+          {blockedReason}
+        </p>
+      )}
+
       <div className="grid w-full grid-cols-2 gap-3">
         <SheetClose asChild>
           <Button
@@ -58,7 +66,7 @@ export const CartFooter = ({ total, count, currencyCode }: CartFooterProps) => {
         <Button
           variant="primary"
           onClick={handlePayNow}
-          disabled={isCartEmpty}
+          disabled={isCartEmpty || Boolean(blockedReason)}
           loading={isOpeningCheckout}
           className="group/cta relative h-11 overflow-hidden rounded-lg text-sm md:text-sm"
         >

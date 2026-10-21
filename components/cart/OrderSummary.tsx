@@ -15,6 +15,8 @@ interface OrderSummaryProps {
   /** Returns false when checkout can't open (e.g. the sign-in modal opened instead). */
   onCheckout: () => boolean | void
   onNavigate: () => void
+  /** Shown above the button, which is then disabled (e.g. a sold-out item is in the cart). */
+  blockedReason?: string
 }
 
 const LEGAL_LINK_CLASS =
@@ -28,6 +30,7 @@ export function OrderSummary({
   currency,
   onCheckout,
   onNavigate,
+  blockedReason,
 }: OrderSummaryProps) {
   const cartCmsData = useCartStore((state) => state.cartCmsData)
   const [isOpening, startOpening] = useTransition()
@@ -95,12 +98,17 @@ export function OrderSummary({
           </div>
         </div>
 
+        {blockedReason && (
+          <p role="alert" className="mt-5 -mb-2 text-[13px] leading-[18px] font-medium text-[#FF7088]">
+            {blockedReason}
+          </p>
+        )}
         <button
           type="button"
           onClick={handleCheckout}
-          disabled={isOpening}
+          disabled={isOpening || Boolean(blockedReason)}
           aria-busy={isOpening || undefined}
-          className="group/cta bg-primary relative mt-5 flex h-13 w-full cursor-pointer items-center justify-center overflow-hidden rounded-[10px] text-[15px] font-medium text-white shadow-[0_10px_30px_-8px_var(--primary-glow-60)] transition-all duration-200 outline-none hover:-translate-y-px hover:brightness-110 focus-visible:ring-2 focus-visible:ring-white/40 active:translate-y-0 disabled:hover:translate-y-0"
+          className="group/cta bg-primary relative mt-5 flex h-13 w-full cursor-pointer items-center justify-center overflow-hidden rounded-[10px] text-[15px] font-medium text-white shadow-[0_10px_30px_-8px_var(--primary-glow-60)] transition-all duration-200 outline-none hover:-translate-y-px hover:brightness-110 focus-visible:ring-2 focus-visible:ring-white/40 active:translate-y-0 disabled:hover:translate-y-0 disabled:cursor-default disabled:opacity-50 disabled:shadow-none disabled:hover:brightness-100"
         >
           <span
             aria-hidden
