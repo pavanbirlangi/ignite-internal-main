@@ -86,7 +86,7 @@ export default function ProductHero({
         </div>
         <div
           aria-hidden
-          className="absolute inset-0 bg-[linear-gradient(rgb(12_12_12/0.5),transparent_30%,rgb(12_12_12/0.6)_70%,var(--background))] lg:bg-[linear-gradient(90deg,rgb(12_12_12/0.94)_0%,rgb(12_12_12/0.72)_38%,rgb(12_12_12/0.2)_70%,rgb(12_12_12/0.35)_100%),linear-gradient(rgb(12_12_12/0.5),transparent_25%,transparent_55%,var(--background))]"
+          className="absolute inset-0 bg-[linear-gradient(rgb(12_12_12/0.35),transparent_30%,rgb(12_12_12/0.45)_72%,var(--background))] lg:bg-[linear-gradient(90deg,rgb(12_12_12/0.8)_0%,rgb(12_12_12/0.5)_35%,rgb(12_12_12/0.1)_65%,rgb(12_12_12/0.15)_100%),linear-gradient(rgb(12_12_12/0.35),transparent_20%,transparent_60%,var(--background))]"
         />
       </div>
 
@@ -150,11 +150,11 @@ export default function ProductHero({
             )}
           </div>
 
-          <h1 className="text-2xl leading-[30px] font-bold tracking-[-0.3px] text-white/95 [grid-area:title] lg:text-[32px] lg:leading-[38px] lg:text-balance">
+          <h1 className="text-2xl leading-[30px] font-bold tracking-[-0.3px] text-white/95 [text-shadow:0_2px_18px_rgb(0_0_0/0.55)] [grid-area:title] lg:text-[32px] lg:leading-[38px] lg:text-balance">
             {product.title}
           </h1>
 
-          <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-white/95 [grid-area:meta]">
+          <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-white/95 [text-shadow:0_1px_10px_rgb(0_0_0/0.6)] [grid-area:meta]">
             {isNew(platform) && (
               <span className="inline-flex items-center gap-2">
                 {guide?.icon && (
