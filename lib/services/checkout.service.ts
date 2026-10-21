@@ -35,6 +35,16 @@ export class ServiceFeeOutOfDateError extends Error {
   }
 }
 
+// An item sold out between the cart and payment: `complete` answers 409 `out_of_stock` with the
+// items (apps/backend/src/api/middlewares.ts stockGuardMiddleware) before capturing the payment.
+// The message names them; the customer has to remove them from the cart.
+export class CheckoutOutOfStockError extends Error {
+  constructor(message = 'An item in your cart just sold out. Remove it from your cart to continue.') {
+    super(message)
+    this.name = 'CheckoutOutOfStockError'
+  }
+}
+
 // A checkout payment method and what it charges (`GET /store/payment-methods`). The method decides
 // the charge currency -- the customer never picks one -- and `chargeAmount` is the exact amount
 // in it, shown as "You will pay ..." when it differs from the display currency.
@@ -219,6 +229,9 @@ export const checkoutService = {
       if (error?.response?.status === 409) {
         if (error.response.data?.code === 'service_fee_out_of_date') {
           throw new ServiceFeeOutOfDateError(error.response.data?.message)
+        }
+        if (error.response.data?.code === 'out_of_stock') {
+          throw new CheckoutOutOfStockError(error.response.data?.message)
         }
         throw new CheckoutRiskBlockedError(
           error.response.data?.message,

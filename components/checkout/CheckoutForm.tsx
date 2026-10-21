@@ -22,6 +22,7 @@ import {
 import { Input } from '@/components/ui/input'
 import {
   checkoutService,
+  CheckoutOutOfStockError,
   CheckoutRiskBlockedError,
   ServiceFeeOutOfDateError,
 } from '@/lib/services/checkout.service'
@@ -310,6 +311,9 @@ function CheckoutFormInner({
         console.error('Failed to re-sync service fee after 409', syncError)
       }
       onServiceFeeStale()
+    } else if (err instanceof CheckoutOutOfStockError) {
+      // "Sold out: <titles>. Remove it from the cart to continue."
+      setErrorMessage(err.message)
     } else if (err instanceof CheckoutRiskBlockedError) {
       setErrorMessage(
         err.message ||

@@ -61,6 +61,15 @@ export function extractApiErrorMessage(
   return fallbackMessage
 }
 
+// The backend refuses a product that can't be bought (no key left and no backorders, or no
+// price) with `code: "out_of_stock"`: 400 when adding it to a cart, 409 when completing one.
+export function isOutOfStockError(error: unknown): boolean {
+  return (
+    axios.isAxiosError(error) &&
+    (error.response?.data as { code?: unknown } | undefined)?.code === 'out_of_stock'
+  )
+}
+
 export function isCartNotFoundError(error: unknown): boolean {
   if (!axios.isAxiosError(error)) {
     return false

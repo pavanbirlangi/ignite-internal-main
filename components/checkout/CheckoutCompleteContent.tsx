@@ -9,7 +9,7 @@ import { CartNavbar } from '@/components/cart/CartNavbar'
 import { Spinner } from '@/components/ui/spinner'
 import { ACCOUNT_PRIMARY_BUTTON_CLASS, ACCOUNT_SECONDARY_BUTTON_CLASS } from '@/components/library/account-ui'
 import { cn } from '@/lib/utils'
-import { checkoutService } from '@/lib/services/checkout.service'
+import { CheckoutOutOfStockError, checkoutService } from '@/lib/services/checkout.service'
 import { useCartStore } from '@/store/useCartStore'
 import { extractApiErrorMessage } from '@/lib/utils/api-error'
 
@@ -104,10 +104,12 @@ export function CheckoutCompleteContent() {
         if (!cancelled) {
           setStatus('error')
           setErrorMessage(
-            extractApiErrorMessage(
-              error,
-              "We couldn't finish processing this order.",
-            ),
+            error instanceof CheckoutOutOfStockError
+              ? error.message
+              : extractApiErrorMessage(
+                  error,
+                  "We couldn't finish processing this order.",
+                ),
           )
         }
       }

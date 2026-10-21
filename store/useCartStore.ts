@@ -14,6 +14,7 @@ import {
   extractApiErrorMessage,
   isCartNotFoundError,
   isCartCompletedError,
+  isOutOfStockError,
 } from '@/lib/utils/api-error'
 import { getStoredAttribution } from '@/lib/utils/attribution'
 import { DEFAULT_CURRENCY } from '@/lib/utils/display-currency'
@@ -345,6 +346,13 @@ export const useCartStore = create<CartState>()((set, get) => ({
         'Failed to add to cart',
       )
       console.error('Error adding to cart', error)
+
+      // The backend's own message is worded for a cart that already holds the item.
+      if (isOutOfStockError(error)) {
+        toast.error('Sorry, this item just sold out.')
+        set({ error: 'Sorry, this item just sold out.', isLoading: false })
+        return
+      }
 
       if (isCartNotFoundError(error) || isCartCompletedError(error)) {
         clearCartIdCookie()
