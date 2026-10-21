@@ -331,6 +331,9 @@ export default async function ProductPage({ params }: PageProps) {
             locale={locale}
             labels={{
               ...buyLabels,
+              soldOutHint: labels.soldOutHint,
+              addToWishlist: labels.addToWishlist,
+              inWishlist: labels.inWishlist,
               priceNotFinal: labels.priceNotFinal,
               priceNotFinalTip: labels.priceNotFinalTip,
               addToCart: labels.addToCart,

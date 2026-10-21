@@ -12,6 +12,7 @@ import { useProductPurchase } from '@/hooks/useProductPurchase'
 import { localizedHref, cn } from '@/lib/utils'
 import type { CmsMappedDropdownGroup } from '@/lib/services/cms-product.service'
 import { AddToCartButton, BuyNowButton, PriceNotFinal, ProductPrice } from '@/components/product/purchase-ui'
+import { SoldOutStatus } from '@/components/shared/SoldOutStatus'
 
 // The sliding buy bar watches this button to know when the panel has scrolled out of view.
 export const PRODUCT_BUY_BUTTON_ID = 'product-buy-now'
@@ -27,6 +28,9 @@ interface ProductDetailsProps {
     addToCart: string
     outOfStock: string
     notAvailable: string
+    soldOutHint: string
+    addToWishlist: string
+    inWishlist: string
   }
 }
 
@@ -164,24 +168,33 @@ export default function ProductDetails({ product, cmsDropdownOptions = [], local
         </div>
       )}
 
-      <BuyNowButton
-        id={PRODUCT_BUY_BUTTON_ID}
-        label={buyLabel}
-        disabled={!variant || !canBuy}
-        busy={isOpening}
-        onClick={buyNow}
-      />
+      {canBuy && variant ? (
+        <BuyNowButton id={PRODUCT_BUY_BUTTON_ID} label={buyLabel} disabled={false} busy={isOpening} onClick={buyNow} />
+      ) : (
+        // Keeps the id: the sliding buy bar watches it.
+        <div className="flex flex-col gap-2.5">
+          <SoldOutStatus id={PRODUCT_BUY_BUTTON_ID} label={buyLabel} />
+          {isPriced && variant && <p className="text-[13px] leading-[18px] text-white/65">{labels.soldOutHint}</p>}
+        </div>
+      )}
       <div className="flex gap-2.5">
-        <AddToCartButton label={labels.addToCart} disabled={!variant || !canBuy} state={addState} onClick={addToCart} />
+        {canBuy && variant && (
+          <AddToCartButton label={labels.addToCart} disabled={false} state={addState} onClick={addToCart} />
+        )}
+        {/* Can't be bought: the wishlist takes the whole row, with its name on it. */}
         <button
           type="button"
           onClick={toggleWishlist}
           aria-label={isInWishlist ? 'Remove from wishlist' : 'Add to wishlist'}
           aria-pressed={isInWishlist}
           aria-busy={isWishlistBusy || undefined}
-          className="inline-flex size-12 shrink-0 cursor-pointer items-center justify-center rounded-[10px] border border-white/10 bg-white/6 text-white/95 transition-all duration-200 outline-none hover:-translate-y-px hover:border-white/20 hover:bg-white/10 focus-visible:ring-2 focus-visible:ring-white/40"
+          className={cn(
+            'inline-flex shrink-0 cursor-pointer items-center justify-center rounded-[10px] border border-white/10 bg-white/6 text-white/95 transition-all duration-200 outline-none hover:-translate-y-px hover:border-white/20 hover:bg-white/10 focus-visible:ring-2 focus-visible:ring-white/40',
+            canBuy && variant ? 'size-12' : 'h-12 flex-1 gap-2 text-sm font-medium',
+          )}
         >
           <WishlistHeart filled={isInWishlist} />
+          {!(canBuy && variant) && (isInWishlist ? labels.inWishlist : labels.addToWishlist)}
         </button>
       </div>
     </div>

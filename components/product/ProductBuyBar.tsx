@@ -6,6 +6,7 @@ import type { Product } from '@/types/product'
 import { useProductPurchase } from '@/hooks/useProductPurchase'
 import { PRODUCT_BUY_BUTTON_ID } from '@/components/product/hero-section/ProductDetails'
 import { BuyNowButton } from '@/components/product/purchase-ui'
+import { SoldOutStatus } from '@/components/shared/SoldOutStatus'
 import { cn, getProxyImageUrl } from '@/lib/utils'
 
 interface ProductBuyBarProps {
@@ -45,7 +46,12 @@ export default function ProductBuyBar({ product, coverImage, labels }: ProductBu
       {/* Cover, name and price on every screen; on phones the name may take two lines and the
           price sits under it. */}
       <div className="max-w-container mx-auto flex h-19 w-full items-center gap-3 px-4 md:gap-4 xl:px-0">
-        <div className="relative aspect-[3/4] w-10 shrink-0 overflow-hidden rounded-md ring-1 ring-white/10">
+        <div
+          className={cn(
+            'relative aspect-[3/4] w-10 shrink-0 overflow-hidden rounded-md ring-1 ring-white/10',
+            !canBuy && 'opacity-55 grayscale-[0.6]',
+          )}
+        >
           <Image src={getProxyImageUrl(coverImage)} alt="" fill sizes="40px" className="object-cover object-top" />
         </div>
         <div className="min-w-0 flex-1">
@@ -64,13 +70,17 @@ export default function ProductBuyBar({ product, coverImage, labels }: ProductBu
             {compareAtPrice && <span className="text-sm whitespace-nowrap text-white/45 line-through">{compareAtPrice}</span>}
           </div>
         )}
-        <BuyNowButton
-          label={buyLabel}
-          disabled={!variant || !canBuy}
-          busy={isOpening}
-          onClick={buyNow}
-          className="h-11 w-auto shrink-0 px-4.5 text-sm md:h-11.5 md:w-50 md:px-0 md:text-[15px]"
-        />
+        {canBuy && variant ? (
+          <BuyNowButton
+            label={buyLabel}
+            disabled={false}
+            busy={isOpening}
+            onClick={buyNow}
+            className="h-11 w-auto shrink-0 px-4.5 text-sm md:h-11.5 md:w-50 md:px-0 md:text-[15px]"
+          />
+        ) : (
+          <SoldOutStatus label={buyLabel} size="md" className="w-auto shrink-0 md:w-50" />
+        )}
       </div>
     </div>
   )

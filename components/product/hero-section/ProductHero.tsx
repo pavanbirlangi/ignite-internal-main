@@ -68,6 +68,10 @@ export default function ProductHero({
     : 0
   const ratingCount = product.ratingCount ?? 0
   const guide = product.activationGuide
+  // Matches useProductPurchase: nothing to buy greys the cover, like the cards.
+  const variants = Array.isArray(product.variants) ? product.variants : product.variants.edges.map((edge) => edge.node)
+  const buyVariant = variants.find((v) => v.availableForSale) ?? variants[0]
+  const canBuy = Boolean(buyVariant?.availableForSale) && buyVariant?.priced !== false
 
   return (
     <section className="relative">
@@ -96,7 +100,7 @@ export default function ProductHero({
         <div className="grid grid-cols-[104px_minmax(0,1fr)] items-center gap-x-4 gap-y-3.5 [grid-template-areas:'top_top'_'cover_title'_'meta_meta'] lg:grid-cols-[150px_minmax(0,1fr)] lg:grid-rows-[1fr_auto_auto] lg:items-end lg:gap-x-7 lg:[grid-template-areas:'cover_top'_'cover_title'_'cover_meta']">
           <div
             data-product-cover
-            className="relative aspect-[3/4] overflow-hidden rounded-xl shadow-[0_30px_60px_-20px_rgb(0_0_0/0.8)] ring-1 ring-white/10 [grid-area:cover]"
+            className={`relative aspect-[3/4] overflow-hidden rounded-xl shadow-[0_30px_60px_-20px_rgb(0_0_0/0.8)] ring-1 ring-white/10 [grid-area:cover] ${canBuy ? '' : 'opacity-55 grayscale-[0.6]'}`}
           >
             <Image
               src={getProxyImageUrl(coverImage)}

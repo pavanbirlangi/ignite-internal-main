@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
+import { SoldOutStatus } from '@/components/shared/SoldOutStatus'
 import WishlistHeart from '@/components/shared/WishlistHeart'
 import CartPlusIcon from '../icons/CartPlusIcon'
 import Thunder from '../icons/Thunder'
@@ -315,7 +316,10 @@ const StoreCard: React.FC<ProductCardProps> = ({ product, wishlisted }) => {
             fill
             loading="lazy"
             sizes="(max-width: 640px) 58vw, (max-width: 768px) 38vw, (max-width: 1024px) 32vw, 20vw"
-            className="object-cover object-top transition-transform duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-105 motion-reduce:transition-none"
+            className={cn(
+              'object-cover object-top transition-transform duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-105 motion-reduce:transition-none',
+              !isInStock && 'opacity-55 grayscale-[0.6]',
+            )}
             style={{ objectFit: 'cover', objectPosition: 'top' }}
           />
           <span
@@ -329,19 +333,6 @@ const StoreCard: React.FC<ProductCardProps> = ({ product, wishlisted }) => {
               WebkitBackfaceVisibility: 'hidden',
             }}
           ></div>
-
-          {/* Top-Left Badges (Out of Stock) */}
-          {!isInStock && (
-            <div className="absolute top-3 left-3 z-10">
-              {/* Same size and shape as the discount badge. .trim drops the
-                  font's built-in space under the letters so they sit centred. */}
-              <div className="bg-deal flex h-[22px] items-center rounded-[6px] px-[9px]">
-                <span className="trim block text-xs font-bold text-white/95 uppercase">
-                  Out of Stock
-                </span>
-              </div>
-            </div>
-          )}
 
           {/* Centred so the discount lines up with the platform icon. */}
           <div className="absolute bottom-3 z-10 flex h-8 w-full items-center justify-between px-3">
@@ -388,7 +379,12 @@ const StoreCard: React.FC<ProductCardProps> = ({ product, wishlisted }) => {
 
             {/* Price */}
             <div className="mt-2 flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
-              <span className="text-sm font-medium text-white/95">
+              <span
+                className={cn(
+                  'text-sm font-medium',
+                  isInStock ? 'text-white/95' : 'text-white/65',
+                )}
+              >
                 {product.priceRange?.minVariantPrice?.amount
                   ? formatCurrency(
                       product.priceRange.minVariantPrice.amount,
@@ -420,53 +416,58 @@ const StoreCard: React.FC<ProductCardProps> = ({ product, wishlisted }) => {
       </Link>
 
       <div className="mt-1 rounded-b-2xl px-2 pt-0 pb-3 transition-colors">
-        <div className="border-border group-hover:border-border mt-auto grid grid-cols-2 gap-2">
-          {/* Add Button */}
-          <button
-            disabled={isBusy || !variantId || !isInStock}
-            onClick={handleAddToCart}
-            onPointerMove={trackPointer}
-            aria-label={`Add ${product.title} to cart`}
-            aria-busy={addState === 'loading'}
-            className={cn(
-              BUTTON,
-              // Its edge also lights up near the pointer.
-              'pointer-rim border-border border bg-white/[0.02] enabled:hover:border-white/30 enabled:hover:bg-white/[0.07]',
-              // The button showing progress stays fully lit; only the
-              // other one dims.
-              addState === 'idle' && 'disabled:opacity-50',
-            )}
-          >
-            <ButtonFace
-              state={addState}
-              icon={<CartPlusIcon height={15} width={15} />}
-              iconHover="tip"
-              label="Add"
-              doneLabel="Added"
-            />
-          </button>
+        {!isInStock ? (
+          // Sold out: one status in place of Add and Buy (the cover is greyed too).
+          <SoldOutStatus label="Out of stock" size="sm" />
+        ) : (
+          <div className="border-border group-hover:border-border mt-auto grid grid-cols-2 gap-2">
+            {/* Add Button */}
+            <button
+              disabled={isBusy || !variantId || !isInStock}
+              onClick={handleAddToCart}
+              onPointerMove={trackPointer}
+              aria-label={`Add ${product.title} to cart`}
+              aria-busy={addState === 'loading'}
+              className={cn(
+                BUTTON,
+                // Its edge also lights up near the pointer.
+                'pointer-rim border-border border bg-white/[0.02] enabled:hover:border-white/30 enabled:hover:bg-white/[0.07]',
+                // The button showing progress stays fully lit; only the
+                // other one dims.
+                addState === 'idle' && 'disabled:opacity-50',
+              )}
+            >
+              <ButtonFace
+                state={addState}
+                icon={<CartPlusIcon height={15} width={15} />}
+                iconHover="tip"
+                label="Add"
+                doneLabel="Added"
+              />
+            </button>
 
-          {/* Buy Button */}
-          <button
-            disabled={isBusy || !variantId || !isInStock}
-            onClick={handleBuyNow}
-            onPointerMove={trackPointer}
-            aria-label={`Buy ${product.title} now`}
-            aria-busy={buyState === 'loading'}
-            className={cn(
-              BUTTON,
-              'bg-primary enabled:hover:shadow-[0_10px_24px_-10px_var(--primary)] enabled:hover:brightness-110',
-              buyState === 'idle' && 'disabled:opacity-50',
-            )}
-          >
-            <ButtonFace
-              state={buyState}
-              icon={<Thunder height={15} width={15} />}
-              iconHover="zap"
-              label="Buy"
-            />
-          </button>
-        </div>
+            {/* Buy Button */}
+            <button
+              disabled={isBusy || !variantId || !isInStock}
+              onClick={handleBuyNow}
+              onPointerMove={trackPointer}
+              aria-label={`Buy ${product.title} now`}
+              aria-busy={buyState === 'loading'}
+              className={cn(
+                BUTTON,
+                'bg-primary enabled:hover:shadow-[0_10px_24px_-10px_var(--primary)] enabled:hover:brightness-110',
+                buyState === 'idle' && 'disabled:opacity-50',
+              )}
+            >
+              <ButtonFace
+                state={buyState}
+                icon={<Thunder height={15} width={15} />}
+                iconHover="zap"
+                label="Buy"
+              />
+            </button>
+          </div>
+        )}
       </div>
     </div>
   )

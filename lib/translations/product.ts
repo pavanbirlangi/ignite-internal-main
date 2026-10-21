@@ -19,6 +19,9 @@ export interface ProductPageTranslations {
   addToCart: string
   outOfStock: string
   notAvailable: string
+  soldOutHint: string
+  addToWishlist: string
+  inWishlist: string
   // ProductDescription component
   productDescriptionHeading: string
   readMore: string
@@ -56,6 +59,9 @@ const defaultLabels: ProductPageTranslations = {
   addToCart: 'Add to cart',
   outOfStock: 'Out of stock',
   notAvailable: 'Not available',
+  soldOutHint: 'This key is sold out right now. Save it to your wishlist to find it again.',
+  addToWishlist: 'Add to wishlist',
+  inWishlist: 'In your wishlist',
   productDescriptionHeading: 'About this game',
   readMore: 'Read more',
   readLess: 'Read less',
