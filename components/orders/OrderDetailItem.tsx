@@ -27,7 +27,7 @@ export function OrderDetailItem({
   quantity,
   tags,
   onReveal,
-  actionLabel = 'Reveal Key',
+  actionLabel = 'View Key',
 }: OrderDetailItemProps) {
   const productHref = productHandle
     ? `/${encodeURIComponent(productHandle)}`

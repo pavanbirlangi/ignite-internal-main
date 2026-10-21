@@ -18,7 +18,7 @@ const content: Record<
   'success-key-ready': {
     title: 'Order confirmed',
     description: (email) =>
-      `Thanks for your order! Your key is ready: reveal it below.${email ? ` We've also emailed it to ${email}.` : ''}`,
+      `Thanks for your order! Your key is ready: view it below.${email ? ` We've also emailed it to ${email}.` : ''}`,
     tone: 'success',
     pill: 'Paid',
   },
