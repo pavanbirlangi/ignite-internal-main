@@ -4,10 +4,8 @@ import { ProductService } from '@/lib/services/product.service'
 import { LegalService } from '@/lib/services/legal.service'
 import { HelpService } from '@/lib/services/help.service'
 import { DEFAULT_LOCALE, localizedHref } from '@/lib/utils'
+import { SITE_URL } from '@/lib/site'
 
-const SITE_URL =
-  process.env.NEXT_PUBLIC_APP_URL?.replace(/\/+$/, '') ||
-  'https://increddy.com'
 
 const LOCALES = Array.from(
   new Set(languages.map((l) => l.value.toLowerCase())),

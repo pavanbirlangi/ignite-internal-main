@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { languages } from './region-data'
 import { translateTextsWithLangbly } from './services/langbly-translation.service'
 import { DEFAULT_LOCALE, localizedHref } from './utils'
+import { SITE_URL } from './site'
 
 export interface SeoData {
   id?: string
@@ -30,10 +31,7 @@ type SeoTranslateFn = (
 const SUPPORTED_LOCALES = Array.from(new Set(languages.map((l) => l.value.toLowerCase())))
 
 function getSiteUrl(): string {
-  return (
-    process.env.NEXT_PUBLIC_APP_URL?.replace(/\/+$/, '') ||
-    'https://increddy.com'
-  )
+  return SITE_URL
 }
 
 /**

@@ -18,6 +18,7 @@ import {
   translateFooterData,
   getDefaultFooterTranslations,
 } from '@/lib/translations/footer'
+import { SITE_URL } from '@/lib/site'
 
 // The site font (Epic Games Store style type scale, see globals.css).
 // latin-ext carries the rupee sign.
@@ -34,9 +35,7 @@ const geistMono = Geist_Mono({
 })
 
 export const metadata: Metadata = {
-  metadataBase: new URL(
-    process.env.NEXT_PUBLIC_APP_URL || 'https://increddy.com',
-  ),
+  metadataBase: new URL(SITE_URL),
   title: 'Increddy: Buy Digital Goods Cheaper!',
   description:
     'Level up with the best deals on games, gift cards, subscriptions, and more with Increddy. Enjoy  lowest prices, and endless gaming fun!',
@@ -56,10 +55,7 @@ export const metadata: Metadata = {
 const CMS_ORIGIN = process.env.NEXT_PUBLIC_CMS_API_URL?.replace(/\/+$/, '') || 'https://cms.increddy.com'
 
 function getBaseUrl(): string {
-  return (
-    process.env.NEXT_PUBLIC_APP_URL?.replace(/\/+$/, '') ||
-    'https://increddy.com'
-  )
+  return SITE_URL
 }
 
 function getSharedJsonLd(locale: string) {

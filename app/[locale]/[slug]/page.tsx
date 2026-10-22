@@ -29,6 +29,7 @@ import { generateSeoMetadata } from '@/lib/seo'
 import { getCountryForCurrency } from '@/lib/region-data'
 import { formatPrice } from '@/lib/currency'
 import { stripHtml, localizedHref } from '@/lib/utils'
+import { SITE_URL } from '@/lib/site'
 
 interface PageProps {
   params: Promise<{
@@ -133,9 +134,7 @@ function getProductJsonLd(
   locale: string,
   totalReviews?: number,
 ) {
-  const siteUrl =
-    process.env.NEXT_PUBLIC_APP_URL?.replace(/\/+$/, '') ||
-    'https://increddy.com'
+  const siteUrl = SITE_URL
   const firstVariant = Array.isArray(product.variants)
     ? product.variants[0]
     : product.variants.edges[0]?.node

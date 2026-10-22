@@ -6,6 +6,7 @@ import type { Metadata } from 'next'
 import { generateSeoMetadata } from '@/lib/seo'
 import { localizedHref } from '@/lib/utils'
 import type { GuideDetail } from '@/lib/services/help.service'
+import { SITE_URL } from '@/lib/site'
 
 interface PageProps {
   params: Promise<{
@@ -55,7 +56,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 }
 
 function getGuideJsonLd(guide: GuideDetail, locale: string) {
-  const siteUrl = process.env.NEXT_PUBLIC_APP_URL?.replace(/\/+$/, '') || 'https://increddy.com'
+  const siteUrl = SITE_URL
   const cmsBase = process.env.NEXT_PUBLIC_CMS_API_URL?.replace(/\/+$/, '')
   const image = guide.image && cmsBase ? `${cmsBase}/assets/${guide.image}` : undefined
 
