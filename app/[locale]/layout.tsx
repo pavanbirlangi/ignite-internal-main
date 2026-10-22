@@ -19,6 +19,7 @@ import {
   getDefaultFooterTranslations,
 } from '@/lib/translations/footer'
 import { SITE_URL } from '@/lib/site'
+import { organizationJsonLd, websiteJsonLd } from '@/lib/structured-data'
 
 // The site font (Epic Games Store style type scale, see globals.css).
 // latin-ext carries the rupee sign.
@@ -54,40 +55,13 @@ export const metadata: Metadata = {
 // before the LCP hero image and product images are requested.
 const CMS_ORIGIN = process.env.NEXT_PUBLIC_CMS_API_URL?.replace(/\/+$/, '') || 'https://cms.increddy.com'
 
-function getBaseUrl(): string {
-  return SITE_URL
-}
-
-function getSharedJsonLd(locale: string) {
-  const baseUrl = getBaseUrl()
-  const normalizedLocale = locale.toLowerCase()
-
+// Organization + website on every page; page graphs refer to them by id (lib/structured-data.ts).
+// The social profiles are the footer's (Directus), minus placeholders like "/".
+function getSharedJsonLd(locale: string, social: { url?: string }[] = []) {
+  const socialUrls = social.map((item) => item.url ?? '').filter((url) => /^https?:\/\//.test(url))
   return {
     '@context': 'https://schema.org',
-    '@graph': [
-      {
-        '@type': 'Organization',
-        '@id': `${baseUrl}/#organization`,
-        name: 'Increddy',
-        url: baseUrl,
-        logo: `${baseUrl}/icon.png`,
-      },
-      {
-        '@type': 'WebSite',
-        '@id': `${baseUrl}/#website`,
-        url: `${baseUrl}/${normalizedLocale}`,
-        name: 'Increddy',
-        inLanguage: normalizedLocale,
-        publisher: {
-          '@id': `${baseUrl}/#organization`,
-        },
-        potentialAction: {
-          '@type': 'SearchAction',
-          target: `${baseUrl}/${normalizedLocale}/store?search={search_term_string}`,
-          'query-input': 'required name=search_term_string',
-        },
-      },
-    ],
+    '@graph': [organizationJsonLd(socialUrls), websiteJsonLd(locale)],
   }
 }
 
@@ -127,7 +101,7 @@ export default async function RootLayout({
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
-            __html: JSON.stringify(getSharedJsonLd(locale)),
+            __html: JSON.stringify(getSharedJsonLd(locale, footerData?.social)),
           }}
         />
         <QueryProvider>
