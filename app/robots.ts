@@ -1,19 +1,23 @@
 import type { MetadataRoute } from 'next'
 import { SITE_URL } from '@/lib/site'
 
-export default function robots(): MetadataRoute.Robots {
+// Private and transactional pages, with and without a language prefix (/fr/checkout). "$" ends a
+// rule exactly at the page, so a product whose handle starts with the same word (e.g. a
+// "cart..." game) isn't blocked by accident.
+const PRIVATE = ['dashboard', 'checkout', 'cart', 'order', 'account', 'auth']
 
+export default function robots(): MetadataRoute.Robots {
   return {
     rules: [
       {
         userAgent: '*',
         allow: '/',
         disallow: [
-          '/*/dashboard/',
-          '/*/cart/',
-          '/dashboard/',
-          '/cart/',
           '/api/',
+          ...PRIVATE.flatMap((page) => [`/${page}$`, `/${page}/`, `/*/${page}$`, `/*/${page}/`]),
+          // Tracking parameters create duplicate URLs of the same page.
+          '/*?utm_',
+          '/*&utm_',
         ],
       },
     ],
