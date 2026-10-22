@@ -257,6 +257,18 @@ async function fetchActivationGuide(
   return (await getActivationGuides()).get(guideId) ?? null
 }
 
+// The platform as the product page's facts line shows it: the product's `platform` metadata (or
+// its guide's name) with the shared activation guide's icon. Used by the cart rows.
+export async function resolveProductPlatform(
+  metadata: Record<string, unknown> | null | undefined,
+): Promise<{ name: string; icon: string | null } | null> {
+  const guide = await fetchActivationGuide(metaString(metadata, 'activation_guide_id'))
+  const name =
+    metaStringArray(metadata, 'platform')[0] || guide?.name || metaString(metadata, 'activation_guide_name')
+  if (!name) return null
+  return { name, icon: guide?.icon_url || metaString(metadata, 'activation_guide_icon') || null }
+}
+
 function mapProductDetail(
   raw: any,
   digitalAvailability: Map<string, DigitalAvailability>,

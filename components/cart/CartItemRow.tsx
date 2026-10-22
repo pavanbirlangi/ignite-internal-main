@@ -69,21 +69,28 @@ export function CartItemRow({
           </h3>
         )}
 
-        {(soldOut || (item.badges && item.badges.length > 0)) && (
-          <div className="flex flex-wrap gap-1.5">
+        {/* The platform with its icon, as on the product page (e.g. Steam, Microsoft Store). */}
+        {(soldOut || item.platformInfo) && (
+          <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1.5">
             {soldOut && (
               <span className="bg-deal inline-flex h-5.5 items-center rounded-md px-2 text-xs font-bold text-white uppercase">
                 Out of Stock
               </span>
             )}
-            {item.badges?.map((badge) => (
-              <span
-                key={badge}
-                className="inline-flex h-5.5 max-w-full items-center truncate rounded-md bg-white/8 px-2 text-xs font-medium text-white/65"
-              >
-                {badge}
+            {item.platformInfo && (
+              <span className="inline-flex min-w-0 items-center gap-1.5 text-[13px] leading-[18px] text-white/65">
+                {item.platformInfo.icon && (
+                  <Image
+                    src={item.platformInfo.icon}
+                    alt=""
+                    width={16}
+                    height={16}
+                    className="size-4 shrink-0 object-contain"
+                  />
+                )}
+                <span className="truncate">{item.platformInfo.name}</span>
               </span>
-            ))}
+            )}
           </div>
         )}
 
@@ -145,3 +152,4 @@ export function CartItemRow({
     </div>
   )
 }
+

@@ -4,6 +4,7 @@ import cmsClient from '../cms-axios'
 import {
   ProductService,
   GetProductRecommendationsParams,
+  resolveProductPlatform,
 } from './product.service'
 import { ProductListItem } from '@/types/product'
 import { resolveRegionForCountry } from '../utils/region-resolver'
@@ -33,8 +34,10 @@ export interface CartLineItem {
   unitPrice: number
   compareAtUnitPrice: number | null
   thumbnail?: string
-  // The product's tags (Medusa Admin → product → Tags), shown as badges under the title.
+  // The product's tags (Medusa Admin → product → Tags).
   tags: string[]
+  // Platform name and icon, as on the product page (filled in by toCart).
+  platform?: { name: string; icon: string | null }
 }
 
 // Carts are always in USD (the charge currency for card payments). Every amount below is shown in
@@ -150,10 +153,18 @@ function mapCart(raw: any, { currencyCode, convert }: CurrencyConverter): CartRe
 // `+items.metadata` is needed to detect the service-fee line (see mapCart above).
 // `+items.product.tags.value` feeds the tag badges on the cart page.
 const CART_FIELDS =
-  '+items.thumbnail,+items.product.images.url,+items.metadata,+items.product.tags.value'
+  '+items.thumbnail,+items.product.images.url,+items.metadata,+items.product.tags.value,+items.product.metadata'
 
-const toCart = async (raw: any): Promise<CartResponse> =>
-  mapCart(raw, await getDisplayConverter(raw.currency_code ?? DEFAULT_CURRENCY))
+const toCart = async (raw: any): Promise<CartResponse> => {
+  const cart = mapCart(raw, await getDisplayConverter(raw.currency_code ?? DEFAULT_CURRENCY))
+  const rawById = new Map<string, any>((raw.items ?? []).map((item: any) => [item.id, item]))
+  await Promise.all(
+    cart.items.map(async (item) => {
+      item.platform = (await resolveProductPlatform(rawById.get(item.id)?.product?.metadata)) ?? undefined
+    }),
+  )
+  return cart
+}
 
 export const cartService = {
   // Always USD: the display currency only changes how amounts are shown (see CartResponse).

@@ -11,6 +11,8 @@ export interface CartProduct {
   image: string
   badges?: string[] // e.g., ["GAME", "DIGITAL KEY"]
   availableForSale?: boolean
+  // Cart page: the platform shown under the title.
+  platformInfo?: { name: string; icon: string | null }
   hasShopifyDiscount?: boolean
   shopifyDiscountBreakdowns?: Array<{ title: string; amount: number }>
 }

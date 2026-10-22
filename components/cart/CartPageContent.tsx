@@ -112,6 +112,7 @@ export function CartPageContent() {
         badges: item.tags,
         originalPrice,
         availableForSale: isInStock(stock, item.variantId),
+        platformInfo: item.platform,
       }
     })
   }, [cart, stock])
