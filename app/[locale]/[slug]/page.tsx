@@ -26,10 +26,17 @@ import {
 import { reviewService } from '@/lib/services/review.service'
 import { translateTextsWithLangbly } from '@/lib/services/langbly-translation.service'
 import { generateSeoMetadata } from '@/lib/seo'
-import { getCountryForCurrency } from '@/lib/region-data'
 import { formatPrice } from '@/lib/currency'
 import { stripHtml, localizedHref } from '@/lib/utils'
-import { SITE_URL } from '@/lib/site'
+import { siteUrl } from '@/lib/site'
+import {
+  ORGANIZATION_ID,
+  RETURN_POLICY_ID,
+  SHIPPING_SERVICE_ID,
+  breadcrumbJsonLd,
+  plainText,
+} from '@/lib/structured-data'
+import type { ProductReview } from '@/types/review'
 
 interface PageProps {
   params: Promise<{
@@ -129,88 +136,85 @@ export async function generateMetadata({
   }
 }
 
+// Product + breadcrumb graph for Google's product snippets and merchant listings. Refund and
+// delivery rules are the store-wide ones on the organization (lib/structured-data.ts), referenced
+// by id. Ratings and reviews are only ever the real ones; an unpriced product gets no Product node
+// (Google needs a price), only the breadcrumb.
 function getProductJsonLd(
   product: Product,
   locale: string,
-  totalReviews?: number,
+  reviews: { summary?: { averageRating?: number; totalReviews?: number }; reviews?: ProductReview[] } | null,
 ) {
-  const siteUrl = SITE_URL
-  const firstVariant = Array.isArray(product.variants)
-    ? product.variants[0]
-    : product.variants.edges[0]?.node
-  const price = firstVariant?.price
+  const url = siteUrl(locale, `/${product.handle}`)
+  const variants = Array.isArray(product.variants)
+    ? product.variants
+    : product.variants.edges.map((edge) => edge.node)
+  const variant = variants.find((v) => v.availableForSale) ?? variants[0]
+  const isPriced = Boolean(variant) && variant.priced !== false && Number(variant.price?.amount) > 0
+  const canBuy = Boolean(variant?.availableForSale) && isPriced
 
-  const image =
-    product.featuredImage?.url ??
-    product.gallery.find((item) => item.type === 'IMAGE')?.url ??
-    '/images/product/cover.png'
+  const images = [
+    product.featuredImage?.url,
+    ...product.gallery.filter((item) => item.type === 'IMAGE').map((item) => item.url),
+  ].filter((src, index, all): src is string => Boolean(src) && /^https?:\/\//.test(src!) && all.indexOf(src) === index)
+
+  const ratingCount = reviews?.summary?.totalReviews ?? 0
+  const ratingValue = reviews?.summary?.averageRating ?? 0
+  const reviewList = (reviews?.reviews ?? []).filter((r) => r.rating > 0 && (r.body || r.title))
+
+  const breadcrumb = breadcrumbJsonLd(locale, [{ name: 'Store', path: '/store' }, { name: product.title }], url)
+  if (!isPriced || images.length === 0) {
+    return { '@context': 'https://schema.org', '@graph': [breadcrumb] }
+  }
 
   return {
     '@context': 'https://schema.org',
-    '@type': 'Product',
-    name: product.title,
-    description: stripHtml(product.description),
-    image,
-    url: `${siteUrl}${localizedHref(locale, `/${product.handle}`)}`,
-    brand: {
-      '@type': 'Brand',
-      name: 'Increddy',
-    },
-    ...(product.rating && {
-      aggregateRating: {
-        '@type': 'AggregateRating',
-        ratingValue: product.rating.value,
-        bestRating: product.rating.scale_max,
-        worstRating: product.rating.scale_min,
-        ratingCount: Math.max(totalReviews || 0, 1), // Google requires at least 1 if aggregateRating is present
-      },
-    }),
-    offers: {
-      '@type': 'Offer',
-      url: `${siteUrl}${localizedHref(locale, `/${product.handle}`)}`,
-      priceCurrency: price?.currencyCode || 'USD',
-      price: price?.amount || '0',
-      availability: product.inStock
-        ? 'https://schema.org/InStock'
-        : 'https://schema.org/OutOfStock',
-      seller: {
-        '@type': 'Organization',
-        name: 'Increddy',
-      },
-      hasMerchantReturnPolicy: {
-        '@type': 'MerchantReturnPolicy',
-        applicableCountry: getCountryForCurrency(price?.currencyCode || 'USD'),
-        returnPolicyCategory:
-          'https://schema.org/MerchantReturnPolicyNoReturns',
-      },
-      shippingDetails: {
-        '@type': 'OfferShippingDetails',
-        shippingRate: {
-          '@type': 'MonetaryAmount',
-          value: '0',
-          currency: price?.currencyCode || 'USD',
-        },
-        shippingDestination: {
-          '@type': 'DefinedRegion',
-          addressCountry: getCountryForCurrency(price?.currencyCode || 'USD'),
-        },
-        deliveryTime: {
-          '@type': 'ShippingDeliveryTime',
-          handlingTime: {
-            '@type': 'QuantitativeValue',
-            minValue: 0,
-            maxValue: 0,
-            unitCode: 'DAY',
-          },
-          transitTime: {
-            '@type': 'QuantitativeValue',
-            minValue: 0,
-            maxValue: 0,
-            unitCode: 'DAY',
-          },
+    '@graph': [
+      {
+        '@type': 'Product',
+        '@id': `${url}#product`,
+        name: product.title,
+        url,
+        description: plainText(product.description, 5000) || product.title,
+        image: images.slice(0, 10),
+        // Same id as the Google Merchant feed (CTX feed g:id), so the two match up.
+        sku: variant.id,
+        productID: variant.id,
+        ...(product.genre?.length && { category: product.genre.join(', ') }),
+        ...(ratingCount > 0 &&
+          ratingValue > 0 && {
+            aggregateRating: {
+              '@type': 'AggregateRating',
+              ratingValue: Number(ratingValue.toFixed(1)),
+              ratingCount,
+              bestRating: 5,
+              worstRating: 1,
+            },
+          }),
+        ...(reviewList.length > 0 && {
+          review: reviewList.slice(0, 5).map((r) => ({
+            '@type': 'Review',
+            reviewRating: { '@type': 'Rating', ratingValue: r.rating, bestRating: 5, worstRating: 1 },
+            author: { '@type': 'Person', name: r.name || 'Increddy customer' },
+            ...(r.createdAt && { datePublished: r.createdAt.slice(0, 10) }),
+            ...(r.title && { name: plainText(r.title, 110) }),
+            ...(r.body && { reviewBody: plainText(r.body, 1000) }),
+          })),
+        }),
+        offers: {
+          '@type': 'Offer',
+          url,
+          price: Number(variant.price.amount),
+          priceCurrency: variant.price.currencyCode || 'USD',
+          availability: canBuy ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
+          itemCondition: 'https://schema.org/NewCondition',
+          seller: { '@id': ORGANIZATION_ID },
+          hasMerchantReturnPolicy: { '@id': RETURN_POLICY_ID },
+          shippingDetails: { '@type': 'OfferShippingDetails', hasShippingService: { '@id': SHIPPING_SERVICE_ID } },
         },
       },
-    },
+      breadcrumb,
+    ],
   }
 }
 
@@ -239,7 +243,8 @@ export default async function ProductPage({ params }: PageProps) {
       limit: 8,
     }),
     CmsProductService.getProductCmsData(slug),
-    reviewService.getReviews({ productId: product.id, perPage: 1 }),
+    // The newest 5 reviews and the summary, for the structured data (the section loads its own).
+    reviewService.getReviews({ productId: product.id, perPage: 5 }),
   ])
 
   const recommendedProducts: ProductListItem[] =
@@ -250,10 +255,8 @@ export default async function ProductPage({ params }: PageProps) {
   const cmsData: CmsProductResult | null =
     cmsResult.status === 'fulfilled' ? cmsResult.value : null
 
-  let totalReviews = 0
-  if (reviewsResult.status === 'fulfilled') {
-    totalReviews = reviewsResult.value.summary.totalReviews
-  } else {
+  const reviewsData = reviewsResult.status === 'fulfilled' ? reviewsResult.value : null
+  if (reviewsResult.status === 'rejected') {
     console.error(
       '[ProductPage] Failed to fetch reviews for JSON-LD:',
       reviewsResult.reason,
@@ -304,7 +307,7 @@ export default async function ProductPage({ params }: PageProps) {
         type="application/ld+json"
         dangerouslySetInnerHTML={{
           __html: JSON.stringify(
-            getProductJsonLd(product, locale, totalReviews),
+            getProductJsonLd(product, locale, reviewsData),
           ),
         }}
       />
