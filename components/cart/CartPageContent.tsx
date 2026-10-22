@@ -11,6 +11,7 @@ import { ensureCheckoutAllowed } from '@/lib/utils/checkout-guard'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { getDiscountPercent } from '@/lib/utils/discount'
+import { isListItemBuyable } from '@/lib/utils/list-item-stock'
 import { isInStock, useCartStock } from '@/hooks/useCartStock'
 
 const RECOMMENDATION_PLACEHOLDER_IMAGE =
@@ -135,7 +136,11 @@ export function CartPageContent() {
   )
 
   const recommendationItems = React.useMemo(() => {
-    return recommendations.slice(0, MAX_RECOMMENDATIONS).map((rec: any) => {
+    // Sold-out products aren't suggested.
+    return recommendations
+      .filter(isListItemBuyable)
+      .slice(0, MAX_RECOMMENDATIONS)
+      .map((rec: any) => {
       const price = parseAmount(rec?.price?.amount)
       const compareAtPrice = parseAmount(rec?.compareAtPrice?.amount)
       const image = rec?.featuredImage?.url || RECOMMENDATION_PLACEHOLDER_IMAGE

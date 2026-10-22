@@ -21,6 +21,7 @@ import { toast } from 'sonner'
 import { useCartStore } from '@/store/useCartStore'
 import { isInStock, useCartStock } from '@/hooks/useCartStock'
 import { getDiscountPercent } from '@/lib/utils/discount'
+import { isListItemBuyable } from '@/lib/utils/list-item-stock'
 import { setCartDrawerOpen } from '@/components/cart/AddedToCartToast'
 import { isCartFlightPending } from '@/lib/fly-to-cart'
 
@@ -172,6 +173,8 @@ export function CartDrawer() {
     const inCart = new Set(cart?.items?.map((item) => item.handle) ?? [])
     const held = new Set(justAdded.map((product) => product.id))
     const items: CartProduct[] = recommendations
+      // Sold-out products aren't suggested; ones in the cart only while their tick shows.
+      .filter(isListItemBuyable)
       .filter((rec) => !inCart.has(rec.handle) || held.has(rec.id))
       .map((rec: any): CartProduct => {
         const price = parseAmount(rec?.price?.amount)
