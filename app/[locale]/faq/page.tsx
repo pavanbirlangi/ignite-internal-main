@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import { generateSeoMetadata, getWebPageJsonLd } from '@/lib/seo'
+import { plainText } from '@/lib/structured-data'
 import { FaqService } from '@/lib/services/faq.service'
 import { translateFaqItems } from '@/lib/translations/faq'
 import FaqSection from '@/components/faq/FaqSection'
@@ -26,14 +27,6 @@ export default async function FaqPage({
   params: Promise<{ locale: string }>
 }) {
   const { locale } = await params
-  const webPageJsonLd = getWebPageJsonLd({
-    locale,
-    pathname: 'faq',
-    name: 'Frequently Asked Questions | Increddy',
-    description:
-      'Answers to common questions about buying, receiving, and using your Increddy keys.',
-  })
-
   let groups: Awaited<ReturnType<typeof FaqService.getAllGrouped>> = []
   try {
     groups = await FaqService.getAllGrouped()
@@ -48,6 +41,26 @@ export default async function FaqPage({
   } catch (error) {
     console.error('[FaqPage] Failed to fetch FAQ data:', error)
   }
+
+  // FAQPage with every question on the page (Google no longer shows FAQ rich results for
+  // stores, but Bing and AI answers still read it).
+  const questions = groups.flatMap((group) => group.items)
+  const webPageJsonLd = getWebPageJsonLd({
+    locale,
+    pathname: 'faq',
+    name: 'Frequently Asked Questions | Increddy',
+    description:
+      'Answers to common questions about buying, receiving, and using your Increddy keys.',
+    type: questions.length > 0 ? 'FAQPage' : 'WebPage',
+    breadcrumbs: [{ name: 'FAQ' }],
+    ...(questions.length > 0 && {
+      mainEntity: questions.map((item) => ({
+        '@type': 'Question',
+        name: plainText(item.question),
+        acceptedAnswer: { '@type': 'Answer', text: plainText(item.answer) },
+      })),
+    }),
+  })
 
   return (
     <>

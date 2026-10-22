@@ -42,6 +42,8 @@ export default async function AppAboutPage({
     pathname: 'about-us',
     name: 'About Us | Increddy',
     description: 'Learn more about Increddy.',
+    type: 'AboutPage',
+    breadcrumbs: [{ name: 'About us' }],
   })
 
   const covers = await getAboutCovers()

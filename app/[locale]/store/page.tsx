@@ -48,6 +48,8 @@ export default async function Store({
     pathname: 'store',
     name: 'Store | Increddy',
     description: 'Browse our collection of game keys.',
+    type: 'CollectionPage',
+    breadcrumbs: [{ name: 'Store' }],
   })
 
   let storeData: StoreData | null = null

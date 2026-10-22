@@ -2,7 +2,8 @@ import type { Metadata } from 'next'
 import { languages } from './region-data'
 import { translateTextsWithLangbly } from './services/langbly-translation.service'
 import { DEFAULT_LOCALE, localizedHref } from './utils'
-import { SITE_URL } from './site'
+import { SITE_URL, siteUrl } from './site'
+import { WEBSITE_ID, breadcrumbJsonLd, type BreadcrumbItem } from './structured-data'
 
 export interface SeoData {
   id?: string
@@ -20,6 +21,12 @@ interface WebPageJsonLdOptions {
   pathname: string
   name: string
   description?: string
+  /** schema.org page type, e.g. CollectionPage, AboutPage, ContactPage, FAQPage. Default WebPage. */
+  type?: string
+  /** Trail after Home; the last item is this page (give it no path). */
+  breadcrumbs?: BreadcrumbItem[]
+  /** What the page is mainly about (e.g. the FAQ's questions). */
+  mainEntity?: unknown
 }
 
 type SeoTranslateFn = (
@@ -157,27 +164,45 @@ export async function generateSeoMetadata(
   return metadata
 }
 
+/** "getting-started" -> "Getting Started", for breadcrumb names taken from a URL slug. */
+export function slugLabel(slug: string): string {
+  return decodeURIComponent(slug)
+    .split('-')
+    .filter(Boolean)
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ')
+}
+
+/** The page itself (+ its breadcrumb trail), linked to the site-wide website and organization. */
 export function getWebPageJsonLd({
   locale,
   pathname,
   name,
   description,
+  type = 'WebPage',
+  breadcrumbs,
+  mainEntity,
 }: WebPageJsonLdOptions) {
-  const base = getSiteUrl()
   const normalizedLocale = locale.toLowerCase()
   const cleanPath = pathname.replace(/^\/+|\/+$/g, '')
-  const pageUrl = `${base}${localizedHref(normalizedLocale, cleanPath ? `/${cleanPath}` : '/')}`
+  const pageUrl = siteUrl(normalizedLocale, cleanPath ? `/${cleanPath}` : '/')
+  const breadcrumb = breadcrumbs?.length ? breadcrumbJsonLd(normalizedLocale, breadcrumbs, pageUrl) : null
 
   return {
     '@context': 'https://schema.org',
-    '@type': 'WebPage',
-    '@id': `${pageUrl}#webpage`,
-    url: pageUrl,
-    name,
-    description,
-    inLanguage: normalizedLocale,
-    isPartOf: {
-      '@id': `${base}/#website`,
-    },
+    '@graph': [
+      {
+        '@type': type,
+        '@id': `${pageUrl}#webpage`,
+        url: pageUrl,
+        name,
+        ...(description && { description }),
+        inLanguage: normalizedLocale,
+        isPartOf: { '@id': WEBSITE_ID },
+        ...(breadcrumb && { breadcrumb: { '@id': breadcrumb['@id'] } }),
+        ...(mainEntity !== undefined && { mainEntity }),
+      },
+      ...(breadcrumb ? [breadcrumb] : []),
+    ],
   }
 }

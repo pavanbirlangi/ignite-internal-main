@@ -49,6 +49,7 @@ export default async function DynamicLegalPage({ params }: Props) {
     pathname: `legal/${slug}`,
     name: `${slugToLabel(slug)} | Increddy`,
     description: `Read our ${slugToLabel(slug).toLowerCase()}.`,
+    breadcrumbs: [{ name: slugToLabel(slug) }],
   })
 
   try {

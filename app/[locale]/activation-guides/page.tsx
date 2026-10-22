@@ -44,6 +44,8 @@ export default async function AppActivationGuidesPage({
     pathname: 'activation-guides',
     name: 'Activation Guides | Increddy',
     description: 'Learn how to activate your digital products.',
+    type: 'CollectionPage',
+    breadcrumbs: [{ name: 'Activation guides' }],
   })
 
   try {

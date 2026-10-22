@@ -39,6 +39,7 @@ export default async function HelpPageRoute({
     pathname: 'help',
     name: 'Help Center | Increddy',
     description: 'Find answers to your questions in our Help Center.',
+    breadcrumbs: [{ name: 'Help center' }],
   })
 
   return (

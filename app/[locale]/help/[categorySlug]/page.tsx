@@ -1,5 +1,5 @@
 import HelpTopicsListWrapper from '@/components/help/HelpTopicsListWrapper'
-import { getWebPageJsonLd } from '@/lib/seo'
+import { getWebPageJsonLd, slugLabel } from '@/lib/seo'
 
 interface CategoryPageProps {
   params: Promise<{
@@ -15,6 +15,7 @@ export default async function CategoryPageRoute({ params }: CategoryPageProps) {
     pathname: `help/${categorySlug}`,
     name: 'Help Category | Increddy',
     description: 'Browse support topics in this help category.',
+    breadcrumbs: [{ name: 'Help center', path: '/help' }, { name: slugLabel(categorySlug) }],
   })
 
   return (

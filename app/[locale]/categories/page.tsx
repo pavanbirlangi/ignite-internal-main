@@ -38,6 +38,8 @@ export default async function CategoriesPage({
     pathname: 'categories',
     name: 'Categories | Increddy',
     description: 'Browse game categories and platforms on Increddy.',
+    type: 'CollectionPage',
+    breadcrumbs: [{ name: 'Categories' }],
   })
 
   let platformsTitle = ''

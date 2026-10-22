@@ -1,5 +1,5 @@
 import HelpTopicDetailWrapper from '@/components/help/HelpTopicDetailWrapper'
-import { getWebPageJsonLd } from '@/lib/seo'
+import { getWebPageJsonLd, slugLabel } from '@/lib/seo'
 
 interface TopicPageProps {
   params: Promise<{
@@ -16,6 +16,11 @@ export default async function TopicPageRoute({ params }: TopicPageProps) {
     pathname: `help/${categorySlug}/${topicSlug}`,
     name: 'Help Topic | Increddy',
     description: 'Read detailed support guidance for this topic.',
+    breadcrumbs: [
+      { name: 'Help center', path: '/help' },
+      { name: slugLabel(categorySlug), path: `/help/${categorySlug}` },
+      { name: slugLabel(topicSlug) },
+    ],
   })
 
   return (

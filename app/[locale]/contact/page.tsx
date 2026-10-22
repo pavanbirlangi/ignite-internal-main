@@ -45,6 +45,8 @@ export default async function AppContactPage({
     pathname: 'contact',
     name: 'Contact Us | Increddy',
     description: 'Need help? Get in touch with our support team.',
+    type: 'ContactPage',
+    breadcrumbs: [{ name: 'Contact' }],
   })
 
   try {

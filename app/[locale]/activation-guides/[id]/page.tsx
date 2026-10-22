@@ -4,9 +4,9 @@ import { translateTextsWithLangbly } from '@/lib/services/langbly-translation.se
 import { translateGuideDetailData } from '@/lib/translations/activation-guides'
 import type { Metadata } from 'next'
 import { generateSeoMetadata } from '@/lib/seo'
-import { localizedHref } from '@/lib/utils'
 import type { GuideDetail } from '@/lib/services/help.service'
-import { SITE_URL } from '@/lib/site'
+import { siteUrl } from '@/lib/site'
+import { ORGANIZATION_ID, breadcrumbJsonLd, plainText } from '@/lib/structured-data'
 
 interface PageProps {
   params: Promise<{
@@ -55,33 +55,33 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   return baseMeta
 }
 
+// The guide as an article (+ breadcrumb), published by the store.
 function getGuideJsonLd(guide: GuideDetail, locale: string) {
-  const siteUrl = SITE_URL
+  const url = siteUrl(locale, `/activation-guides/${guide.slug}`)
   const cmsBase = process.env.NEXT_PUBLIC_CMS_API_URL?.replace(/\/+$/, '')
   const image = guide.image && cmsBase ? `${cmsBase}/assets/${guide.image}` : undefined
 
   return {
     '@context': 'https://schema.org',
-    '@type': 'Article',
-    headline: guide.title,
-    description: guide.description,
-    ...(image && { image }),
-    url: `${siteUrl}${localizedHref(locale, `/activation-guides/${guide.slug}`)}`,
-    datePublished: guide.published_date,
-    ...(guide.date_updated && { dateModified: guide.date_updated }),
-    author: {
-      '@type': 'Person',
-      name: guide.author_name,
-      ...(guide.author_profile && { url: guide.author_profile }),
-    },
-    publisher: {
-      '@type': 'Organization',
-      name: 'Increddy',
-    },
-    mainEntityOfPage: {
-      '@type': 'WebPage',
-      '@id': `${siteUrl}${localizedHref(locale, `/activation-guides/${guide.slug}`)}`,
-    },
+    '@graph': [
+      {
+        '@type': 'Article',
+        '@id': `${url}#article`,
+        headline: plainText(guide.title, 110),
+        ...(guide.description && { description: plainText(guide.description) }),
+        ...(image && { image }),
+        url,
+        mainEntityOfPage: url,
+        inLanguage: locale.toLowerCase(),
+        ...(guide.published_date && { datePublished: guide.published_date }),
+        ...((guide.date_updated || guide.published_date) && { dateModified: guide.date_updated || guide.published_date }),
+        author: guide.author_name
+          ? { '@type': 'Person', name: guide.author_name, ...(guide.author_profile && { url: guide.author_profile }) }
+          : { '@id': ORGANIZATION_ID },
+        publisher: { '@id': ORGANIZATION_ID },
+      },
+      breadcrumbJsonLd(locale, [{ name: 'Activation guides', path: '/activation-guides' }, { name: plainText(guide.title) }], url),
+    ],
   }
 }
 
