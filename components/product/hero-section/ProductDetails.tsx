@@ -11,7 +11,7 @@ import { useWishlistStatus, useAddToWishlist, useRemoveFromWishlist } from '@/ho
 import { useProductPurchase } from '@/hooks/useProductPurchase'
 import { localizedHref, cn } from '@/lib/utils'
 import type { CmsMappedDropdownGroup } from '@/lib/services/cms-product.service'
-import { AddToCartButton, BuyNowButton, PriceNotFinal, ProductPrice } from '@/components/product/purchase-ui'
+import { AddToCartButton, BuyNowButton, ProductPrice } from '@/components/product/purchase-ui'
 import { SoldOutStatus } from '@/components/shared/SoldOutStatus'
 
 // The sliding buy bar watches this button to know when the panel has scrolled out of view.
@@ -22,8 +22,6 @@ interface ProductDetailsProps {
   cmsDropdownOptions?: CmsMappedDropdownGroup[]
   locale?: string
   labels: {
-    priceNotFinal: string
-    priceNotFinalTip: string
     buyNow: string
     addToCart: string
     outOfStock: string
@@ -89,12 +87,7 @@ export default function ProductDetails({ product, cmsDropdownOptions = [], local
 
   return (
     <div className="flex flex-col gap-4 rounded-2xl border border-white/9 bg-card p-4.5 lg:bg-[rgb(18_18_18/0.72)] lg:p-6 lg:backdrop-blur-[22px]">
-      {price && (
-        <div className="flex flex-col items-start gap-2">
-          <ProductPrice price={price} compareAtPrice={compareAtPrice} discountPercent={discountPercent} />
-          <PriceNotFinal label={labels.priceNotFinal} tip={labels.priceNotFinalTip} />
-        </div>
-      )}
+      {price && <ProductPrice price={price} compareAtPrice={compareAtPrice} discountPercent={discountPercent} />}
 
       {cmsDropdownOptions.length > 0 && (
         <div

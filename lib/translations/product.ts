@@ -13,8 +13,6 @@ export interface ProductPageTranslations {
   reviewCount: string
   activationGuide: string
   // Buy panel and buy bar
-  priceNotFinal: string
-  priceNotFinalTip: string
   buyNow: string
   addToCart: string
   outOfStock: string
@@ -53,8 +51,6 @@ const defaultLabels: ProductPageTranslations = {
   reviewCountOne: '(1 review)',
   reviewCount: '({count} reviews)',
   activationGuide: 'Activation guide',
-  priceNotFinal: 'Price not final',
-  priceNotFinalTip: 'A small service fee and any taxes are added at checkout.',
   buyNow: 'Buy now',
   addToCart: 'Add to cart',
   outOfStock: 'Out of stock',

@@ -334,8 +334,6 @@ export default async function ProductPage({ params }: PageProps) {
               soldOutHint: labels.soldOutHint,
               addToWishlist: labels.addToWishlist,
               inWishlist: labels.inWishlist,
-              priceNotFinal: labels.priceNotFinal,
-              priceNotFinalTip: labels.priceNotFinalTip,
               addToCart: labels.addToCart,
             }}
           />

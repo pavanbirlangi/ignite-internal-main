@@ -1,7 +1,6 @@
 'use client'
 
-import { useState } from 'react'
-import { ArrowRight, Info, ShoppingCart } from 'lucide-react'
+import { ArrowRight, ShoppingCart } from 'lucide-react'
 import { Spinner } from '@/components/ui/spinner'
 import { cn } from '@/lib/utils'
 import type { AddState } from '@/hooks/useProductPurchase'
@@ -38,38 +37,6 @@ export function ProductPrice({
         </span>
       ) : null}
     </div>
-  )
-}
-
-// Same note and wording as the cart summary: the service fee and taxes are added at checkout.
-export function PriceNotFinal({ label, tip }: { label: string; tip: string }) {
-  const [open, setOpen] = useState(false)
-  return (
-    <span className="relative inline-flex">
-      <button
-        type="button"
-        onClick={() => setOpen((value) => !value)}
-        onBlur={() => setOpen(false)}
-        onMouseEnter={() => setOpen(true)}
-        onMouseLeave={() => setOpen(false)}
-        aria-describedby="product-price-not-final-tip"
-        aria-expanded={open}
-        className="inline-flex cursor-help items-center gap-1.5 rounded text-xs font-medium tracking-[0.6px] text-white/65 uppercase outline-none hover:text-white focus-visible:ring-2 focus-visible:ring-white/40"
-      >
-        {label}
-        <Info className="size-3.5" />
-      </button>
-      <span
-        id="product-price-not-final-tip"
-        role="tooltip"
-        className={cn(
-          'bg-secondary border-border pointer-events-none absolute bottom-[calc(100%+10px)] left-0 z-20 w-62 rounded-[10px] border px-3 py-2.5 text-left text-[13px] leading-[18px] text-white/95 shadow-[0_12px_30px_rgb(0_0_0/0.5)] transition-all duration-150',
-          open ? 'translate-y-0 opacity-100' : 'translate-y-1 opacity-0',
-        )}
-      >
-        {tip}
-      </span>
-    </span>
   )
 }
 
