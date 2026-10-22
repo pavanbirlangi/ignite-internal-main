@@ -19,15 +19,26 @@ interface ProductBuyBarProps {
 // scrolled off the top, so price and Buy now stay in reach on a long page.
 export default function ProductBuyBar({ product, coverImage, labels }: ProductBuyBarProps) {
   const { variant, isPriced, canBuy, price, compareAtPrice, buyNow, isOpening } = useProductPurchase(product)
-  const [visible, setVisible] = useState(false)
+  const [pastBuyButton, setPastBuyButton] = useState(false)
+  const [footerInView, setFooterInView] = useState(false)
+  // Out of the way once the footer shows, so it never covers the payment logos at the bottom.
+  const visible = pastBuyButton && !footerInView
 
   useEffect(() => {
     const target = document.getElementById(PRODUCT_BUY_BUTTON_ID)
     if (!target) return
     const observer = new IntersectionObserver(([entry]) => {
-      setVisible(!entry.isIntersecting && entry.boundingClientRect.top < 0)
+      setPastBuyButton(!entry.isIntersecting && entry.boundingClientRect.top < 0)
     })
     observer.observe(target)
+    return () => observer.disconnect()
+  }, [])
+
+  useEffect(() => {
+    const footer = document.querySelector('footer')
+    if (!footer) return
+    const observer = new IntersectionObserver(([entry]) => setFooterInView(entry.isIntersecting))
+    observer.observe(footer)
     return () => observer.disconnect()
   }, [])
 
