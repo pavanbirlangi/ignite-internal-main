@@ -20,5 +20,12 @@ export function useCartStock(items: StockLine[] | undefined) {
   return { stock: data, soldOutCount }
 }
 
-export const isInStock = (stock: Record<string, boolean> | undefined, variantId: string) =>
-  stock?.[variantId] !== false
+type Stock = Record<string, { purchasable: boolean; limit: number | null }> | undefined
+
+// A sensible ceiling for one line when stock doesn't set one (backorders on, or unknown).
+export const MAX_LINE_QUANTITY = 99
+
+export const isInStock = (stock: Stock, variantId: string) => stock?.[variantId]?.purchasable !== false
+
+export const maxQuantity = (stock: Stock, variantId: string) =>
+  Math.max(1, Math.min(MAX_LINE_QUANTITY, stock?.[variantId]?.limit ?? MAX_LINE_QUANTITY))

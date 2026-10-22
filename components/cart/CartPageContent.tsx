@@ -12,7 +12,7 @@ import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { getDiscountPercent } from '@/lib/utils/discount'
 import { isListItemBuyable } from '@/lib/utils/list-item-stock'
-import { isInStock, useCartStock } from '@/hooks/useCartStock'
+import { isInStock, maxQuantity, useCartStock } from '@/hooks/useCartStock'
 
 const RECOMMENDATION_PLACEHOLDER_IMAGE =
   'https://placehold.co/205x262/png?text=No+Image'
@@ -112,6 +112,7 @@ export function CartPageContent() {
         badges: item.tags,
         originalPrice,
         availableForSale: isInStock(stock, item.variantId),
+        maxQuantity: maxQuantity(stock, item.variantId),
         platformInfo: item.platform,
       }
     })

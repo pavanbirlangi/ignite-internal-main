@@ -800,15 +800,24 @@ export const ProductService = {
    * does for the store grid. Runs client-side, no cache wrapper involved.
    */
   /**
-   * Whether each variant of these products can be bought right now, keyed by variant id
-   * (`GET /store/digital-availability`). Used by the cart to mark sold-out lines.
+   * Whether each variant of these products can be bought right now, and how many at most
+   * (`limit`: the unused keys of a key product without backorders, otherwise null), keyed by
+   * variant id (`GET /store/digital-availability`). Used by the cart.
    */
-  getVariantStock: async (productIds: string[]): Promise<Record<string, boolean>> => {
+  getVariantStock: async (
+    productIds: string[],
+  ): Promise<Record<string, { purchasable: boolean; limit: number | null }>> => {
     const availability = await fetchDigitalAvailabilityBatch(productIds)
     return Object.fromEntries(
       [...availability]
         .filter(([, v]) => typeof v.purchasable === 'boolean')
-        .map(([variantId, v]) => [variantId, v.purchasable as boolean]),
+        .map(([variantId, v]) => [
+          variantId,
+          {
+            purchasable: v.purchasable as boolean,
+            limit: v.is_license_key_product && !v.allow_backorder ? v.unused_key_count : null,
+          },
+        ]),
     )
   },
 

@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { Trash2, Minus, Plus } from 'lucide-react'
@@ -118,11 +119,18 @@ export function CartItemRow({
               >
                 <Minus className="size-3.5" />
               </button>
-              <span className="min-w-7 text-center text-sm font-medium text-white/95">{quantity}</span>
+              <QuantityInput
+                // Remounts with the saved value whenever the cart's quantity changes.
+                key={quantity}
+                quantity={quantity}
+                max={item.maxQuantity ?? 99}
+                disabled={isItemLoading || soldOut}
+                onCommit={(next) => onUpdateQuantity(item.id, next)}
+              />
               <button
                 type="button"
                 onClick={() => onUpdateQuantity(item.id, quantity + 1)}
-                disabled={isItemLoading || soldOut}
+                disabled={isItemLoading || soldOut || quantity >= (item.maxQuantity ?? 99)}
                 title="Increase quantity"
                 aria-label="Increase quantity"
                 className={QTY_BUTTON_CLASS}
@@ -153,3 +161,46 @@ export function CartItemRow({
   )
 }
 
+// The number between − and + can be typed into: saved on Enter or when the field loses focus,
+// kept between 1 and `max` (the keys left when the product has no backorders); Escape undoes.
+function QuantityInput({
+  quantity,
+  max,
+  disabled,
+  onCommit,
+}: {
+  quantity: number
+  max: number
+  disabled: boolean
+  onCommit: (next: number) => void
+}) {
+  const [draft, setDraft] = useState(String(quantity))
+
+  const commit = () => {
+    const parsed = Number.parseInt(draft, 10)
+    const next = Number.isFinite(parsed) ? Math.min(max, Math.max(1, parsed)) : quantity
+    setDraft(String(next))
+    if (next !== quantity) onCommit(next)
+  }
+
+  return (
+    <input
+      type="text"
+      inputMode="numeric"
+      aria-label="Quantity"
+      value={draft}
+      disabled={disabled}
+      onChange={(event) => setDraft(event.target.value.replace(/\D/g, '').slice(0, 2))}
+      onBlur={commit}
+      onKeyDown={(event) => {
+        if (event.key === 'Enter') event.currentTarget.blur()
+        if (event.key === 'Escape') {
+          setDraft(String(quantity))
+          event.currentTarget.blur()
+        }
+      }}
+      onFocus={(event) => event.currentTarget.select()}
+      className="h-full w-8 bg-transparent text-center text-sm font-medium text-white/95 outline-none focus:rounded-md focus:bg-white/8 disabled:opacity-60"
+    />
+  )
+}
