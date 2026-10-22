@@ -16,6 +16,8 @@ import { FaqService, type FaqItem } from '@/lib/services/faq.service'
 import { translateFaqItems } from '@/lib/translations/faq'
 import type { Metadata } from 'next'
 import { generateSeoMetadata, getWebPageJsonLd } from '@/lib/seo'
+import { isSupportedLocale } from '@/lib/site'
+import { notFound } from 'next/navigation'
 
 export const revalidate = 900 // Revalidate homepage cache every 15 minutes
 
@@ -87,6 +89,8 @@ export default async function HomePage({
   params: Promise<{ locale: string }>
 }) {
   const { locale } = await params
+  // A one-segment path that isn't a page (e.g. /test.php) lands here as the "locale".
+  if (!isSupportedLocale(locale)) notFound()
   const webPageJsonLd = getWebPageJsonLd({
     locale,
     pathname: '',
