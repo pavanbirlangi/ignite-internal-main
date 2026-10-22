@@ -5,6 +5,7 @@ import { getForeignCharge, getPaymentMethodName } from '@/lib/orders/payment-met
 
 export type ConfirmationState =
   | 'success-key-ready'
+  | 'success-partial'
   | 'success-processing'
   | 'refunded'
   | 'failed'
@@ -55,6 +56,10 @@ export function getConfirmationState(
   const isPaid = financialStatus === 'PAID' || financialStatus === 'PARTIALLY_REFUNDED'
   if (isPaid && fulfillmentStatus === 'FULFILLED') {
     return 'success-key-ready'
+  }
+  // Some keys were delivered straight away, others wait for stock.
+  if (isPaid && fulfillmentStatus === 'PARTIAL') {
+    return 'success-partial'
   }
 
   return 'success-processing'

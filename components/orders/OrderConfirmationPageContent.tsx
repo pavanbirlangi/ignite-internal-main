@@ -49,6 +49,23 @@ export default function OrderConfirmationPageContent() {
   }, [validId])
 
   const state = getConfirmationState(order)
+
+  // The backend reserves keys a second or two after the order exists (order.placed), so the
+  // first load usually still says "being prepared". Re-check for a short while so an instant key
+  // shows as ready without a reload; keys waiting for stock keep the "being prepared" message.
+  const [checks, setChecks] = useState(0)
+  const stillPreparing = Boolean(order) && (state === 'success-processing' || state === 'success-partial')
+  useEffect(() => {
+    if (!validId || !stillPreparing || checks >= 12) return
+    const timer = window.setTimeout(() => {
+      orderService
+        .getOrderById(validId)
+        .then((data) => data && setOrder(data))
+        .catch(() => undefined)
+        .finally(() => setChecks((count) => count + 1))
+    }, 2500)
+    return () => window.clearTimeout(timer)
+  }, [validId, stillPreparing, checks])
   const lineItems = order?.lineItems?.edges ?? []
 
   function openKey(item: (typeof lineItems)[number]) {

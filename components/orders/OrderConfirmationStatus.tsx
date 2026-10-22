@@ -22,6 +22,13 @@ const content: Record<
     tone: 'success',
     pill: 'Paid',
   },
+  'success-partial': {
+    title: 'Order confirmed',
+    description: (email) =>
+      `Thanks for your order! Some of your keys are ready: view them below. The rest appear here and in My Library as soon as they arrive.${email ? ` We'll also email them to ${email}.` : ''}`,
+    tone: 'success',
+    pill: 'Paid',
+  },
   'success-processing': {
     title: 'Order confirmed',
     description: (email) =>
@@ -47,6 +54,7 @@ const content: Record<
 
 const iconTone: Record<ConfirmationState, string> = {
   'success-key-ready': 'bg-[#22C55E]/14 text-[#4ADE80] before:border-[#22C55E]/35',
+  'success-partial': 'bg-[#22C55E]/14 text-[#4ADE80] before:border-[#22C55E]/35',
   'success-processing': 'bg-primary/16 text-[#7DB0FF] before:border-primary/35',
   refunded: 'bg-[#F5A524]/12 text-[#F5A524] before:border-[#F5A524]/30',
   failed: 'bg-[#F04452]/14 text-[#FF6B76] before:border-[#F04452]/30',
