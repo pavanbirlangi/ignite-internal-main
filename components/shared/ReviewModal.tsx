@@ -118,7 +118,7 @@ export function ReviewModal({
         body,
       })
 
-      toast.success('Your review was submitted successfully')
+      toast.success("Thanks for your review! It will appear on this page once it's approved.")
       await onSubmitted?.()
       resetForm()
       closeModal()
