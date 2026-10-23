@@ -2,16 +2,10 @@
 
 import { useState } from "react"
 import { ACCOUNT_CHIP_ROW_CLASS, accountChipClass } from "@/components/library/account-ui"
+import { ORDER_TABS } from "@/lib/orders/order-status"
 
-const tabs = [
-  "All Orders",
-  "Paid",
-  "Pending",
-  "Refunded",
-  "Fulfilled",
-  "Unfulfilled",
-  "Partial",
-]
+// Customer statuses, not payment-system words (lib/orders/order-status.ts).
+const tabs = ORDER_TABS
 
 interface OrderTabsProps {
   activeTab?: string

@@ -1,10 +1,11 @@
 import medusaClient from '../medusa-axios'
+import { getCustomerOrderStatus, type CustomerOrderStatus } from '../orders/order-status'
 
 export interface GetOrdersParams {
   first?: number
   after?: string
-  financialStatus?: string
-  fulfillmentStatus?: string
+  /** Only orders in these customer statuses (lib/orders/order-status.ts); omit for all. */
+  statuses?: CustomerOrderStatus[]
   search?: string
   sort?: 'asc' | 'desc'
   country?: string
@@ -257,16 +258,9 @@ export const orderService = {
 
     let orders: Order[] = (data.orders ?? []).map(mapOrder)
 
-    if (params.financialStatus) {
-      // The "Refunded" tab shows partly refunded orders too.
-      const statuses =
-        params.financialStatus === 'REFUNDED'
-          ? ['REFUNDED', 'PARTIALLY_REFUNDED']
-          : [params.financialStatus]
-      orders = orders.filter((o) => statuses.includes(o.financialStatus))
-    }
-    if (params.fulfillmentStatus) {
-      orders = orders.filter((o) => o.fulfillmentStatus === params.fulfillmentStatus)
+    if (params.statuses?.length) {
+      const wanted = params.statuses
+      orders = orders.filter((o) => wanted.includes(getCustomerOrderStatus(o)))
     }
 
     const search = params.search?.trim().toLowerCase()

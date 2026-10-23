@@ -109,6 +109,7 @@ export default function OrderConfirmationPageContent() {
               orderNumber={order?.orderNumber}
               orderDate={order?.processedAt ? formatOrderDate(order.processedAt) : undefined}
               email={order?.email ?? undefined}
+              keyCount={lineItems.reduce((sum, item) => sum + (item.node?.quantity ?? 1), 0)}
             />
 
             {order && state !== 'failed' && (

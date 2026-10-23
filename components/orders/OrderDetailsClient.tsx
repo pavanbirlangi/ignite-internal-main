@@ -6,11 +6,7 @@ import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
 import { OrderDetailItem } from '@/components/orders/OrderDetailItem'
 import { TransactionDetails } from '@/components/orders/TransactionDetails'
-import {
-  getOrderDisplayStatus,
-  orderStatusLabel,
-  orderStatusTone,
-} from '@/components/orders/OrderCard'
+import { getCustomerOrderStatus, ORDER_STATUS_LABEL, ORDER_STATUS_TONE } from '@/lib/orders/order-status'
 import {
   ACCOUNT_CARD_CLASS,
   ACCOUNT_PRIMARY_BUTTON_CLASS,
@@ -175,7 +171,7 @@ export default function OrderDetailsClient({
     }
   }
 
-  const displayStatus = order ? getOrderDisplayStatus(order) : null
+  const displayStatus = order ? getCustomerOrderStatus(order) : null
 
   return (
     <>
@@ -192,9 +188,7 @@ export default function OrderDetailsClient({
         subtitle={order?.processedAt ? `Placed ${formatOrderDate(order.processedAt)}` : undefined}
         action={
           displayStatus && (
-            <StatusPill tone={orderStatusTone(displayStatus)}>
-              {orderStatusLabel(displayStatus)}
-            </StatusPill>
+            <StatusPill tone={ORDER_STATUS_TONE[displayStatus]}>{ORDER_STATUS_LABEL[displayStatus]}</StatusPill>
           )
         }
       />

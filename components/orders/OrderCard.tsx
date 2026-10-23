@@ -6,25 +6,10 @@ import {
   ACCOUNT_SECONDARY_BUTTON_CLASS,
   MetaItem,
   StatusPill,
-  type StatusTone,
 } from '@/components/library/account-ui'
+import { ORDER_STATUS_LABEL, ORDER_STATUS_TONE, type CustomerOrderStatus } from '@/lib/orders/order-status'
 import Image from 'next/image'
 import Link from 'next/link'
-
-export type OrderStatus =
-  | 'PAID'
-  | 'FULFILLED'
-  | 'UNFULFILLED'
-  | 'PARTIALLY_FULFILLED'
-  | 'PENDING'
-  | 'AUTHORIZED'
-  | 'REFUNDED'
-  | 'PARTIALLY_REFUNDED'
-  | 'VOIDED'
-  | 'CANCELLED'
-  | 'SUCCESSFUL'
-  | 'REFUND SUCCESSFUL'
-  | 'REFUND INITIATED'
 
 interface OrderCardProps {
   id: string
@@ -32,56 +17,11 @@ interface OrderCardProps {
   productHandle?: string
   amount: string
   purchaseDate: string
-  status: OrderStatus
+  status: CustomerOrderStatus
   image: string
   title: string
   itemsCount?: number
   onViewDetails?: () => void
-}
-
-// One status per order for the badge: refunds first, then delivery, then payment.
-export function getOrderDisplayStatus(order: {
-  financialStatus?: string
-  fulfillmentStatus?: string
-}): OrderStatus {
-  if (order.financialStatus === 'REFUNDED') return 'REFUNDED'
-  if (order.financialStatus === 'PARTIALLY_REFUNDED') return 'PARTIALLY_REFUNDED'
-  if (order.financialStatus === 'VOIDED') return 'VOIDED'
-  if (order.fulfillmentStatus === 'FULFILLED') return 'FULFILLED'
-  if (order.financialStatus === 'PAID') return 'PAID'
-  if (order.financialStatus === 'PENDING' || order.financialStatus === 'AUTHORIZED')
-    return 'PENDING'
-  return order.financialStatus as OrderStatus
-}
-
-export function orderStatusTone(status: OrderStatus): StatusTone {
-  switch (status) {
-    case 'FULFILLED':
-    case 'SUCCESSFUL':
-      return 'success'
-    case 'PAID':
-    case 'AUTHORIZED':
-      return 'info'
-    case 'CANCELLED':
-    case 'VOIDED':
-      return 'danger'
-    case 'PENDING':
-    case 'UNFULFILLED':
-    case 'PARTIALLY_FULFILLED':
-    case 'REFUNDED':
-    case 'PARTIALLY_REFUNDED':
-    case 'REFUND SUCCESSFUL':
-    case 'REFUND INITIATED':
-      return 'warning'
-    default:
-      return 'neutral'
-  }
-}
-
-// PARTIALLY_REFUNDED -> "Partially refunded"
-export function orderStatusLabel(status: OrderStatus) {
-  const words = status.replace(/_/g, ' ').toLowerCase()
-  return words.charAt(0).toUpperCase() + words.slice(1)
 }
 
 export function OrderCard({
@@ -119,7 +59,7 @@ export function OrderCard({
           <MetaItem label="Order Amount" value={amount} />
           <MetaItem label="Order ID" value={`#${id}`} />
         </div>
-        <StatusPill tone={orderStatusTone(status)}>{orderStatusLabel(status)}</StatusPill>
+        <StatusPill tone={ORDER_STATUS_TONE[status]}>{ORDER_STATUS_LABEL[status]}</StatusPill>
       </div>
 
       <div className="bg-border mb-4 h-px w-full" />

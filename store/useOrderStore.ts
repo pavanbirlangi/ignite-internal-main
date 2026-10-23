@@ -5,42 +5,17 @@ import {
   GetOrdersParams,
   OrderPageInfo,
 } from '@/lib/services/order.service'
+import { ORDER_TAB_STATUSES, type OrderTab } from '@/lib/orders/order-status'
 
-export type OrderTab =
-  | 'All Orders'
-  | 'Paid'
-  | 'Pending'
-  | 'Refunded'
-  | 'Fulfilled'
-  | 'Unfulfilled'
-  | 'Partial'
-
+export type { OrderTab } from '@/lib/orders/order-status'
 
 export type SortOrder = 'desc' | 'asc'
 
 const ORDERS_PER_PAGE = 10
 
 
-function getApiFiltersForTab(
-  tab: OrderTab,
-): Pick<GetOrdersParams, 'financialStatus' | 'fulfillmentStatus'> {
-  switch (tab) {
-    case 'Paid':
-      return { financialStatus: 'PAID' }
-    case 'Pending':
-      return { financialStatus: 'PENDING' }
-    case 'Refunded':
-      return { financialStatus: 'REFUNDED' }
-    case 'Fulfilled':
-      return { fulfillmentStatus: 'FULFILLED' }
-    case 'Unfulfilled':
-      return { fulfillmentStatus: 'UNFULFILLED' }
-    case 'Partial':
-      return { fulfillmentStatus: 'PARTIAL' }
-    case 'All Orders':
-    default:
-      return {}
-  }
+function getApiFiltersForTab(tab: OrderTab): Pick<GetOrdersParams, 'statuses'> {
+  return tab === 'All Orders' ? {} : { statuses: ORDER_TAB_STATUSES[tab] }
 }
 
 interface OrderState {

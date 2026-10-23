@@ -3,8 +3,9 @@
 import { useEffect } from 'react'
 import { OrderHeader } from '@/components/orders/OrderHeader'
 import { OrderTabs } from '@/components/orders/OrderTabs'
-import { OrderCard, getOrderDisplayStatus } from '@/components/orders/OrderCard'
-import { useOrderStore, type OrderTab, type SortOrder } from '@/store/useOrderStore'
+import { OrderCard } from '@/components/orders/OrderCard'
+import { getCustomerOrderStatus, type OrderTab } from '@/lib/orders/order-status'
+import { useOrderStore, type SortOrder } from '@/store/useOrderStore'
 import type { Order } from '@/lib/services/order.service'
 import { useDebounce } from '@/hooks/useDebounce'
 import { formatPrice as currencyFormatPrice } from '@/lib/currency'
@@ -159,7 +160,7 @@ export default function MyOrdersPage() {
               productHandle={getOrderHandle(order)}
               amount={formatPrice(order.totalPrice)}
               purchaseDate={formatDate(order.processedAt)}
-              status={getOrderDisplayStatus(order)}
+              status={getCustomerOrderStatus(order)}
               image={getOrderImage(order)}
               title={getFirstLineItemTitle(order)}
               itemsCount={getExtraItemsCount(order)}
