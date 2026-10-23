@@ -64,7 +64,7 @@ const TONE_CLASS: Record<StatusTone, string> = {
   neutral: 'bg-white/8 text-white/65',
 }
 
-// Small rounded status label with a dot (order, ticket and email status).
+// Small rounded status label (order, ticket and email status).
 export function StatusPill({
   tone,
   children,
@@ -77,12 +77,11 @@ export function StatusPill({
   return (
     <span
       className={cn(
-        'inline-flex h-6 shrink-0 items-center gap-1.5 rounded-full px-2.5 text-xs font-medium whitespace-nowrap',
+        'inline-flex h-6 shrink-0 items-center rounded-full px-2.5 text-xs font-medium whitespace-nowrap',
         TONE_CLASS[tone],
         className,
       )}
     >
-      <span aria-hidden className="size-1.5 rounded-full bg-current" />
       {children}
     </span>
   )
