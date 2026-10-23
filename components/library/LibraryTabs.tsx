@@ -1,6 +1,15 @@
 "use client"
 
-import { ACCOUNT_CHIP_ROW_CLASS, accountChipClass } from "./account-ui"
+import { useState } from "react"
+import { Check, ChevronDown } from "lucide-react"
+import { cn } from "@/lib/utils"
+import {
+  ACCOUNT_CHIP_ROW_CLASS,
+  ACCOUNT_MENU_PANEL_CLASS,
+  ACCOUNT_SORT_TRIGGER_CLASS,
+  accountChipClass,
+  accountMenuItemClass,
+} from "./account-ui"
 
 export interface LibraryItemCategory {
   title: string
@@ -21,8 +30,64 @@ interface LibraryTabsProps {
   onProductTypeChange?: (productType: string) => void
 }
 
-const SELECT_CLASS =
-  "bg-secondary border-border h-9 cursor-pointer rounded-lg border px-3 text-sm font-medium text-white/95 outline-none transition-colors hover:border-white/20 focus-visible:border-primary/70"
+// Platform / Type: the same button and menu as the Order Date sort, "Platform: All" on the button.
+function FilterMenu({
+  label,
+  allLabel,
+  options,
+  value,
+  onChange,
+}: {
+  label: string
+  allLabel: string
+  options: string[]
+  value: string
+  onChange: (value: string) => void
+}) {
+  const [isOpen, setIsOpen] = useState(false)
+  const choose = (next: string) => {
+    onChange(next)
+    setIsOpen(false)
+  }
+
+  return (
+    <div className="relative">
+      <button
+        type="button"
+        onClick={() => setIsOpen(!isOpen)}
+        aria-expanded={isOpen}
+        aria-haspopup="menu"
+        className={cn(ACCOUNT_SORT_TRIGGER_CLASS, "h-10 px-3.5", value && "border-white/30")}
+      >
+        <span className="text-white/65">{label}:</span>
+        <span>{value || "All"}</span>
+        <ChevronDown className={cn("size-4 text-white/65 transition-transform", isOpen && "rotate-180")} />
+      </button>
+
+      {isOpen && (
+        <>
+          {/* Clicking anywhere outside closes the menu */}
+          <div className="fixed inset-0 z-10" onClick={() => setIsOpen(false)} />
+          <div role="menu" className={cn(ACCOUNT_MENU_PANEL_CLASS, "right-auto left-0 max-h-72 w-56 overflow-y-auto")}>
+            {["", ...options].map((option) => (
+              <button
+                key={option || "all"}
+                type="button"
+                role="menuitemradio"
+                aria-checked={value === option}
+                onClick={() => choose(option)}
+                className={cn(accountMenuItemClass(value === option), "justify-between gap-3")}
+              >
+                <span className="truncate">{option || allLabel}</span>
+                {value === option && <Check className="size-4 shrink-0" />}
+              </button>
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  )
+}
 
 export function LibraryTabs({
   categories = [],
@@ -57,39 +122,26 @@ export function LibraryTabs({
         ))}
       </div>
 
-      {/* Sub-filters Layer (Platforms & Product Types) */}
+      {/* Sub-filters: platform and product type */}
       {(platforms.length > 0 || productTypes.length > 0) && (
-        <div className="flex flex-wrap items-center gap-x-5 gap-y-3">
+        <div className="flex flex-wrap items-center gap-2.5">
           {platforms.length > 0 && onPlatformChange && (
-            <div className="flex items-center gap-2">
-              <span className="text-sm font-medium text-white/65">Platform:</span>
-              <select
-                value={activePlatform}
-                onChange={(e) => onPlatformChange(e.target.value)}
-                className={SELECT_CLASS}
-              >
-                <option value="">All Platforms</option>
-                {platforms.map(p => (
-                  <option key={p} value={p}>{p}</option>
-                ))}
-              </select>
-            </div>
+            <FilterMenu
+              label="Platform"
+              allLabel="All platforms"
+              options={platforms}
+              value={activePlatform}
+              onChange={onPlatformChange}
+            />
           )}
-
           {productTypes.length > 0 && onProductTypeChange && (
-            <div className="flex items-center gap-2">
-              <span className="text-sm font-medium text-white/65">Type:</span>
-              <select
-                value={activeProductType}
-                onChange={(e) => onProductTypeChange(e.target.value)}
-                className={SELECT_CLASS}
-              >
-                <option value="">All Types</option>
-                {productTypes.map(t => (
-                  <option key={t} value={t}>{t}</option>
-                ))}
-              </select>
-            </div>
+            <FilterMenu
+              label="Type"
+              allLabel="All types"
+              options={productTypes}
+              value={activeProductType}
+              onChange={onProductTypeChange}
+            />
           )}
         </div>
       )}
