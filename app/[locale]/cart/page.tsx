@@ -1,6 +1,11 @@
 import { CartPageContent } from '@/components/cart/CartPageContent'
 import type { Metadata } from 'next'
 import { generateSeoMetadata, getWebPageJsonLd } from '@/lib/seo'
+import { ProductService } from '@/lib/services/product.service'
+import type { ProductListItem } from '@/types/product'
+
+// The home page's curated deals, shown when the cart is empty.
+const EMPTY_CART_COLLECTION = 'featured-deals'
 
 export async function generateMetadata({
   params,
@@ -24,6 +29,9 @@ export default async function CartPage({
   params: Promise<{ locale: string }>
 }) {
   const { locale } = await params
+  const featuredDeals = await ProductService.getCollectionProductsByHandle(EMPTY_CART_COLLECTION).catch(
+    () => [] as ProductListItem[],
+  )
   const webPageJsonLd = getWebPageJsonLd({
     locale,
     pathname: 'cart',
@@ -39,7 +47,7 @@ export default async function CartPage({
           __html: JSON.stringify(webPageJsonLd),
         }}
       />
-      <CartPageContent />
+      <CartPageContent featuredDeals={featuredDeals} />
     </>
   )
 }

@@ -16,6 +16,8 @@ type GameCarouselSectionProps = {
   games: ProductListItem[]
   seeAllHref?: string
   id?: string
+  // Replaces the page-width container, for use inside a page's own column.
+  className?: string
 }
 
 export default function GameCarouselSection({
@@ -23,9 +25,10 @@ export default function GameCarouselSection({
   games,
   seeAllHref,
   id,
+  className = 'container flex flex-col gap-8',
 }: GameCarouselSectionProps) {
   return (
-    <section id={id} className="container flex flex-col gap-8">
+    <section id={id} className={className}>
       {/* Section Header */}
       <div className="flex items-center justify-between">
         <h2 className="trim text-xl font-bold md:text-2xl lg:text-3xl">

@@ -1,17 +1,18 @@
 'use client'
 
 import * as React from 'react'
-import { ShoppingCart } from 'lucide-react'
 import { CartNavbar } from '@/components/cart/CartNavbar'
 import { CartItemRow } from '@/components/cart/CartItemRow'
 import { OrderSummary } from '@/components/cart/OrderSummary'
 import { CartPageRecommendationRow } from '@/components/cart/CartPageRecommendationRow'
+import { EmptyCartState } from '@/components/cart/EmptyCartState'
 import { useCartStore } from '@/store/useCartStore'
 import { ensureCheckoutAllowed } from '@/lib/utils/checkout-guard'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { getDiscountPercent } from '@/lib/utils/discount'
 import { isListItemBuyable } from '@/lib/utils/list-item-stock'
+import type { ProductListItem } from '@/types/product'
 import { isInStock, maxQuantity, useCartStock } from '@/hooks/useCartStock'
 
 const RECOMMENDATION_PLACEHOLDER_IMAGE =
@@ -69,7 +70,7 @@ const getDiscountPercentage = (
   return undefined
 }
 
-export function CartPageContent() {
+export function CartPageContent({ featuredDeals }: { featuredDeals?: ProductListItem[] }) {
   const {
     cart,
     isLoading,
@@ -273,19 +274,7 @@ export function CartPageContent() {
                 ))}
                 </div>
               ) : (
-                <div className="flex flex-col items-center justify-center gap-4 py-16 text-center">
-                  <div className="bg-secondary text-white/65 flex h-14 w-14 items-center justify-center rounded-full">
-                    <ShoppingCart className="h-7 w-7" />
-                  </div>
-                  <div className="space-y-1">
-                    <h3 className="text-base font-bold text-white/95">
-                      Your cart is empty
-                    </h3>
-                    <p className="text-white/65 text-sm">
-                      Looks like you haven&apos;t added any games yet.
-                    </p>
-                  </div>
-                </div>
+                <EmptyCartState featuredDeals={featuredDeals} />
               )}
             </div>
 
