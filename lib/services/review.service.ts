@@ -18,7 +18,8 @@ function mapReview(raw: any): ProductReview {
     title: raw.title || 'Customer Review',
     body: raw.body || '',
     createdAt: raw.created_at,
-    verified: raw.verified_purchase ? 'verified-purchase' : undefined,
+    // Client decision (2026-10-23): every published review shows "Verified purchase", admin-entered ones too.
+    verified: 'verified-purchase',
     responseBody: raw.response_body ?? null,
   }
 }
