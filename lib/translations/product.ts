@@ -46,6 +46,11 @@ export interface ProductPageTranslations {
   loadingReviews: string
   verifiedPurchase: string
   storeReply: string
+  sortBy: string
+  sortMostRecent: string
+  sortOldest: string
+  sortHighestRated: string
+  sortLowestRated: string
 }
 
 const defaultLabels: ProductPageTranslations = {
@@ -81,6 +86,11 @@ const defaultLabels: ProductPageTranslations = {
   loadingReviews: 'Loading...',
   verifiedPurchase: 'Verified purchase',
   storeReply: 'Reply from Increddy',
+  sortBy: 'Sort by',
+  sortMostRecent: 'Most recent',
+  sortOldest: 'Oldest',
+  sortHighestRated: 'Highest rated',
+  sortLowestRated: 'Lowest rated',
 }
 
 export function getDefaultProductTranslations(): ProductPageTranslations {

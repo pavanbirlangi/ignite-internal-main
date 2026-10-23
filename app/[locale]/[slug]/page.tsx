@@ -394,6 +394,11 @@ export default async function ProductPage({ params }: PageProps) {
             verifiedPurchase: labels.verifiedPurchase,
             storeReply: labels.storeReply,
             readMore: labels.readMore,
+            sortBy: labels.sortBy,
+            sortMostRecent: labels.sortMostRecent,
+            sortOldest: labels.sortOldest,
+            sortHighestRated: labels.sortHighestRated,
+            sortLowestRated: labels.sortLowestRated,
           }}
         />
         <SimilarGames
