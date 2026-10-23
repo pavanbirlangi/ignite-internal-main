@@ -50,13 +50,15 @@ export const reviewService = {
     }
   },
 
-  submitReview: async (payload: SubmitReviewPayload): Promise<void> => {
-    await medusaClient.post(`/store/products/${payload.productId}/reviews`, {
+  // Returns the saved review's status: 'published' once R-108 ships, 'pending' until then.
+  submitReview: async (payload: SubmitReviewPayload): Promise<string | undefined> => {
+    const { data } = await medusaClient.post(`/store/products/${payload.productId}/reviews`, {
       order_id: payload.orderId,
       rating: payload.rating,
       title: payload.title,
       body: payload.body,
     })
+    return data?.review?.status
   },
 
   /**

@@ -110,7 +110,7 @@ export function ReviewModal({
     }
 
     try {
-      await submitReview({
+      const status = await submitReview({
         productId: product.id,
         orderId: effectiveOrderId,
         rating,
@@ -118,7 +118,11 @@ export function ReviewModal({
         body,
       })
 
-      toast.success("Thanks for your review! It will appear on this page once it's approved.")
+      toast.success(
+        status === 'pending'
+          ? "Thanks for your review! It will appear on this page once it's approved."
+          : 'Thanks for your review! It is now posted on this page.',
+      )
       await onSubmitted?.()
       resetForm()
       closeModal()
