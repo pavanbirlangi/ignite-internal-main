@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { ChevronDown } from 'lucide-react'
+import { ChevronDown, PenLine } from 'lucide-react'
 import { ReviewModal } from '@/components/shared/ReviewModal'
 import { useReviews } from '@/hooks/useReviews'
 import type { ProductReview } from '@/types/review'
@@ -17,6 +17,7 @@ interface RatingReviewsProps extends BaseRatingReviewsProps {
     basedOnOneReview?: string
     basedOnReviews?: string
     writeAReview?: string
+    writeFirstReview?: string
     failedToLoad?: string
     noReviews?: string
     loadMore?: string
@@ -28,7 +29,7 @@ interface RatingReviewsProps extends BaseRatingReviewsProps {
 }
 
 const WRITE_BUTTON_CLASS =
-  'inline-flex h-10 shrink-0 cursor-pointer items-center rounded-[10px] border border-white/10 bg-white/6 px-4 text-sm font-medium whitespace-nowrap text-white/95 transition-all duration-200 hover:-translate-y-px hover:border-white/20 hover:bg-white/10'
+  'inline-flex h-10 shrink-0 cursor-pointer items-center gap-2 rounded-[10px] border border-white/10 bg-white/6 px-4 text-sm font-medium whitespace-nowrap text-white/95 transition-all duration-200 hover:-translate-y-px hover:border-white/20 hover:bg-white/10'
 
 export default function RatingReviews({ product, labels }: RatingReviewsProps) {
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false)
@@ -41,10 +42,10 @@ export default function RatingReviews({ product, labels }: RatingReviewsProps) {
   const reviews = pages.flatMap((page) => page.reviews)
   const averageRating = pages[0]?.summary.averageRating ?? 0
   const totalReviews = pages[0]?.summary.totalReviews ?? 0
-  const writeLabel = labels?.writeAReview ?? 'Write a review'
-  const writeButton = (
+  const writeButton = (label: string) => (
     <button type="button" className={WRITE_BUTTON_CLASS} onClick={() => setIsReviewModalOpen(true)}>
-      {writeLabel}
+      <PenLine className="size-4" aria-hidden />
+      {label}
     </button>
   )
   const hasReviews = !isLoading && !isError && reviews.length > 0
@@ -55,7 +56,7 @@ export default function RatingReviews({ product, labels }: RatingReviewsProps) {
         <h2 className="text-xl leading-[26px] font-bold text-white/95 md:text-2xl md:leading-[30px]">
           {labels?.heading ?? 'Ratings & reviews'}
         </h2>
-        {hasReviews && writeButton}
+        {hasReviews && writeButton(labels?.writeAReview ?? 'Write a review')}
       </div>
 
       {isLoading ? (
@@ -63,7 +64,7 @@ export default function RatingReviews({ product, labels }: RatingReviewsProps) {
       ) : isError || reviews.length === 0 ? (
         <div className="flex flex-col items-start justify-between gap-4 rounded-[14px] border border-dashed border-white/14 px-5.5 py-5 text-sm text-white/65 sm:flex-row sm:items-center">
           <span>{isError ? (labels?.failedToLoad ?? 'Failed to load reviews.') : (labels?.noReviews ?? 'No reviews yet for this product.')}</span>
-          {!isError && writeButton}
+          {!isError && writeButton(labels?.writeFirstReview ?? 'Write the first review')}
         </div>
       ) : (
         <>

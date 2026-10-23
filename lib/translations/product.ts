@@ -39,6 +39,7 @@ export interface ProductPageTranslations {
   basedOnOneReview: string
   basedOnReviews: string
   writeAReview: string
+  writeFirstReview: string
   failedToLoadReviews: string
   noReviewsYet: string
   loadMoreReviews: string
@@ -73,6 +74,7 @@ const defaultLabels: ProductPageTranslations = {
   basedOnOneReview: 'Based on 1 review',
   basedOnReviews: 'Based on {count} reviews',
   writeAReview: 'Write a review',
+  writeFirstReview: 'Write the first review',
   failedToLoadReviews: 'Failed to load reviews.',
   noReviewsYet: 'No reviews yet for this product.',
   loadMoreReviews: 'Load more reviews',

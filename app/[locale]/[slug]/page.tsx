@@ -386,6 +386,7 @@ export default async function ProductPage({ params }: PageProps) {
             basedOnOneReview: labels.basedOnOneReview,
             basedOnReviews: labels.basedOnReviews,
             writeAReview: labels.writeAReview,
+            writeFirstReview: labels.writeFirstReview,
             failedToLoad: labels.failedToLoadReviews,
             noReviews: labels.noReviewsYet,
             loadMore: labels.loadMoreReviews,
