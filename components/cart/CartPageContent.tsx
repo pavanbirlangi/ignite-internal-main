@@ -242,7 +242,7 @@ export function CartPageContent() {
       <CartNavbar currentStep={1} itemCount={itemCount} />
 
       {/* Main Content Layout - account for fixed navbar */}
-      <main className="mx-auto max-w-310 px-3 pt-8 sm:px-5 md:pt-16 lg:px-8">
+      <main className="mx-auto max-w-310 px-4 pt-8 sm:px-5 md:pt-16 lg:px-8">
         <div className="relative grid grid-cols-1 gap-6 lg:grid-cols-12 lg:gap-8">
           {/* Left Column: Cart Items & Recommendations */}
           <div className={itemCount > 0 ? 'lg:col-span-8' : 'lg:col-span-12'}>
