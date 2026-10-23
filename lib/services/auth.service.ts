@@ -150,9 +150,15 @@ export const authService = {
     // Medusa's customer registration is two steps: first create the auth
     // identity (get a registration-scoped token), then create the actual
     // customer record using that token as bearer auth.
+    // R-36: the backend checks the Turnstile token here, where the password account is created
+    // (tokens work once, so it isn't sent again below).
     const { data: authData } = await medusaClient.post(
       '/auth/customer/emailpass/register',
-      { email: payload.email, password: payload.password },
+      {
+        email: payload.email,
+        password: payload.password,
+        ...(payload.turnstileToken ? { turnstile_token: payload.turnstileToken } : {}),
+      },
     )
 
     const { data: customerData } = await medusaClient.post(
@@ -161,9 +167,6 @@ export const authService = {
         email: payload.email,
         first_name: payload.firstName,
         last_name: payload.lastName,
-        ...(payload.turnstileToken
-          ? { turnstile_token: payload.turnstileToken }
-          : {}),
       },
       { headers: { Authorization: `Bearer ${authData.token}` } },
     )
