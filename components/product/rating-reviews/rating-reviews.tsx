@@ -21,6 +21,9 @@ interface RatingReviewsProps extends BaseRatingReviewsProps {
     noReviews?: string
     loadMore?: string
     loading?: string
+    verifiedPurchase?: string
+    storeReply?: string
+    readMore?: string
   }
 }
 
@@ -69,9 +72,17 @@ export default function RatingReviews({ product, labels }: RatingReviewsProps) {
             totalReviews={totalReviews}
             labels={{ basedOnOneReview: labels?.basedOnOneReview, basedOnReviews: labels?.basedOnReviews }}
           />
-          <div className="mt-5 grid gap-3.5 md:grid-cols-2">
+          <div className="mt-5 grid items-start gap-3.5 md:grid-cols-2">
             {reviews.map((review: ProductReview) => (
-              <ReviewCard key={review.id} review={review} />
+              <ReviewCard
+                key={review.id}
+                review={review}
+                labels={{
+                  verifiedPurchase: labels?.verifiedPurchase,
+                  storeReply: labels?.storeReply,
+                  readMore: labels?.readMore,
+                }}
+              />
             ))}
           </div>
           {hasNextPage ? (

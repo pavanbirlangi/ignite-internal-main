@@ -21,4 +21,9 @@ export interface StarRatingProps {
 
 export interface ReviewCardProps {
   review: ProductReview
+  labels?: {
+    verifiedPurchase?: string
+    storeReply?: string
+    readMore?: string
+  }
 }

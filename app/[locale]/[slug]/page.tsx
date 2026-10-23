@@ -390,6 +390,9 @@ export default async function ProductPage({ params }: PageProps) {
             noReviews: labels.noReviewsYet,
             loadMore: labels.loadMoreReviews,
             loading: labels.loadingReviews,
+            verifiedPurchase: labels.verifiedPurchase,
+            storeReply: labels.storeReply,
+            readMore: labels.readMore,
           }}
         />
         <SimilarGames

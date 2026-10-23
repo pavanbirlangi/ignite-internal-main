@@ -43,6 +43,8 @@ export interface ProductPageTranslations {
   noReviewsYet: string
   loadMoreReviews: string
   loadingReviews: string
+  verifiedPurchase: string
+  storeReply: string
 }
 
 const defaultLabels: ProductPageTranslations = {
@@ -75,6 +77,8 @@ const defaultLabels: ProductPageTranslations = {
   noReviewsYet: 'No reviews yet for this product.',
   loadMoreReviews: 'Load more reviews',
   loadingReviews: 'Loading...',
+  verifiedPurchase: 'Verified purchase',
+  storeReply: 'Reply from Increddy',
 }
 
 export function getDefaultProductTranslations(): ProductPageTranslations {
