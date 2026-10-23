@@ -35,7 +35,7 @@ export default function SimilarGames({ products, title }: SimilarGamesProps) {
           {products.map((product) => (
             <CarouselItem
               key={product.id}
-              className="basis-[58%] sm:basis-[38%] md:basis-1/3 lg:basis-1/5"
+              className="basis-[42%] sm:basis-[38%] md:basis-1/3 lg:basis-1/5"
             >
               <StoreCard product={product} />
             </CarouselItem>

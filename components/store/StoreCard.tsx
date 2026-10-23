@@ -53,6 +53,7 @@ const ButtonFace = ({
   iconHover,
   label,
   doneLabel,
+  labelClassName,
 }: {
   state: ButtonState
   icon: React.ReactNode
@@ -60,6 +61,8 @@ const ButtonFace = ({
   label: string
   /** Omit for buttons that never show a success state (Buy navigates away). */
   doneLabel?: string
+  /** Extra classes for the words (e.g. hidden on phones, where Add is an icon button). */
+  labelClassName?: string
 }) => (
   <span className="grid place-items-center">
     <span
@@ -78,7 +81,7 @@ const ButtonFace = ({
       </span>
       {/* .trim drops the font's built-in space under the letters, so the
           word centres against the icon instead of riding high. */}
-      <span className="trim">{label}</span>
+      <span className={cn('trim', labelClassName)}>{label}</span>
     </span>
     <span
       className={cn(
@@ -121,7 +124,7 @@ const ButtonFace = ({
         ) : (
           <span className="size-[15px]" />
         )}
-        <span className="trim">{doneLabel}</span>
+        <span className={cn('trim', labelClassName)}>{doneLabel}</span>
       </span>
     )}
   </span>
@@ -129,7 +132,7 @@ const ButtonFace = ({
 
 // Hover also gets a soft light under the pointer (.pointer-light in globals.css).
 const BUTTON =
-  'pointer-light group/btn relative isolate grid h-9 w-full cursor-pointer place-items-center overflow-hidden rounded-lg text-sm font-medium text-white/95 transition-[transform,background-color,border-color,box-shadow,filter,opacity] duration-300 enabled:hover:-translate-y-px enabled:active:scale-[0.97] disabled:cursor-default motion-reduce:transition-none'
+  'pointer-light group/btn relative isolate grid h-9 w-full cursor-pointer place-items-center overflow-hidden rounded-lg text-sm font-medium max-sm:h-8 max-sm:text-[13px] text-white/95 transition-[transform,background-color,border-color,box-shadow,filter,opacity] duration-300 enabled:hover:-translate-y-px enabled:active:scale-[0.97] disabled:cursor-default motion-reduce:transition-none'
 
 interface ProductCardProps {
   product: ProductListItem
@@ -272,7 +275,7 @@ const StoreCard: React.FC<ProductCardProps> = ({ product, wishlisted }) => {
       // (the same sweep as the hero's Browse Deals button).
       // The border needs ! to beat .glassmorphism, which sits outside Tailwind's layers.
       className={cn(
-        'group glassmorphism bg-secondary/20 relative flex h-full w-full transform-gpu flex-col overflow-hidden rounded-2xl transition-[border-color,opacity,scale] duration-[450ms] hover:border-white/20! motion-reduce:transition-none',
+        'group glassmorphism bg-secondary/20 @container relative flex h-full w-full transform-gpu flex-col overflow-hidden rounded-2xl transition-[border-color,opacity,scale] duration-[450ms] hover:border-white/20! motion-reduce:transition-none',
         isRemovingCard && 'pointer-events-none scale-[0.97] opacity-40',
       )}
       style={{
@@ -373,14 +376,16 @@ const StoreCard: React.FC<ProductCardProps> = ({ product, wishlisted }) => {
         </div>
 
         {/* Details Section */}
-        <div className="flex flex-1 flex-col p-3 transition-colors">
-          <div className="flex flex-col gap-2">
-            <h3 className="line-clamp-2 min-h-[38.4px] text-base leading-[19.2px] font-bold tracking-[-0.08px] text-white/95 transition-colors group-hover:text-white">
+        {/* Phones: smaller title and tighter spacing, so about 2 cards fit across a home row. */}
+        <div className="flex flex-1 flex-col p-3 transition-colors max-sm:px-2.5 max-sm:pt-2.5 max-sm:pb-1.5">
+          <div className="flex flex-col gap-2 max-sm:gap-1">
+            <h3 className="line-clamp-2 min-h-[38.4px] text-base leading-[19.2px] font-bold max-sm:min-h-9 max-sm:text-sm max-sm:leading-[18px] tracking-[-0.08px] text-white/95 transition-colors group-hover:text-white">
               {product.title}
             </h3>
 
             {/* Price */}
-            <div className="mt-2 flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+            {/* One line on phones; the old price drops out on cards too narrow for it (the -% badge stays). */}
+            <div className="mt-2 flex flex-wrap items-baseline gap-x-2 gap-y-0.5 max-sm:mt-1 max-sm:flex-nowrap max-sm:overflow-hidden max-sm:whitespace-nowrap">
               <span
                 className={cn(
                   'text-sm font-medium',
@@ -403,7 +408,7 @@ const StoreCard: React.FC<ProductCardProps> = ({ product, wishlisted }) => {
                 (typeof product.compareAtPrice === 'object' &&
                   product.compareAtPrice?.amount &&
                   Number(product.compareAtPrice.amount) > 0)) && (
-                <span className="text-sm font-medium text-white/65 line-through decoration-white/20">
+                <span className="text-sm font-medium text-white/65 line-through decoration-white/20 max-sm:text-xs @max-[10.5rem]:hidden">
                   {product.originalPrice ??
                     (typeof product.compareAtPrice === 'object' &&
                       formatCurrency(
@@ -417,12 +422,12 @@ const StoreCard: React.FC<ProductCardProps> = ({ product, wishlisted }) => {
         </div>
       </Link>
 
-      <div className="mt-1 rounded-b-2xl px-2 pt-0 pb-3 transition-colors">
+      <div className="mt-1 rounded-b-2xl px-2 pt-0 pb-3 transition-colors max-sm:pb-2.5">
         {!isInStock ? (
           // Sold out: one status in place of Add and Buy (the cover is greyed too).
           <SoldOutStatus label={hasPrice ? 'Out of stock' : 'Not available'} size="sm" />
         ) : (
-          <div className="border-border group-hover:border-border mt-auto grid grid-cols-2 gap-2">
+          <div className="border-border group-hover:border-border mt-auto grid grid-cols-2 gap-2 max-sm:grid-cols-[2rem_1fr]">
             {/* Add Button */}
             <button
               disabled={isBusy || !variantId || !isInStock}
@@ -445,6 +450,7 @@ const StoreCard: React.FC<ProductCardProps> = ({ product, wishlisted }) => {
                 iconHover="tip"
                 label="Add"
                 doneLabel="Added"
+                labelClassName="max-sm:hidden"
               />
             </button>
 
