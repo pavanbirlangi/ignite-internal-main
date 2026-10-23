@@ -4,7 +4,6 @@ import { cn, getProxyImageUrl } from '@/lib/utils'
 import {
   ACCOUNT_CARD_CLASS,
   ACCOUNT_SECONDARY_BUTTON_CLASS,
-  MetaItem,
   StatusPill,
 } from '@/components/library/account-ui'
 import { ORDER_STATUS_LABEL, ORDER_STATUS_TONE, type CustomerOrderStatus } from '@/lib/orders/order-status'
@@ -52,12 +51,14 @@ export function OrderCard({
 
   return (
     <div className={cn(ACCOUNT_CARD_CLASS, 'w-full min-w-0 px-4 py-4 sm:px-5')}>
-      {/* Top row: order facts and status */}
-      <div className="mb-4 flex flex-col-reverse items-start gap-3 sm:flex-row sm:justify-between sm:gap-4">
-        <div className="flex flex-wrap gap-x-8 gap-y-3">
-          <MetaItem label="Purchased on" value={purchaseDate} />
-          <MetaItem label="Order Amount" value={amount} />
-          <MetaItem label="Order ID" value={`#${id}`} />
+      {/* Header: the order number with its status on the right (same on every width), then
+          the date and amount in one line. */}
+      <div className="mb-4 flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="text-base leading-6 font-bold text-white/95">Order #{id}</p>
+          <p className="mt-0.5 text-sm leading-5 text-white/65">
+            {purchaseDate} · {amount}
+          </p>
         </div>
         <StatusPill tone={ORDER_STATUS_TONE[status]}>{ORDER_STATUS_LABEL[status]}</StatusPill>
       </div>
