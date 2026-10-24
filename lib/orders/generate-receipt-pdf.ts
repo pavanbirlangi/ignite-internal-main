@@ -3,6 +3,7 @@ import type { OrderDetails } from '@/lib/services/order.service'
 import { formatOrderDate, formatOrderPrice } from './order-formatters'
 import { getVariantDisplayName } from '@/lib/orders/variant-title'
 import { getForeignCharge, getPaymentMethodName } from '@/lib/orders/payment-method'
+import { loadPdfLogo, pdfLogoHeight } from '@/lib/orders/pdf-logo'
 
 type RGB = readonly [number, number, number]
 
@@ -23,11 +24,8 @@ const STATUS_STYLES: Record<string, { label: string; color: RGB }> = {
 }
 
 const MARGIN = 20
-
-// White wordmark with the blue dot, 700x92 px (aspect 7.6:1), drawn on the dark header.
-const LOGO_URL = '/images/common/logo-receipt.png'
 const LOGO_WIDTH = 44
-const LOGO_HEIGHT = LOGO_WIDTH / (700 / 92)
+const LOGO_HEIGHT = pdfLogoHeight(LOGO_WIDTH)
 const PAGE_BOTTOM = 270
 
 const toNumber = (amount?: string | number) => {
@@ -63,29 +61,11 @@ function paymentMethodLabel(order: OrderDetails): string {
   return getPaymentMethodName(order.paymentMethod)
 }
 
-// The logo as a data URL for jsPDF, or null if it can't be loaded (the receipt then prints the
-// name as text instead).
-async function loadLogo(): Promise<string | null> {
-  try {
-    const response = await fetch(LOGO_URL)
-    if (!response.ok) return null
-    const blob = await response.blob()
-    return await new Promise((resolve) => {
-      const reader = new FileReader()
-      reader.onload = () => resolve(typeof reader.result === 'string' ? reader.result : null)
-      reader.onerror = () => resolve(null)
-      reader.readAsDataURL(blob)
-    })
-  } catch {
-    return null
-  }
-}
-
 // The receipt records the charge itself, so every amount is in the currency the payment was
 // charged in (USD) -- never the display currency the customer browsed in, whose rate moves daily
 // and wouldn't match their card statement.
 export async function generateReceiptPdf(order: OrderDetails): Promise<void> {
-  const logo = await loadLogo()
+  const logo = await loadPdfLogo()
   const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' })
   const pageWidth = doc.internal.pageSize.getWidth()
   const right = pageWidth - MARGIN

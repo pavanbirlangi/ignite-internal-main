@@ -162,7 +162,7 @@ export default function OrderDetailsClient({
     setKeysLoading(true)
     try {
       const keys: KeyAssignment[] = await keysService.getOrderKeys(order.id)
-      generateKeysPdf(order, keys)
+      await generateKeysPdf(order, keys)
     } catch (err) {
       console.error('Failed to fetch license keys:', err)
       toast.error('Could not load your keys. Please try again.')

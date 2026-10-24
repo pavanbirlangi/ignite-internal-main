@@ -4,6 +4,7 @@ import type { KeyAssignment } from '@/lib/services/keys.service'
 import { formatOrderDate } from './order-formatters'
 import { parseCredentialKey } from './parse-credential-key'
 import { getVariantDisplayName } from '@/lib/orders/variant-title'
+import { loadPdfLogo, pdfLogoHeight } from '@/lib/orders/pdf-logo'
 
 const BRAND_BLUE = [59, 130, 246] as const
 const DARK_BG = [17, 24, 39] as const
@@ -12,6 +13,8 @@ const TEXT_MUTED = [156, 163, 175] as const
 const BORDER_COLOR = [55, 65, 81] as const
 const KEY_BG = [31, 41, 55] as const
 const WARNING_AMBER = [245, 158, 11] as const
+const LOGO_WIDTH = 46
+const LOGO_HEIGHT = pdfLogoHeight(LOGO_WIDTH)
 
 function drawLine(doc: jsPDF, y: number, width: number) {
   doc.setDrawColor(...BORDER_COLOR)
@@ -31,10 +34,11 @@ function ensurePage(doc: jsPDF, y: number, needed: number): number {
   return y
 }
 
-export function generateKeysPdf(
+export async function generateKeysPdf(
   order: OrderDetails,
   keysData: KeyAssignment[] = [],
-): void {
+): Promise<void> {
+  const logo = await loadPdfLogo()
   const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' })
   const pageWidth = doc.internal.pageSize.getWidth()
 
@@ -45,10 +49,15 @@ export function generateKeysPdf(
   let y = 20
 
   // — Header
-  doc.setFontSize(22)
-  doc.setTextColor(...TEXT_WHITE)
-  doc.setFont('helvetica', 'bold')
-  doc.text('Increddy', 20, y)
+  if (logo) {
+    // Bottom edge on the text baseline the name used to sit on.
+    doc.addImage(logo, 'PNG', 20, y - LOGO_HEIGHT, LOGO_WIDTH, LOGO_HEIGHT, undefined, 'FAST')
+  } else {
+    doc.setFontSize(22)
+    doc.setTextColor(...TEXT_WHITE)
+    doc.setFont('helvetica', 'bold')
+    doc.text('Increddy', 20, y)
+  }
 
   doc.setFontSize(12)
   doc.setTextColor(...BRAND_BLUE)
