@@ -14,14 +14,14 @@ interface LegalPageContentProps {
   pages: LegalNavPage[]
 }
 
-// The CMS HTML, styled to the account pages' type scale: title 32 px, sections 20 px (18 on
-// phones), body 16 px (15) at 65% white, a ~75-character reading column. The CMS's dividers
+// The CMS HTML on the site's type scale: title 32 px (24 on phones), sections 20 px, body 16 px at
+// 65% white, a ~75-character reading column. The CMS's dividers
 // between sections are hidden; spacing separates them.
 const LEGAL_HTML_CLASS = cn(
-  'max-w-[720px] text-[15px] leading-[1.65] text-white/65 md:text-base',
-  '[&_h1]:mb-6 [&_h1]:text-[28px] [&_h1]:leading-tight [&_h1]:font-bold [&_h1]:text-white/95 md:[&_h1]:text-[32px]',
-  '[&_h2]:mt-10 [&_h2]:mb-3 [&_h2]:text-lg [&_h2]:font-bold [&_h2]:text-white/95 md:[&_h2]:text-xl',
-  '[&_h3]:mt-8 [&_h3]:mb-3 [&_h3]:text-lg [&_h3]:leading-snug [&_h3]:font-bold [&_h3]:text-white/95 md:[&_h3]:mt-10 md:[&_h3]:text-xl',
+  'max-w-[720px] text-base leading-[1.65] text-white/65',
+  '[&_h1]:mb-6 [&_h1]:text-2xl [&_h1]:leading-tight [&_h1]:font-bold [&_h1]:text-white/95 md:[&_h1]:text-3xl',
+  '[&_h2]:mt-10 [&_h2]:mb-3 [&_h2]:text-xl [&_h2]:font-bold [&_h2]:text-white/95',
+  '[&_h3]:mt-8 [&_h3]:mb-3 [&_h3]:text-xl [&_h3]:leading-snug [&_h3]:font-bold [&_h3]:text-white/95 md:[&_h3]:mt-10',
   '[&_p]:mb-3.5 [&_ul]:mb-3.5 [&_ul]:list-disc [&_ul]:pl-5.5 [&_ol]:mb-3.5 [&_ol]:list-decimal [&_ol]:pl-5.5',
   '[&_li]:mb-1.5 [&_li]:marker:text-white/40',
   '[&_strong]:font-bold [&_strong]:text-white/95 [&_b]:text-white/95',
@@ -48,7 +48,7 @@ export default function LegalPageContent({ locale, activeSlug, html, pages }: Le
                   href={localizedHref(locale, `/legal/${page.slug}`)}
                   aria-current={page.slug === activeSlug ? 'page' : undefined}
                   className={cn(
-                    'shrink-0 rounded-full border px-3.5 py-2 text-[13px] font-medium whitespace-nowrap transition-colors',
+                    'shrink-0 rounded-full border px-3.5 py-2 text-sm font-medium whitespace-nowrap transition-colors',
                     page.slug === activeSlug
                       ? 'border-primary/50 bg-primary/15 text-white'
                       : 'bg-card border-border text-white/65 hover:text-white',
@@ -69,7 +69,7 @@ export default function LegalPageContent({ locale, activeSlug, html, pages }: Le
             )}
           >
             <div>
-              <p className="text-[15px] font-bold text-white/95">Questions about this page?</p>
+              <p className="text-base font-bold text-white/95">Questions about this page?</p>
               <p className="text-sm text-white/65">Ask us on the Contact page and we will help.</p>
             </div>
             <Link href={localizedHref(locale, '/contact')} className={ACCOUNT_PRIMARY_BUTTON_CLASS}>
