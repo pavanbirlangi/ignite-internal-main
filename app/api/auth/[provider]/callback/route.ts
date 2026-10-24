@@ -1,4 +1,4 @@
-import { authService } from '@/lib/services/auth.service'
+import { authService, isSocialProvider, SOCIAL_PROVIDER_LABELS } from '@/lib/services/auth.service'
 import {
   OAUTH_CHANNEL,
   OAUTH_RESULT_KEY,
@@ -9,7 +9,7 @@ import {
 // (phones: the popup was blocked and the whole tab went to Google, or the popup tab lost its
 // opener on the way) the result is broadcast to the other tab and also left in this tab's
 // session storage before going back to the page the sign-in started from, where
-// GoogleSignInReturn finishes it. Previously this path dropped the token and went home.
+// GoogleSignInReturn finishes it (for every provider). Previously this path dropped the token and went home.
 function popupResponse(
   type: 'OAUTH_SUCCESS' | 'OAUTH_ERROR',
   payload: Record<string, unknown>,
@@ -46,7 +46,14 @@ function popupResponse(
   )
 }
 
-export async function GET(request: Request) {
+// R-03: one callback for Google, Discord and Facebook (/api/auth/<provider>/callback); each URL is
+// registered as a redirect URI with its provider.
+export async function GET(request: Request, { params }: { params: Promise<{ provider: string }> }) {
+  const { provider } = await params
+  if (!isSocialProvider(provider)) {
+    return popupResponse('OAUTH_ERROR', { message: 'Unknown sign-in provider' })
+  }
+  const label = SOCIAL_PROVIDER_LABELS[provider]
   const url = new URL(request.url)
   const code = url.searchParams.get('code')
   const state = url.searchParams.get('state')
@@ -61,15 +68,19 @@ export async function GET(request: Request) {
   }
 
   try {
-    const result = await authService.completeGoogleAuth(code, state)
+    const result = await authService.completeSocialAuth(provider, code, state)
     return popupResponse('OAUTH_SUCCESS', {
       accessToken: result.token.accessToken,
       expiresAt: result.token.expiresAt,
     })
   } catch (err) {
-    console.error('[Google OAuth] Failed to complete callback:', err)
+    console.error(`[${label} OAuth] Failed to complete callback:`, err)
+    // The backend explains a refusal it can name (e.g. an account without a verified email).
+    const backendMessage = (err as { response?: { data?: { message?: string } } })?.response?.data?.message
     return popupResponse('OAUTH_ERROR', {
-      message: 'Could not complete Google sign-in. Please try again.',
+      message: backendMessage?.includes('verified email')
+        ? backendMessage
+        : `Could not complete ${label} sign-in. Please try again.`,
     })
   }
 }

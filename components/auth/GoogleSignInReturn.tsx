@@ -16,7 +16,7 @@ async function finish(result: OAuthResult | null) {
   try {
     const accessToken = result.payload?.accessToken
     if (result.type !== 'OAUTH_SUCCESS' || typeof accessToken !== 'string') {
-      toast.error(String(result.payload?.message || 'Google sign-in failed'))
+      toast.error(String(result.payload?.message || 'Sign-in failed'))
       return
     }
     const expiresAt =

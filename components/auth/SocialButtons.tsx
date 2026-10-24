@@ -2,7 +2,7 @@ import React, { useEffect, useRef } from 'react'
 import Cookies from 'js-cookie'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
-import { authService } from '@/lib/services/auth.service'
+import { authService, SOCIAL_PROVIDER_LABELS, type SocialProvider } from '@/lib/services/auth.service'
 import { useUserStore } from '@/store/useUserStore'
 import { useCartStore } from '@/store/useCartStore'
 import { useAuthModalStore } from '@/store/useAuthModalStore'
@@ -43,14 +43,6 @@ function SocialButton({
   )
 }
 
-// Discord and Facebook aren't wired up: Medusa has no Discord auth provider at
-// all, and Facebook has never had a handler in this design (button already
-// renders with no onClick). Waiting on client confirmation before scoping
-// either -- see MEDUSA_MIGRATION_BACKEND_REQUIREMENTS.md (R-03).
-function handleSocialLoginUnavailable(provider: string) {
-  toast.error(`${provider} login isn't available yet`)
-}
-
 export function SocialButtons() {
   const handledRef = useRef(false)
 
@@ -62,14 +54,14 @@ export function SocialButtons() {
       handledRef.current = true
 
       if (event.data.type === 'OAUTH_ERROR') {
-        toast.error(event.data.payload?.message || 'Google sign-in failed')
+        toast.error(event.data.payload?.message || 'Sign-in failed')
         handledRef.current = false
         return
       }
 
       const { accessToken, expiresAt } = event.data.payload || {}
       if (!accessToken) {
-        toast.error('Google sign-in failed')
+        toast.error('Sign-in failed')
         handledRef.current = false
         return
       }
@@ -84,7 +76,7 @@ export function SocialButtons() {
         .getState()
         .transferGuestCartToUser()
         .catch((cartError) => {
-          console.error('Failed to transfer cart after Google login', cartError)
+          console.error('Failed to transfer cart after social login', cartError)
         })
         .finally(() => {
           toast.success('Login successful')
@@ -97,31 +89,33 @@ export function SocialButtons() {
     return () => window.removeEventListener('message', handleMessage)
   }, [])
 
-  const handleGoogleLogin = async () => {
+  // R-03: Google, Discord and Facebook all use the same popup (or whole-tab redirect on phones).
+  const handleSocialLogin = async (provider: SocialProvider) => {
+    const label = SOCIAL_PROVIDER_LABELS[provider]
     const width = Math.min(500, window.outerWidth - 20)
     const height = Math.min(600, window.outerHeight - 20)
     const left = Math.max(0, window.screenX + (window.outerWidth - width) / 2)
     const top = Math.max(0, window.screenY + (window.outerHeight - height) / 2)
 
     // Opened on the tap itself: phone browsers block a popup opened after an await. It gets
-    // Google's address once the backend replies.
-    const popup = window.open('', 'google-oauth', `width=${width},height=${height},left=${left},top=${top}`)
+    // the provider's address once the backend replies.
+    const popup = window.open('', `${provider}-oauth`, `width=${width},height=${height},left=${left},top=${top}`)
     try {
-      // If the popup is blocked the whole tab goes to Google; the callback comes back here.
+      // If the popup is blocked the whole tab goes to the provider; the callback comes back here.
       sessionStorage.setItem(OAUTH_RETURN_KEY, window.location.pathname + window.location.search)
     } catch {
       // Storage blocked: the callback falls back to the home page.
     }
 
     try {
-      const callbackUrl = `${window.location.origin}/api/auth/google/callback`
-      const { location } = await authService.googleAuthInit(callbackUrl)
+      const callbackUrl = `${window.location.origin}/api/auth/${provider}/callback`
+      const { location } = await authService.socialAuthInit(provider, callbackUrl)
       if (popup && !popup.closed) popup.location.href = location
       else window.location.href = location
     } catch (err) {
       popup?.close()
-      console.error('Failed to start Google login:', err)
-      toast.error('Could not start Google sign-in. Please try again.')
+      console.error(`Failed to start ${label} login:`, err)
+      toast.error(`Could not start ${label} sign-in. Please try again.`)
     }
   }
 
@@ -130,18 +124,18 @@ export function SocialButtons() {
       <SocialButton
         label="Google"
         icon={<GoogleIcon className="size-[18px] shrink-0" />}
-        onClick={handleGoogleLogin}
+        onClick={() => handleSocialLogin('google')}
       />
       <SocialButton
         label="Facebook"
         icon={<FacebookIcon className="size-[22px] shrink-0 text-(--facebook-blue)" />}
-        onClick={() => handleSocialLoginUnavailable('Facebook')}
+        onClick={() => handleSocialLogin('facebook')}
       />
       <SocialButton
         label="Discord"
         // The Discord glyph has a lot of padding in its viewBox.
         icon={<DiscordIcon className="-m-1.5 size-[30px] shrink-0 text-(--discord-blue)" />}
-        onClick={() => handleSocialLoginUnavailable('Discord')}
+        onClick={() => handleSocialLogin('discord')}
       />
       {/* <SocialButton
         icon={<AppleIcon className="size-8 text-white/95" />}

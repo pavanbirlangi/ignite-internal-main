@@ -77,6 +77,19 @@ export interface ResetPasswordResponse {
   token: { accessToken: string; expiresAt: string } | null
 }
 
+// R-03: Google, Discord and Facebook share one flow (the backend's providers have the same contract).
+export type SocialProvider = 'google' | 'discord' | 'facebook'
+
+export const SOCIAL_PROVIDER_LABELS: Record<SocialProvider, string> = {
+  google: 'Google',
+  discord: 'Discord',
+  facebook: 'Facebook',
+}
+
+export function isSocialProvider(value: string): value is SocialProvider {
+  return value in SOCIAL_PROVIDER_LABELS
+}
+
 export interface GoogleAuthInitResponse {
   location: string
 }
@@ -303,7 +316,8 @@ export const authService = {
    * that URL must be registered as an Authorized Redirect URI in the Google
    * Cloud Console OAuth client, or Google will reject it.
    */
-  googleAuthInit: async (
+  socialAuthInit: async (
+    provider: SocialProvider,
     callbackUrl: string,
   ): Promise<GoogleAuthInitResponse> => {
     // POST, not GET: the route handles both identically (Medusa core aliases
@@ -312,7 +326,7 @@ export const authService = {
     // silently dropped client-side even though it worked in server-side
     // testing, causing Google to reject with the backend's default callback
     // URL instead of ours.
-    const { data } = await medusaClient.post('/auth/customer/google', {
+    const { data } = await medusaClient.post(`/auth/customer/${provider}`, {
       callback_url: callbackUrl,
     })
     return { location: data.location }
@@ -383,14 +397,15 @@ export const authService = {
     }
   },
 
-  completeGoogleAuth: async (
+  completeSocialAuth: async (
+    provider: SocialProvider,
     code: string,
     state: string,
   ): Promise<LoginResponse> => {
     // callback_url doesn't need to be re-sent here -- Medusa already stored it
     // server-side against this `state` value when the flow was initiated.
     const { data } = await medusaClient.get(
-      '/auth/customer/google/callback',
+      `/auth/customer/${provider}/callback`,
       { params: { code, state } },
     )
 
