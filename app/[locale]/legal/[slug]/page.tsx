@@ -1,25 +1,18 @@
 import { Metadata } from 'next'
+import { notFound } from 'next/navigation'
 import LegalPageContent from '@/components/legal/LegalPageContent'
 import { translateTextsWithLangbly } from '@/lib/services/langbly-translation.service'
 import { LegalService, type LegalPage } from '@/lib/services/legal.service'
-import { translateLegalData } from '@/lib/translations/legal'
+import { legalPageLabel, translateLegalData } from '@/lib/translations/legal'
 import { generateSeoMetadata, getWebPageJsonLd } from '@/lib/seo'
 
 type Props = {
   params: Promise<{ slug: string; locale: string }>
 }
 
-/** Convert a slug like "privacy-policy" to "Privacy Policy" */
-function slugToLabel(slug: string): string {
-  return slug
-    .split('-')
-    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-    .join(' ')
-}
-
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug, locale } = await params
-  const formattedTitle = slugToLabel(slug)
+  const formattedTitle = legalPageLabel(slug)
 
   let page: LegalPage | null = null
   try {
@@ -42,86 +35,53 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   )
 }
 
+// Rendered on the server with the text in the HTML (search engines and link previews read it);
+// an unknown slug is a real 404.
 export default async function DynamicLegalPage({ params }: Props) {
   const { slug, locale } = await params
+
+  const [pageResponse, allPagesResponse] = await Promise.all([
+    LegalService.getPageBySlug(slug),
+    LegalService.getAllPages().catch(() => ({ data: [] as { slug: string }[] })),
+  ])
+  const page = pageResponse?.data?.[0]
+  if (!page) notFound()
+
+  const slugs = allPagesResponse?.data?.map((p) => p.slug) ?? []
+  const labels: Record<string, string> = Object.fromEntries(slugs.map((s) => [s, legalPageLabel(s)]))
+
+  let content = page
+  if (locale.toUpperCase() !== 'EN') {
+    try {
+      const { translatedPage, sidebarLabelsMap } = await translateLegalData(page, slugs, locale)
+      content = translatedPage
+      Object.assign(labels, sidebarLabelsMap)
+    } catch (error) {
+      // The English text is better than no page.
+      console.error('[DynamicLegalPage] Translation failed:', error)
+    }
+  }
+
   const webPageJsonLd = getWebPageJsonLd({
     locale,
     pathname: `legal/${slug}`,
-    name: `${slugToLabel(slug)} | Increddy`,
-    description: `Read our ${slugToLabel(slug).toLowerCase()}.`,
-    breadcrumbs: [{ name: slugToLabel(slug) }],
+    name: `${legalPageLabel(slug)} | Increddy`,
+    description: `Read our ${legalPageLabel(slug).toLowerCase()}.`,
+    breadcrumbs: [{ name: legalPageLabel(slug) }],
   })
 
-  try {
-    const [pageResponse, allPagesResponse] = await Promise.all([
-      LegalService.getPageBySlug(slug),
-      LegalService.getAllPages(),
-    ])
-
-    const page = pageResponse?.data?.[0]
-    const allSlugs = allPagesResponse?.data?.map((p) => p.slug) || []
-
-    if (!page) {
-      return (
-        <>
-          <script
-            type="application/ld+json"
-            dangerouslySetInnerHTML={{
-              __html: JSON.stringify(webPageJsonLd),
-            }}
-          />
-          <LegalPageContent slug={slug} />
-        </>
-      )
-    }
-
-    if (locale.toUpperCase() === 'EN') {
-      return (
-        <>
-          <script
-            type="application/ld+json"
-            dangerouslySetInnerHTML={{
-              __html: JSON.stringify(webPageJsonLd),
-            }}
-          />
-          <LegalPageContent slug={slug} />
-        </>
-      )
-    }
-
-    const { translatedPage, sidebarLabelsMap } = await translateLegalData(
-      page,
-      allSlugs,
-      locale,
-    )
-
-    return (
-      <>
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{
-            __html: JSON.stringify(webPageJsonLd),
-          }}
-        />
-        <LegalPageContent
-          slug={slug}
-          translatedContent={translatedPage}
-          translatedSidebarLabels={sidebarLabelsMap}
-        />
-      </>
-    )
-  } catch (error) {
-    console.error('[DynamicLegalPage] Translation failed:', error)
-    return (
-      <>
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{
-            __html: JSON.stringify(webPageJsonLd),
-          }}
-        />
-        <LegalPageContent slug={slug} />
-      </>
-    )
-  }
+  return (
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(webPageJsonLd) }}
+      />
+      <LegalPageContent
+        locale={locale}
+        activeSlug={slug}
+        html={content.page_content}
+        pages={slugs.map((s) => ({ slug: s, label: labels[s] ?? legalPageLabel(s) }))}
+      />
+    </>
+  )
 }

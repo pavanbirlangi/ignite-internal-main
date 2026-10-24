@@ -5,6 +5,14 @@ import { cn } from '@/lib/utils'
 
 export const ACCOUNT_CARD_CLASS = 'bg-card border-border rounded-xl border'
 
+// Account menu row (also the legal pages' menu), and the active page: soft panel, white label,
+// short blue marker on the left edge.
+export const ACCOUNT_NAV_LINK_CLASS =
+  'relative flex h-11 w-full cursor-pointer items-center gap-3 rounded-lg px-3.5 text-sm font-medium text-white/65 transition-colors outline-none hover:bg-white/5 hover:text-white focus-visible:ring-2 focus-visible:ring-white/40'
+
+export const ACCOUNT_NAV_ACTIVE_CLASS =
+  'bg-white/6 text-white before:bg-primary before:absolute before:inset-y-3 before:left-0 before:w-[3px] before:rounded-full'
+
 // Small caps heading inside a panel (PRODUCTS, SUMMARY).
 export const ACCOUNT_SECTION_LABEL_CLASS =
   'text-xs leading-4 font-bold tracking-[1.2px] text-white/65 uppercase'

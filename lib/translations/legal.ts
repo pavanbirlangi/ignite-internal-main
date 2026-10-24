@@ -2,11 +2,13 @@ import { unstable_cache } from 'next/cache'
 import { translateTextsWithLangbly } from '@/lib/services/langbly-translation.service'
 import type { LegalPage } from '@/lib/services/legal.service'
 
-/** Convert a slug like "privacy-policy" to "Privacy Policy" */
-function slugToLabel(slug: string): string {
+const LOWERCASE_WORDS = new Set(['and', 'of', 'the', 'for', 'to', 'in', 'on'])
+
+/** A legal page's menu label from its slug: "terms-and-conditions" -> "Terms and Conditions". */
+export function legalPageLabel(slug: string): string {
   return slug
     .split('-')
-    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+    .map((w, i) => (i > 0 && LOWERCASE_WORDS.has(w) ? w : w.charAt(0).toUpperCase() + w.slice(1)))
     .join(' ')
 }
 
@@ -38,7 +40,7 @@ export async function translateLegalData(
   locale: string,
 ) {
   // Batch 1: Plain text (Sidebar labels)
-  const labelsToTranslate = allSlugs.map((slug) => slugToLabel(slug))
+  const labelsToTranslate = allSlugs.map((slug) => legalPageLabel(slug))
 
   // Batch 2: HTML content
   const htmlToTranslate = [page.page_content || '']

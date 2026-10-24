@@ -9,13 +9,10 @@ import { useUserStore } from "@/store/useUserStore"
 import { UserAvatar } from "@/components/layout/navbar/UserAvatar"
 import { LogoutDialog } from "@/components/auth/LogoutDialog"
 import { ACCOUNT_NAV_ITEMS, accountDisplayName, isAccountNavActive } from "./account-nav"
+import { ACCOUNT_NAV_ACTIVE_CLASS, ACCOUNT_NAV_LINK_CLASS } from "./account-ui"
 
-export const ACCOUNT_NAV_LINK_CLASS =
-  "relative flex h-11 w-full cursor-pointer items-center gap-3 rounded-lg px-3.5 text-sm font-medium text-white/65 transition-colors outline-none hover:bg-white/5 hover:text-white focus-visible:ring-2 focus-visible:ring-white/40"
-
-// Active page: soft panel, white label, short blue marker on the left edge.
-export const ACCOUNT_NAV_ACTIVE_CLASS =
-  "bg-white/6 text-white before:bg-primary before:absolute before:inset-y-3 before:left-0 before:w-[3px] before:rounded-full"
+// The row classes live in account-ui (not a client module) so server components can use them too.
+export { ACCOUNT_NAV_LINK_CLASS, ACCOUNT_NAV_ACTIVE_CLASS }
 
 // Avatar, name and email at the top of the account menu.
 export function AccountIdentity({ className }: { className?: string }) {
