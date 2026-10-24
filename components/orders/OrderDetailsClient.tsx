@@ -150,9 +150,9 @@ export default function OrderDetailsClient({
     setSelectedProduct(null)
   }
 
-  function handleDownloadReceipt() {
+  async function handleDownloadReceipt() {
     if (order) {
-      generateReceiptPdf(order)
+      await generateReceiptPdf(order)
     }
   }
 

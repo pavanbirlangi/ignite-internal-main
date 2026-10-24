@@ -23,6 +23,11 @@ const STATUS_STYLES: Record<string, { label: string; color: RGB }> = {
 }
 
 const MARGIN = 20
+
+// White wordmark with the blue dot, 700x92 px (aspect 7.6:1), drawn on the dark header.
+const LOGO_URL = '/images/common/logo-receipt.png'
+const LOGO_WIDTH = 44
+const LOGO_HEIGHT = LOGO_WIDTH / (700 / 92)
 const PAGE_BOTTOM = 270
 
 const toNumber = (amount?: string | number) => {
@@ -58,10 +63,29 @@ function paymentMethodLabel(order: OrderDetails): string {
   return getPaymentMethodName(order.paymentMethod)
 }
 
+// The logo as a data URL for jsPDF, or null if it can't be loaded (the receipt then prints the
+// name as text instead).
+async function loadLogo(): Promise<string | null> {
+  try {
+    const response = await fetch(LOGO_URL)
+    if (!response.ok) return null
+    const blob = await response.blob()
+    return await new Promise((resolve) => {
+      const reader = new FileReader()
+      reader.onload = () => resolve(typeof reader.result === 'string' ? reader.result : null)
+      reader.onerror = () => resolve(null)
+      reader.readAsDataURL(blob)
+    })
+  } catch {
+    return null
+  }
+}
+
 // The receipt records the charge itself, so every amount is in the currency the payment was
 // charged in (USD) -- never the display currency the customer browsed in, whose rate moves daily
 // and wouldn't match their card statement.
-export function generateReceiptPdf(order: OrderDetails): void {
+export async function generateReceiptPdf(order: OrderDetails): Promise<void> {
+  const logo = await loadLogo()
   const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' })
   const pageWidth = doc.internal.pageSize.getWidth()
   const right = pageWidth - MARGIN
@@ -94,8 +118,13 @@ export function generateReceiptPdf(order: OrderDetails): void {
   doc.rect(0, 0, pageWidth, 4, 'F')
 
   let y = 22
-  setText(20, INK, 'bold')
-  doc.text('Increddy', MARGIN, y)
+  if (logo) {
+    // Bottom edge on the text baseline the name used to sit on.
+    doc.addImage(logo, 'PNG', MARGIN, y - LOGO_HEIGHT, LOGO_WIDTH, LOGO_HEIGHT, undefined, 'FAST')
+  } else {
+    setText(20, INK, 'bold')
+    doc.text('Increddy', MARGIN, y)
+  }
   setText(9, MUTED)
   doc.text('increddy.com', MARGIN, y + 6)
 
