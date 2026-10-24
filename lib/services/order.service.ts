@@ -58,6 +58,8 @@ export interface OrderPaymentMethod {
   type?: string | null
   brand?: string | null
   lastDigits?: string | null
+  /** Stripe's payment reference (PaymentIntent id, "pi_..."); null when Stripe wasn't used. */
+  reference?: string | null
   // What the customer was actually charged. Differs from the order's USD total only for a local
   // method charged in its own currency (e.g. Bancontact in EUR, backend R-78).
   chargeCurrency?: string | null
@@ -348,6 +350,7 @@ export const orderService = {
             ? Number(paymentMethod.charge_amount)
             : null,
         lastDigits: paymentMethod.last4 ?? null,
+        reference: paymentMethod.reference ?? null,
       },
       // platformFee/platformFeeLabel already come from `base` (mapOrder) above.
     }

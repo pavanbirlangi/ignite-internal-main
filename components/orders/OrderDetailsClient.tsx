@@ -247,7 +247,7 @@ export default function OrderDetailsClient({
           {/* Summary */}
           <TransactionDetails
             className="w-full shrink-0 lg:w-[340px]"
-            transactionNumber={`${order.orderNumber}`}
+            paymentReference={order.paymentMethod?.reference ?? undefined}
             paymentMode={paymentModeDisplay}
             subtotal={formatOrderPrice(order.itemsSubtotal, order.totalPrice?.currencyCode)}
             discount={formatOptionalAmount(order.totalDiscountV2, '-')}
