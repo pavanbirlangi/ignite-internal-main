@@ -6,6 +6,8 @@ import { getForeignCharge, getPaymentMethodName } from '@/lib/orders/payment-met
 import { loadPdfLogo, pdfLogoHeight } from '@/lib/orders/pdf-logo'
 
 type RGB = readonly [number, number, number]
+// A piece of text, and its URL when it's a link.
+type LinkPart = [text: string, url?: string]
 
 // The receipt's dark theme: dark page, white text, muted labels, blue accent.
 const BRAND: RGB = [59, 130, 246] // #3B82F6
@@ -24,6 +26,14 @@ const STATUS_STYLES: Record<string, { label: string; color: RGB }> = {
 }
 
 const MARGIN = 20
+
+const SITE = 'https://www.increddy.com'
+// Same accounts as the email footer (Discord and X have no URL yet).
+const SOCIAL_LINKS: Array<[string, string]> = [
+  ['Facebook', 'https://facebook.com/increddycom'],
+  ['Instagram', 'https://www.instagram.com/increddycom/'],
+  ['LinkedIn', 'https://www.linkedin.com/company/increddy'],
+]
 const LOGO_WIDTH = 44
 const LOGO_HEIGHT = pdfLogoHeight(LOGO_WIDTH)
 const PAGE_BOTTOM = 270
@@ -82,6 +92,22 @@ export async function generateReceiptPdf(order: OrderDetails): Promise<void> {
     doc.setLineWidth(0.3)
     doc.line(from, y, to, y)
   }
+  // One line of 8 pt text where some parts are clickable links (in the brand blue).
+  const linkRun = (parts: LinkPart[], x: number, y: number, align: 'left' | 'right' = 'left') => {
+    setText(8, MUTED)
+    const width = parts.reduce((sum, [text]) => sum + doc.getTextWidth(text), 0)
+    let cursor = align === 'right' ? x - width : x
+    parts.forEach(([text, url]) => {
+      if (url) {
+        doc.setTextColor(...BRAND)
+        doc.textWithLink(text, cursor, y, { url })
+        doc.setTextColor(...MUTED)
+      } else {
+        doc.text(text, cursor, y)
+      }
+      cursor += doc.getTextWidth(text)
+    })
+  }
 
   const fillPage = () => {
     doc.setFillColor(...PAGE_BG)
@@ -131,6 +157,8 @@ export async function generateReceiptPdf(order: OrderDetails): Promise<void> {
     ['PAYMENT METHOD', paymentMethodLabel(order)],
     ['CURRENCY', currency.toUpperCase()],
   ]
+  // Stripe's reference, what support looks the payment up by.
+  if (order.paymentMethod?.reference) details.push(['PAYMENT REFERENCE', order.paymentMethod.reference])
   const columnX = [MARGIN, pageWidth / 2 + 5]
   details.forEach(([label, value], index) => {
     const x = columnX[index % 2]
@@ -140,7 +168,7 @@ export async function generateReceiptPdf(order: OrderDetails): Promise<void> {
     setText(10, INK)
     doc.text(value, x, rowY + 5)
   })
-  y += 2 * 13 + 4
+  y += Math.ceil(details.length / 2) * 13 + 4
 
   // — Items table
   const qtyX = 122
@@ -259,6 +287,25 @@ export async function generateReceiptPdf(order: OrderDetails): Promise<void> {
     right - MARGIN,
   )
   doc.text(note, MARGIN, y)
+  y += note.length * 3.6 + 6
+
+  // Refunds, in the words of the refund policy (72 hours, faulty or not as described)
+  const refundText = doc.splitTextToSize(
+    "Problem with a key? Refund requests are accepted within 72 hours of purchase for a key that " +
+      "doesn't work or isn't as described.",
+    right - MARGIN,
+  )
+  if (y + 9 + refundText.length * 3.6 > PAGE_BOTTOM) {
+    addPage()
+    y = 20
+  }
+  setText(8.5, MUTED, 'bold')
+  doc.text('REFUNDS', MARGIN, y)
+  y += 4.5
+  setText(8.5, MUTED)
+  doc.text(refundText, MARGIN, y)
+  y += refundText.length * 3.6
+  linkRun([['Read the refund policy', `${SITE}/legal/refund-policy`]], MARGIN, y)
 
   // — Footer, on every page
   const pageCount = doc.getNumberOfPages()
@@ -267,8 +314,24 @@ export async function generateReceiptPdf(order: OrderDetails): Promise<void> {
     rule(275)
     setText(9, INK, 'bold')
     doc.text('Thank you for shopping with Increddy!', MARGIN, 281)
+    const social: LinkPart[] = [['Follow us: ']]
+    SOCIAL_LINKS.forEach(([name, url], index) => {
+      if (index > 0) social.push(['  ·  '])
+      social.push([name, url])
+    })
+    linkRun(social, right, 281, 'right')
+    linkRun(
+      [
+        ['Questions about this order? Visit the '],
+        ['Help centre', `${SITE}/help`],
+        [' or '],
+        ['contact support', `${SITE}/contact`],
+        ['.'],
+      ],
+      MARGIN,
+      286,
+    )
     setText(8, MUTED)
-    doc.text('Questions about this order? Visit increddy.com/help', MARGIN, 286)
     doc.text('This receipt was generated electronically and is valid without a signature.', MARGIN, 290)
     if (pageCount > 1) doc.text(`Page ${page} of ${pageCount}`, right, 286, { align: 'right' })
   }
