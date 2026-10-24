@@ -259,6 +259,33 @@ async function fetchActivationGuide(
 
 // The platform as the product page's facts line shows it: the product's `platform` metadata (or
 // its guide's name) with the shared activation guide's icon. Used by the cart rows.
+// Each product's platform and activation guide, by product id: for the keys PDF, which knows the
+// order's products only by id. The platform name comes from the guide when there is one (the
+// product's own platform field isn't consistently capitalised).
+export async function getProductsActivationInfo(
+  productIds: string[],
+): Promise<Map<string, { platform: string | null; guide: { name: string; html: string } | null }>> {
+  const ids = [...new Set(productIds.filter(Boolean))]
+  const info = new Map<string, { platform: string | null; guide: { name: string; html: string } | null }>()
+  if (!ids.length) return info
+  const { data } = await medusaClient.get('/store/products', {
+    params: { id: ids, fields: 'id,metadata', limit: ids.length },
+  })
+  await Promise.all(
+    ((data.products ?? []) as { id: string; metadata?: Record<string, unknown> | null }[]).map(async (raw) => {
+      const metadata = raw.metadata ?? {}
+      const guide = await fetchActivationGuide(metaString(metadata, 'activation_guide_id'))
+      const platform =
+        guide?.name || metaStringArray(metadata, 'platform')[0] || metaString(metadata, 'activation_guide_name') || null
+      info.set(raw.id, {
+        platform,
+        guide: guide?.html ? { name: guide.name, html: guide.html } : null,
+      })
+    }),
+  )
+  return info
+}
+
 export async function resolveProductPlatform(
   metadata: Record<string, unknown> | null | undefined,
 ): Promise<{ name: string; icon: string | null } | null> {

@@ -4,10 +4,9 @@ import { formatOrderDate, formatOrderPrice } from './order-formatters'
 import { getVariantDisplayName } from '@/lib/orders/variant-title'
 import { getForeignCharge, getPaymentMethodName } from '@/lib/orders/payment-method'
 import { loadPdfLogo, pdfLogoHeight } from '@/lib/orders/pdf-logo'
+import { drawLinkRun, type LinkPart } from '@/lib/orders/pdf-links'
 
 type RGB = readonly [number, number, number]
-// A piece of text, and its URL when it's a link.
-type LinkPart = [text: string, url?: string]
 
 // The receipt's dark theme: dark page, white text, muted labels, blue accent.
 const BRAND: RGB = [59, 130, 246] // #3B82F6
@@ -93,21 +92,8 @@ export async function generateReceiptPdf(order: OrderDetails): Promise<void> {
     doc.line(from, y, to, y)
   }
   // One line of 8 pt text where some parts are clickable links (in the brand blue).
-  const linkRun = (parts: LinkPart[], x: number, y: number, align: 'left' | 'right' = 'left') => {
-    setText(8, MUTED)
-    const width = parts.reduce((sum, [text]) => sum + doc.getTextWidth(text), 0)
-    let cursor = align === 'right' ? x - width : x
-    parts.forEach(([text, url]) => {
-      if (url) {
-        doc.setTextColor(...BRAND)
-        doc.textWithLink(text, cursor, y, { url })
-        doc.setTextColor(...MUTED)
-      } else {
-        doc.text(text, cursor, y)
-      }
-      cursor += doc.getTextWidth(text)
-    })
-  }
+  const linkRun = (parts: LinkPart[], x: number, y: number, align: 'left' | 'right' = 'left') =>
+    drawLinkRun(doc, parts, x, y, { color: MUTED, linkColor: BRAND, align })
 
   const fillPage = () => {
     doc.setFillColor(...PAGE_BG)
