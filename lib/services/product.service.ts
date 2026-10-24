@@ -611,9 +611,13 @@ const _fetchProductRecommendations = async (
   )
   // Recommendations route only returns id/title/handle/thumbnail (no price) --
   // enrich with a second call for full list-card data.
-  const ids = (data.products ?? []).map((p: any) => p.id)
+  const ids: string[] = (data.products ?? []).map((p: any) => p.id)
   if (!ids.length) return []
-  return _fetchProductsByIds(ids, regionId, currency)
+  // `/store/products?id=` answers in its own order, not the one asked for; put the products back
+  // in the backend's order so the admin's upsell picks come first, in the order the admin set.
+  const position = new Map(ids.map((id, index) => [id, index]))
+  const products = await _fetchProductsByIds(ids, regionId, currency)
+  return products.sort((a, b) => (position.get(a.id) ?? 0) - (position.get(b.id) ?? 0))
 }
 
 const _fetchProductsByIds = async (
