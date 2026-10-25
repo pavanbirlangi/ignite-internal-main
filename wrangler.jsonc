@@ -1,0 +1,28 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "increddy-storefront",
+  "main": ".open-next/worker.js",
+  "compatibility_date": "2026-10-01",
+  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+  "assets": {
+    "directory": ".open-next/assets",
+    "binding": "ASSETS"
+  },
+  "services": [
+    {
+      // Lets the worker call itself (OpenNext uses it for revalidation).
+      "binding": "WORKER_SELF_REFERENCE",
+      "service": "increddy-storefront"
+    }
+  ],
+  "kv_namespaces": [
+    {
+      // Next's data cache (unstable_cache, ISR pages).
+      "binding": "NEXT_INC_CACHE_KV",
+      "id": "bf82d88d070643c48dc0ab9e02b58aa8"
+    }
+  ],
+  "observability": {
+    "enabled": true
+  }
+}
