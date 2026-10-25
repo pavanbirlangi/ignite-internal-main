@@ -6,6 +6,8 @@ import { useEffect } from 'react'
 
 interface GalleryCarouselProps {
   images: string[]
+  // Alt text per image (same order); falls back to "Gallery preview N".
+  alts?: string[]
   activeIndex: number | null
   onClose: () => void
   onChangeIndex: (index: number) => void
@@ -13,6 +15,7 @@ interface GalleryCarouselProps {
 
 export default function GalleryCarousel({
   images,
+  alts,
   activeIndex,
   onClose,
   onChangeIndex,
@@ -103,7 +106,7 @@ export default function GalleryCarousel({
       >
         <img
           src={getProxyImageUrl(images[activeIndex])}
-          alt={`Gallery preview ${activeIndex + 1}`}
+          alt={alts?.[activeIndex] ?? `Gallery preview ${activeIndex + 1}`}
           className="max-h-[78vh] w-full rounded-[6px] object-contain"
         />
 

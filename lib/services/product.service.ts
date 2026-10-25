@@ -61,6 +61,12 @@ function metaString(metadata: Record<string, unknown> | null | undefined, key: s
   return typeof value === 'string' && value ? value : undefined
 }
 
+// R-101: alt text set in the admin's Media page (copied onto the product as images[].metadata.alt,
+// metadata.thumbnail_alt, metadata.background_image_alt); the product title when it's empty.
+function altText(value: unknown, title: string | null | undefined): string | null {
+  return typeof value === 'string' && value.trim() ? value.trim() : (title ?? null)
+}
+
 // ─── Money mapping ────────────────────────────────────────────────────────
 // Medusa v2 stores amounts as decimal major-unit numbers (confirmed Phase 1),
 // same convention formatPrice/formatCurrency already expect -- ProductVariantPrice
@@ -124,7 +130,7 @@ function mapVariant(
     : []
 
   const image = raw.thumbnail
-    ? { url: raw.thumbnail, altText: raw.title ?? null }
+    ? { url: raw.thumbnail, altText: altText(raw.metadata?.thumbnail_alt, raw.title) }
     : { url: '', altText: null }
 
   // Digital-goods availability (license-key stock), not Medusa's own
@@ -310,11 +316,11 @@ function mapProductDetail(
 
   const images = (raw.images ?? []).map((img: any) => ({
     url: img.url,
-    altText: raw.title ?? null,
+    altText: altText(img.metadata?.alt, raw.title),
   }))
 
   const featuredImage = raw.thumbnail
-    ? { url: raw.thumbnail, altText: raw.title ?? null }
+    ? { url: raw.thumbnail, altText: altText(metadata.thumbnail_alt, raw.title) }
     : (images[0] ?? null)
 
   const galleryVideoUrls = metaStringArray(metadata, 'gallery_video_urls')
@@ -381,7 +387,7 @@ function mapProductDetail(
     worksOn: metaStringArray(metadata, 'works_on'),
     genre: metaStringArray(metadata, 'genre'),
     backgroundImage: backgroundImageUrl
-      ? { url: backgroundImageUrl, altText: raw.title ?? null }
+      ? { url: backgroundImageUrl, altText: altText(metadata.background_image_alt, raw.title) }
       : (images[0] ?? featuredImage),
     featuredImage,
     // No rating until a review exists, so the page (and the JSON-LD) never shows a 0 rating.
@@ -454,9 +460,9 @@ function mapProductListItem(raw: any): ProductListItem {
       ? { edges: [{ node: { title: raw.collection.title, handle: raw.collection.handle } }] }
       : undefined,
     featuredImage: raw.thumbnail
-      ? { url: raw.thumbnail, altText: raw.title ?? null }
+      ? { url: raw.thumbnail, altText: altText(raw.metadata?.thumbnail_alt, raw.title) }
       : raw.images?.[0]
-        ? { url: raw.images[0].url, altText: raw.title ?? null }
+        ? { url: raw.images[0].url, altText: altText(raw.images[0].metadata?.alt, raw.title) }
         : null,
     priceRange: price ? { minVariantPrice: price } : undefined,
     compareAtPriceRange: compareAtPrice ? { minVariantPrice: compareAtPrice } : undefined,

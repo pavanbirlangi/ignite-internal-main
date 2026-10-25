@@ -286,9 +286,10 @@ export default async function ProductPage({ params }: PageProps) {
     product.featuredImage?.url ??
     product.gallery.find((item) => item.type === 'IMAGE')?.url ??
     '/images/product/cover.png'
+  // The cover shows the featured image, so its alt text comes first (the background is decorative).
   const coverAlt =
-    product.backgroundImage?.altText ??
     product.featuredImage?.altText ??
+    product.backgroundImage?.altText ??
     product.gallery.find((item) => item.type === 'IMAGE')?.altText ??
     product.title
 

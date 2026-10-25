@@ -38,15 +38,19 @@ export default function Gallery({
   const [isPlaying, setIsPlaying] = useState(false)
   const [activeImageIndex, setActiveImageIndex] = useState<number | null>(null)
 
-  const { images, video } = useMemo(() => {
+  const { images, altByUrl, video } = useMemo(() => {
     const backgroundUrl = product.backgroundImage?.url
     const items = product.gallery ?? []
-    const images = items
+    const shots = items
       .filter((item) => item.type === 'IMAGE')
-      .map((item) => item.url)
-      .filter((url) => url && url !== backgroundUrl && url !== featuredImage)
+      .filter((item) => item.url && item.url !== backgroundUrl && item.url !== featuredImage)
+    const images = shots.map((item) => item.url)
+    // R-101: the alt text set in the admin's Media page; null when it's only the product title.
+    const altByUrl = new Map(
+      shots.map((item) => [item.url, item.altText && item.altText !== product.title ? item.altText : null]),
+    )
     const videoItem = items.find((item) => item.type === 'EXTERNAL_VIDEO')
-    if (!videoItem?.url) return { images, video: null }
+    if (!videoItem?.url) return { images, altByUrl, video: null }
     const youtubeId = videoItem.url.match(YOUTUBE_ID)?.[1] ?? null
     const isYouTube = videoItem.host === 'YOUTUBE' || Boolean(youtubeId)
     const poster =
@@ -60,6 +64,7 @@ export default function Gallery({
       images: images.filter(
         (url) => !posterPath || safePathname(url) !== posterPath,
       ),
+      altByUrl,
       video: { url: videoItem.url, isYouTube, youtubeId, poster },
     }
   }, [product, featuredImage])
@@ -152,7 +157,7 @@ export default function Gallery({
               >
                 <Image
                   src={getProxyImageUrl(url)}
-                  alt={`${product.title} screenshot ${index + 1}`}
+                  alt={altByUrl.get(url) ?? `${product.title} screenshot ${index + 1}`}
                   fill
                   loading="lazy"
                   sizes="420px"
@@ -170,6 +175,7 @@ export default function Gallery({
 
       <GalleryCarousel
         images={images}
+        alts={images.map((url, index) => altByUrl.get(url) ?? `${product.title} screenshot ${index + 1}`)}
         activeIndex={activeImageIndex}
         onClose={() => setActiveImageIndex(null)}
         onChangeIndex={setActiveImageIndex}
