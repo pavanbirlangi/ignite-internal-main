@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, useSyncExternalStore } from 'react'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import FilterBar from './FilterBar'
 import FilterSidebar from './FilterSidebar'
@@ -48,10 +48,26 @@ function useFitsInViewport<T extends HTMLElement>() {
   return [ref, fits] as const
 }
 
+// Phones show two cards per row (below md), so 14 a page fills every row; wider screens keep 15
+// (5 per row on desktop). Null until the browser has said which (no fetch before that).
+const TWO_COLUMN_QUERY = '(max-width: 767px)'
+function useItemsPerPage(): number | null {
+  return useSyncExternalStore(
+    (onChange) => {
+      const media = window.matchMedia(TWO_COLUMN_QUERY)
+      media.addEventListener('change', onChange)
+      return () => media.removeEventListener('change', onChange)
+    },
+    () => (window.matchMedia(TWO_COLUMN_QUERY).matches ? 14 : 15),
+    () => null,
+  )
+}
+
 const StoreListing = ({ translations }: StoreListingProps) => {
   const [filterColumnRef, filterColumnFits] = useFitsInViewport<HTMLDivElement>()
   const filters = useStoreFilters()
-  const ITEMS_PER_PAGE = 15
+  const itemsPerPage = useItemsPerPage()
+  const ITEMS_PER_PAGE = itemsPerPage ?? 15
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
@@ -175,7 +191,7 @@ const StoreListing = ({ translations }: StoreListingProps) => {
       : undefined,
     minPrice: filters.priceMin ? Number(filters.priceMin) : undefined,
     maxPrice: filters.priceMax ? Number(filters.priceMax) : undefined,
-  })
+  }, itemsPerPage !== null)
 
   // Determine standard structure based on new API response format
   const products = data?.products || []
@@ -349,7 +365,7 @@ const StoreListing = ({ translations }: StoreListingProps) => {
             onClearAll={handleClearAll}
           />
 
-          {isLoading ? (
+          {isLoading || itemsPerPage === null ? (
             <div className="grid grid-cols-2 justify-items-center gap-x-3 gap-y-6 sm:gap-x-4 sm:gap-y-8 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
               {Array.from({ length: ITEMS_PER_PAGE }).map((_, index) => (
                 <ProductSkeleton key={index} />
