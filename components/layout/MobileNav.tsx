@@ -45,7 +45,8 @@ export default function MobileNav() {
   ]
 
   return (
-    <div className="border-secondary bg-secondary fixed right-0 bottom-0 left-0 z-50 flex h-18 w-full items-start justify-center border-t md:hidden">
+    // Frosted like the scrolled header, so it stands apart from the footer's solid grey.
+    <div className="bg-background/78 fixed right-0 bottom-0 left-0 z-50 flex h-18 w-full items-start justify-center border-t border-white/8 backdrop-blur-[20px] backdrop-saturate-140 md:hidden">
       <div className="flex w-full max-w-98.25 items-start justify-between px-4">
         {navItems.map((item) => {
           const isActive =
