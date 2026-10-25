@@ -34,7 +34,7 @@ const LOGO_WIDTH = 44
 const LOGO_HEIGHT = pdfLogoHeight(LOGO_WIDTH)
 
 const PENDING_TEXT = "On the way. We'll email it to you and show it in My Orders as soon as it's ready."
-const REFUNDED_TEXT = 'Refunded: this key was not delivered.'
+const REFUNDED_TEXT = 'Refunded: this key is no longer part of your order.'
 
 type KeyRow =
   | { kind: 'key'; label: string; value: string }
