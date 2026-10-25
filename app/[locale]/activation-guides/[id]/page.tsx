@@ -1,3 +1,4 @@
+import { notFound } from 'next/navigation'
 import { HelpService } from '@/lib/services/help.service'
 import ActivationGuideDetail from '@/components/help/activation-guides/ActivationGuideDetail'
 import { translateTextsWithLangbly } from '@/lib/services/langbly-translation.service'
@@ -88,14 +89,19 @@ function getGuideJsonLd(guide: GuideDetail, locale: string) {
 export default async function ActivationGuideDetailPage({ params }: PageProps) {
   const { locale, id } = await params
 
+  // An unknown guide is a real 404. Checked outside the try below: notFound() throws, and the catch
+  // there would swallow it. A CMS outage still falls back to the client-side page.
+  let guide: GuideDetail | undefined
   try {
     const response = await HelpService.getActivationGuideBySlug(id)
-    const guide = response?.data?.[0]
+    guide = response?.data?.[0]
+  } catch (error) {
+    console.error('[ActivationGuideDetailPage] Failed to fetch content:', error)
+    return <ActivationGuideDetail id={id} />
+  }
+  if (!guide) notFound()
 
-    if (!guide) {
-      return <ActivationGuideDetail id={id} />
-    }
-
+  try {
     const translatedContent =
       locale.toUpperCase() === 'EN'
         ? guide
@@ -113,7 +119,7 @@ export default async function ActivationGuideDetailPage({ params }: PageProps) {
       </>
     )
   } catch (error) {
-    console.error('[ActivationGuideDetailPage] Failed to fetch/translate content:', error)
+    console.error('[ActivationGuideDetailPage] Failed to translate content:', error)
     return <ActivationGuideDetail id={id} />
   }
 }
