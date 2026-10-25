@@ -24,6 +24,17 @@ export interface ProductPageTranslations {
   productDescriptionHeading: string
   readMore: string
   readLess: string
+  // Details panel beside the description
+  detailsHeading: string
+  detailsPlatform: string
+  detailsRegion: string
+  detailsWorksOn: string
+  detailsGenre: string
+  detailsDelivery: string
+  detailsDeliveryInstant: string
+  detailsDeliveryStandard: string
+  detailsActivation: string
+  detailsHowToActivate: string
   // WarningBox
   importantNotice: string
   // SystemRequirements
@@ -69,6 +80,16 @@ const defaultLabels: ProductPageTranslations = {
   productDescriptionHeading: 'About this game',
   readMore: 'Read more',
   readLess: 'Read less',
+  detailsHeading: 'Details',
+  detailsPlatform: 'Platform',
+  detailsRegion: 'Region',
+  detailsWorksOn: 'Works on',
+  detailsGenre: 'Genre',
+  detailsDelivery: 'Delivery',
+  detailsDeliveryInstant: 'Instant, by email and in My Library',
+  detailsDeliveryStandard: 'By email and in My Library',
+  detailsActivation: 'Activation',
+  detailsHowToActivate: 'How to activate',
   importantNotice: 'Important notice:',
   systemRequirementsHeading: 'System requirements',
   minimumSystemRequirements: 'Minimum',

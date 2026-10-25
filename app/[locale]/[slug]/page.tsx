@@ -5,6 +5,7 @@ import { RedirectService } from '@/lib/services/redirect.service'
 import Gallery from '@/components/product/Gallery'
 import ProductBuyBar from '@/components/product/ProductBuyBar'
 import ProductDescription from '@/components/product/hero-section/ProductDescription'
+import ProductFactsPanel from '@/components/product/hero-section/ProductFactsPanel'
 import ProductDetails from '@/components/product/hero-section/ProductDetails'
 import ProductHero, { PRODUCT_CONTAINER_CLASS } from '@/components/product/hero-section/ProductHero'
 import WarningBox from '@/components/product/hero-section/WarningBox'
@@ -361,6 +362,23 @@ export default async function ProductPage({ params }: PageProps) {
           }}
           translatedDescription={productData?.description}
           translatedDescriptionHtml={productData?.descriptionHtml}
+          details={
+            <ProductFactsPanel
+              product={product}
+              labels={{
+                heading: labels.detailsHeading,
+                platform: labels.detailsPlatform,
+                region: labels.detailsRegion,
+                worksOn: labels.detailsWorksOn,
+                genre: labels.detailsGenre,
+                delivery: labels.detailsDelivery,
+                deliveryInstant: labels.detailsDeliveryInstant,
+                deliveryStandard: labels.detailsDeliveryStandard,
+                activation: labels.detailsActivation,
+                howToActivate: labels.detailsHowToActivate,
+              }}
+            />
+          }
         />
         <SystemRequirements
           product={product}
