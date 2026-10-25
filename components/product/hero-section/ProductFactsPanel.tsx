@@ -1,3 +1,5 @@
+'use client'
+
 import Image from 'next/image'
 import { ChevronRight } from 'lucide-react'
 import { ActivationGuideModal } from '@/components/shared/ActivationGuideModal'
