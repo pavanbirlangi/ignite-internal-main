@@ -1,200 +1,220 @@
 'use client'
 
-import { useState, useMemo, useRef, useEffect } from 'react'
-import { Search, Loader2 } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import GuideCard, { GuideCardProps } from './GuideCard'
-import {
-  useActivationGuides,
-  useSearchActivationGuides,
-} from '@/hooks/useActivationGuides'
-import { useDebounce } from '@/hooks/useDebounce'
-import cmsClient from '@/lib/cms-axios'
+import { useMemo, useState, useSyncExternalStore } from 'react'
 import Link from 'next/link'
-import { ActivationGuidesResponse } from '@/lib/services/help.service'
+import { ChevronRight, Search, X } from 'lucide-react'
+import { cn, localizedHref } from '@/lib/utils'
+import {
+  ACCOUNT_CARD_CLASS,
+  ACCOUNT_PRIMARY_BUTTON_CLASS,
+  ACCOUNT_SECTION_LABEL_CLASS,
+} from '@/components/library/account-ui'
+import type { GuideSummary } from '@/lib/services/help.service'
+import type { ActivationGuidesLabels } from '@/lib/translations/activation-guides'
+import { groupGuides, guideImageUrl } from './guide-groups'
+import GuidesBreadcrumb from './GuidesBreadcrumb'
 
-// We get the base URL straight from the axios client
-const CMS_BASE_URL = cmsClient.defaults.baseURL || ''
-
-function formatDate(dateString: string | null | undefined): string {
-  const date = dateString ? new Date(dateString) : new Date()
-  return date.toLocaleDateString('en-GB', {
-    day: '2-digit',
-    month: 'short',
-    year: 'numeric',
-  })
+export interface HelpLink {
+  name: string
+  href: string
 }
-
-const PAGE_SIZE = 9
 
 interface ActivationGuidesPageProps {
-  translatedContent?: ActivationGuidesResponse['data']
+  locale: string
+  labels: ActivationGuidesLabels
+  guides: GuideSummary[]
+  helpLinks: HelpLink[]
+  // From ?category= (the guide page's breadcrumb links here with it).
+  initialCategory?: string
 }
 
+const ALL = 'all'
+
+// Phones get the short search placeholder (the long one is cut off at 390 px).
+const NARROW_QUERY = '(max-width: 639px)'
+function useNarrowScreen() {
+  return useSyncExternalStore(
+    (onChange) => {
+      const media = window.matchMedia(NARROW_QUERY)
+      media.addEventListener('change', onChange)
+      return () => media.removeEventListener('change', onChange)
+    },
+    () => window.matchMedia(NARROW_QUERY).matches,
+    () => false,
+  )
+}
+
+function chipClass(active: boolean) {
+  return cn(
+    'flex h-9 shrink-0 cursor-pointer items-center gap-1.5 rounded-full border px-3.5 text-sm font-medium whitespace-nowrap transition-colors outline-none focus-visible:ring-2 focus-visible:ring-white/40',
+    active
+      ? 'border-primary/50 bg-primary/15 text-white'
+      : 'bg-card border-border text-white/75 hover:border-white/20 hover:text-white',
+  )
+}
+
+function GuideRow({ guide, locale, letter }: { guide: GuideSummary; locale: string; letter: string }) {
+  const image = guideImageUrl(guide.image)
+  return (
+    <Link
+      href={localizedHref(locale, `/activation-guides/${guide.slug}`)}
+      className="border-border flex items-center gap-3.5 border-b px-4 py-3.5 transition-colors outline-none last:border-b-0 hover:bg-white/3 focus-visible:bg-white/5 md:px-4.5"
+    >
+      <span className="bg-secondary flex size-11 shrink-0 items-center justify-center overflow-hidden rounded-lg text-base font-bold text-white/70">
+        {image ? <img src={image} alt="" className="size-full object-cover" loading="lazy" /> : letter}
+      </span>
+      <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+        <span className="text-base font-medium text-white/95">{guide.title}</span>
+        {guide.description ? (
+          <span className="line-clamp-2 text-sm text-white/55">{guide.description}</span>
+        ) : null}
+      </span>
+      <ChevronRight className="size-4 shrink-0 text-white/40" aria-hidden />
+    </Link>
+  )
+}
+
+// Activation guides as a knowledge base: search, category chips with counts, guides as rows grouped
+// by category (images optional), and a side column with the ticket box and Help Centre links.
 export default function ActivationGuidesPage({
-  translatedContent,
+  locale,
+  labels,
+  guides,
+  helpLinks,
+  initialCategory,
 }: ActivationGuidesPageProps) {
-  const { data: response, isLoading: isLoadingGrid } = useActivationGuides()
+  const groups = useMemo(() => groupGuides(guides, labels.other), [guides, labels.other])
+  const narrow = useNarrowScreen()
+  const [query, setQuery] = useState('')
+  const [category, setCategory] = useState(
+    initialCategory && groups.some((g) => g.slug === initialCategory) ? initialCategory : ALL,
+  )
 
-  // Use pre-translated content from server if available, otherwise use client-fetched data
-  const content = translatedContent || response?.data
-
-  // Search state
-  const [searchQuery, setSearchQuery] = useState('')
-  const [isSearchFocused, setIsSearchFocused] = useState(false)
-  const debouncedQuery = useDebounce(searchQuery, 300)
-
-  const { data: searchResponse, isLoading: isSearchLoading } =
-    useSearchActivationGuides(debouncedQuery)
-  const searchResults = searchResponse?.data || []
-
-  const searchContainerRef = useRef<HTMLDivElement>(null)
-
-  // Handle clicking outside to close
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (
-        searchContainerRef.current &&
-        !searchContainerRef.current.contains(event.target as Node)
-      ) {
-        setIsSearchFocused(false)
-      }
-    }
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [])
-
-  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE)
-
-  const pageTitle = content?.page_title || 'Activation Guides'
-
-  const allGuides: GuideCardProps[] = useMemo(() => {
-    if (!content?.guides) return []
-    return content.guides.map((item, index) => {
-      const g = item.guides_id
-      return {
-        id: String(index + 1),
-        title: g.title,
-        date: formatDate(g.published_date),
-        image: `${CMS_BASE_URL}/assets/${g.image}`,
-        href: `/activation-guides/${g.slug}`,
-      }
-    })
-  }, [content])
-
-  // Still perform local filtering for the grid layout
-  const filteredGuides = useMemo(() => {
-    const query = searchQuery.trim().toLowerCase()
-    if (!query) return allGuides
-    return allGuides.filter((g) => g.title.toLowerCase().includes(query))
-  }, [searchQuery, allGuides])
-
-  const visibleGuides = filteredGuides.slice(0, visibleCount)
-  const hasMore = visibleCount < filteredGuides.length
-
-  // Reset pagination when search changes
-  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchQuery(e.target.value)
-    setVisibleCount(PAGE_SIZE)
-    setIsSearchFocused(true)
+  const pickCategory = (slug: string) => {
+    setCategory(slug)
+    // Keep the choice in the address (shareable, survives back) without a navigation.
+    const url = new URL(window.location.href)
+    if (slug === ALL) url.searchParams.delete('category')
+    else url.searchParams.set('category', slug)
+    window.history.replaceState(window.history.state, '', url)
   }
 
-  const showSuggestions = isSearchFocused && debouncedQuery.trim().length > 0
+  const needle = query.trim().toLowerCase()
+  const shown = groups
+    .filter((group) => category === ALL || group.slug === category)
+    .map((group) => ({
+      ...group,
+      guides: needle
+        ? group.guides.filter((g) =>
+            [g.title, g.description, group.name].some((text) => text?.toLowerCase().includes(needle)),
+          )
+        : group.guides,
+    }))
+    .filter((group) => group.guides.length > 0)
+
+  // One group (no categories set yet) needs neither chips nor a section heading.
+  const grouped = groups.length > 1
 
   return (
-    <div className="container py-12 [--max-width-container:1297px] md:py-16">
-      {/* Header Section */}
-      <div className="mb-10 flex flex-col items-start gap-6 md:mb-12 md:flex-row md:items-center md:justify-between">
-        <h1 className="text-2xl font-bold text-white/95 capitalize md:text-3xl lg:text-3xl">
-          {pageTitle}
-        </h1>
+    <div className="container pt-6 pb-16 md:pt-8 md:pb-24">
+      <GuidesBreadcrumb locale={locale} items={[{ name: labels.helpCentre, path: '/help' }, { name: labels.pageTitle }]} />
 
-        <div
-          className="relative w-full sm:max-w-130.5"
-          ref={searchContainerRef}
-        >
-          <Search className="text-white/65 absolute top-1/2 left-4 size-6 -translate-y-1/2" />
-          <input
-            type="text"
-            placeholder="Search here"
-            value={searchQuery}
-            onChange={handleSearch}
-            onFocus={() => setIsSearchFocused(true)}
-            className="border-muted-foreground/40 text-white/95 placeholder:text-muted-foreground focus:border-primary bg-background h-12.5 w-full rounded-full border pr-12 pl-10 text-xl font-medium transition-colors outline-none"
-          />
-          {isSearchLoading && (
-            <div className="text-white/65 absolute top-1/2 right-4 -translate-y-1/2">
-              <Loader2 className="size-4 animate-spin" />
-            </div>
-          )}
+      <h1 className="mt-3.5 text-2xl leading-tight font-bold text-white/95 md:text-3xl">{labels.pageTitle}</h1>
+      <p className="mt-2 text-base text-white/65">{labels.subtitle}</p>
 
-          {/* Autocomplete Dropdown */}
-          {showSuggestions && (
-            <div className="border-border bg-background absolute top-[calc(100%+8px)] left-0 z-50 w-full rounded-[12px] border p-2 shadow-xl">
-              {isSearchLoading ? (
-                <div className="text-white/65 px-4 py-3 text-sm">
-                  Loading suggestions...
-                </div>
-              ) : searchResults.length > 0 ? (
-                <ul className="flex max-h-[300px] flex-col overflow-y-auto">
-                  {searchResults.map((result) => (
-                    <li key={result.slug}>
-                      <Link
-                        href={`/activation-guides/${result.slug}`}
-                        className="text-white/65 block rounded-[8px] px-4 py-3 text-sm transition-colors hover:bg-white/5 hover:text-white"
-                      >
-                        {result.title}
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <div className="text-white/65 px-4 py-3 text-sm">
-                  No guides found for &quot;{debouncedQuery}&quot;.
-                </div>
-              )}
-            </div>
-          )}
-        </div>
+      <div className="relative mt-6 max-w-160">
+        <Search className="pointer-events-none absolute top-1/2 left-4.5 size-4.5 -translate-y-1/2 text-white/45" />
+        <input
+          type="search"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder={narrow ? labels.searchPlaceholderShort : labels.searchPlaceholder}
+          aria-label={labels.searchPlaceholderShort}
+          className="bg-card border-border h-13 w-full rounded-xl border pr-11 pl-12 text-base text-white/95 transition-colors outline-none placeholder:text-white/45 hover:border-white/20 focus:border-primary/70 [&::-webkit-search-cancel-button]:hidden"
+        />
+        {query ? (
+          <button
+            type="button"
+            onClick={() => setQuery('')}
+            aria-label={labels.clearSearch}
+            className="absolute top-1/2 right-3 flex size-7 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full text-white/55 hover:bg-white/10 hover:text-white"
+          >
+            <X className="size-4" />
+          </button>
+        ) : null}
       </div>
 
-      {/* Grid Section */}
-      {!translatedContent && isLoadingGrid ? (
-        <div className="mb-16 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 lg:gap-5">
-          {Array.from({ length: PAGE_SIZE }).map((_, i) => (
-            <div key={i} className="flex animate-pulse flex-col gap-4">
-              <div className="bg-muted/30 aspect-video w-full rounded-[12px]" />
-              <div className="flex flex-col gap-2 px-0.5">
-                <div className="bg-muted/30 h-6 w-3/4 rounded" />
-                <div className="bg-muted/20 h-4 w-1/3 rounded" />
-              </div>
-            </div>
-          ))}
-        </div>
-      ) : filteredGuides.length === 0 ? (
-        <div className="text-white/65 mb-16 flex min-h-[200px] items-center justify-center text-base">
-          No guides found{searchQuery ? ` for "${searchQuery}"` : ''}.
-        </div>
-      ) : (
-        <div className="mb-16 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 lg:gap-5">
-          {visibleGuides.map((guide) => (
-            <GuideCard key={guide.id} {...guide} />
-          ))}
-        </div>
-      )}
+      {grouped ? (
+        <nav
+          aria-label={labels.pageTitle}
+          className="-mx-4 mt-5 flex gap-2 overflow-x-auto px-4 pb-1 [scrollbar-width:none] sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0"
+        >
+          {[{ slug: ALL, name: labels.all, count: guides.length }, ...groups.map((g) => ({ slug: g.slug, name: g.name, count: g.guides.length }))].map(
+            (chip) => (
+              <button
+                key={chip.slug}
+                type="button"
+                onClick={() => pickCategory(chip.slug)}
+                aria-pressed={category === chip.slug}
+                className={chipClass(category === chip.slug)}
+              >
+                {chip.name}
+                <span className="text-xs text-white/45">{chip.count}</span>
+              </button>
+            ),
+          )}
+        </nav>
+      ) : null}
 
-      {/* Load More Button */}
-      {hasMore && (translatedContent || !isLoadingGrid) && (
-        <div className="flex justify-center">
-          <Button
-            variant="secondary"
-            onClick={() => setVisibleCount((prev) => prev + PAGE_SIZE)}
-            className="border-muted-foreground bg-secondary hover:bg-secondary/80 h-[52px] min-w-[160px] rounded-[6px] border px-12 text-base font-bold text-white/95"
-          >
-            Load More
-          </Button>
+      <div className="mt-7 grid items-start gap-8 lg:grid-cols-[minmax(0,1fr)_300px] lg:gap-10">
+        <div className="flex flex-col gap-7">
+          {shown.length === 0 ? (
+            <p className={cn(ACCOUNT_CARD_CLASS, 'px-5 py-8 text-center text-base text-white/65')}>
+              {labels.noResults.replace('{query}', query.trim())}
+            </p>
+          ) : (
+            shown.map((group) => (
+              <section key={group.slug} aria-label={group.name}>
+                {grouped ? <h2 data-display className={cn(ACCOUNT_SECTION_LABEL_CLASS, 'mb-2.5')}>{group.name}</h2> : null}
+                <div className={cn(ACCOUNT_CARD_CLASS, 'overflow-hidden')}>
+                  {group.guides.map((guide) => (
+                    <GuideRow
+                      key={guide.slug}
+                      guide={guide}
+                      locale={locale}
+                      letter={(guide.category?.name || guide.title).charAt(0).toUpperCase()}
+                    />
+                  ))}
+                </div>
+              </section>
+            ))
+          )}
         </div>
-      )}
+
+        <aside className="flex flex-col gap-4">
+          <div className={cn(ACCOUNT_CARD_CLASS, 'p-5')}>
+            <p className="text-base font-bold text-white/95">{labels.helpBoxTitle}</p>
+            <p className="mt-1 mb-4 text-sm text-white/65">{labels.helpBoxText}</p>
+            <Link href={localizedHref(locale, '/help/create-ticket')} className={ACCOUNT_PRIMARY_BUTTON_CLASS}>
+              {labels.createTicket}
+            </Link>
+          </div>
+          {helpLinks.length > 0 ? (
+            <div className={cn(ACCOUNT_CARD_CLASS, 'p-5')}>
+              <p className="mb-1.5 text-base font-bold text-white/95">{labels.moreHelp}</p>
+              <ul>
+                {helpLinks.map((link) => (
+                  <li key={link.href} className="border-border border-b last:border-b-0">
+                    <Link href={link.href} className="block py-2.5 text-sm text-white/80 transition-colors hover:text-white">
+                      {link.name}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
+        </aside>
+      </div>
     </div>
   )
 }

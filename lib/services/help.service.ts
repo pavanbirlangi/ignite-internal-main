@@ -20,50 +20,68 @@ export interface ContactUsResponse {
   }
 }
 
-export interface ActivationGuide {
-  title: string
-  image: string
+// A Directus guide category (collection `guide_categories`): the editor names, orders and
+// publishes them; guides pick one. Guides without one are listed under "Other".
+export interface GuideCategory {
+  name: string
   slug: string
-  published_date: string
+  sort: number | null
 }
 
-export interface ActivationGuidesResponse {
-  data: {
-    page_title: string
-    seo?: SeoData
-    guides: {
-      guides_id: ActivationGuide
-    }[]
-  }
+// A guide as the activation guides list shows it.
+export interface GuideSummary {
+  title: string
+  slug: string
+  image: string | null
+  description: string | null
+  category: GuideCategory | null
+}
+
+// The list page's own texts (Directus singleton `activation_guide`).
+export interface ActivationGuidesPageContent {
+  page_title: string | null
+  subtitle?: string | null
+  help_box_title?: string | null
+  help_box_text?: string | null
+  seo?: SeoData
 }
 
 export interface RelatedGuide {
   title: string
-  image: string
   slug: string
-  published_date: string
 }
 
 export interface GuideDetail {
   id: string
   title: string
-  description: string
-  image: string
+  description: string | null
+  image: string | null
   content: string
-  tags: string[]
-  author_name: string
-  author_profile: string
+  tags: string[] | null
+  author_name: string | null
   slug: string
-  published_date: string
-  date_updated?: string
+  published_date: string | null
+  date_updated?: string | null
+  category?: GuideCategory | null
   related_guides: {
-    related_guides_id: RelatedGuide
+    related_guides_id: RelatedGuide | null
   }[]
 }
 
-export interface SearchGuideResult {
-  title: string
-  slug: string
+const GUIDE_LIST_FIELDS = 'title,slug,image,description'
+const CATEGORY_FIELDS = 'category.name,category.slug,category.sort'
+const PUBLISHED = 'filter[status][_eq]=published'
+
+// Directus refuses a query that names a field it doesn't know. Until the knowledge base fields
+// exist (scripts/directus/activation-guides-kb.mjs), ask again without them.
+async function getWithOptionalFields<T>(url: (optional: boolean) => string): Promise<T> {
+  try {
+    return (await cmsClient.get(url(true))).data
+  } catch (error) {
+    const status = (error as { response?: { status?: number } })?.response?.status
+    if (status !== 403 && status !== 400) throw error
+    return (await cmsClient.get(url(false))).data
+  }
 }
 
 export interface HelpIssueType {
@@ -157,39 +175,30 @@ export const HelpService = {
     return response.data
   },
 
-  getActivationGuides: async (): Promise<ActivationGuidesResponse> => {
-    const response = await cmsClient.get(
-      '/items/activation_guide?fields=page_title,guides.guides_id.title,guides.guides_id.image,guides.guides_id.slug,guides.guides_id.published_date,seo.*',
-    )
-    return response.data
-  },
+  // The list page's texts and SEO.
+  getActivationGuidesPage: async (): Promise<{ data: ActivationGuidesPageContent }> =>
+    getWithOptionalFields((optional) =>
+      `/items/activation_guide?fields=page_title,seo.*${optional ? ',subtitle,help_box_title,help_box_text' : ''}`,
+    ),
+
+  // Every published guide, in the editor's order (drag and drop in Directus), then by title.
+  getAllActivationGuides: async (): Promise<{ data: GuideSummary[] }> =>
+    getWithOptionalFields((optional) =>
+      `/items/guides?${PUBLISHED}&sort=sort,title&limit=-1&fields=${GUIDE_LIST_FIELDS}${optional ? `,${CATEGORY_FIELDS}` : ''}`,
+    ),
 
   getActivationGuideBySlug: async (
     slug: string,
   ): Promise<{ data: GuideDetail[] }> => {
-    const filter = encodeURIComponent(JSON.stringify({ slug: { _eq: slug } }))
-    const response = await cmsClient.get(
-      `/items/guides?filter=${filter}&fields=*,related_guides.related_guides_id.title,related_guides.related_guides_id.image,related_guides.related_guides_id.slug,related_guides.related_guides_id.published_date`,
+    const filter = encodeURIComponent(JSON.stringify({ slug: { _eq: slug }, status: { _eq: 'published' } }))
+    return getWithOptionalFields((optional) =>
+      `/items/guides?filter=${filter}&fields=id,title,description,image,content,tags,author_name,slug,published_date,date_updated,related_guides.related_guides_id.title,related_guides.related_guides_id.slug${optional ? `,${CATEGORY_FIELDS}` : ''}`,
     )
-    return response.data
   },
 
   getContactUsPage: async (): Promise<ContactUsResponse> => {
     const response = await cmsClient.get(
       '/items/contact_us?fields=*,contact_types.*,seo.*',
-    )
-    return response.data
-  },
-
-  searchActivationGuides: async (
-    query: string,
-  ): Promise<{ data: SearchGuideResult[] }> => {
-    if (!query) return { data: [] }
-    const filter = encodeURIComponent(
-      JSON.stringify({ title: { _icontains: query } }),
-    )
-    const response = await cmsClient.get(
-      `/items/guides?filter=${filter}&fields=title,slug`,
     )
     return response.data
   },

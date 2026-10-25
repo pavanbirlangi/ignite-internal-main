@@ -12,7 +12,7 @@ const link = (title: string, path: string, note?: string) =>
   `- [${title.replace(/[[\]]/g, '')}](${SITE_URL}${path})${note ? `: ${note}` : ''}`
 
 async function guides(): Promise<string[]> {
-  const { data } = await cmsClient.get('/items/guides?fields=slug,title&sort=title&limit=-1')
+  const { data } = await cmsClient.get('/items/guides?fields=slug,title&filter[status][_eq]=published&sort=title&limit=-1')
   return (data.data ?? [])
     .filter((guide: { slug?: string; title?: string }) => guide.slug && guide.title)
     .map((guide: { slug: string; title: string }) => link(guide.title, `/activation-guides/${guide.slug}`))

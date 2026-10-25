@@ -1,204 +1,120 @@
-'use client'
-
-import { useMemo } from 'react'
-import { GuideDetail } from '@/lib/services/help.service'
-import { useActivationGuideDetail } from '@/hooks/useActivationGuides'
-import cmsClient from '@/lib/cms-axios'
-import GuideCard, { GuideCardProps } from './GuideCard'
+import Link from 'next/link'
+import { ChevronRight } from 'lucide-react'
+import { cn, localizedHref } from '@/lib/utils'
+import { ACCOUNT_CARD_CLASS, ACCOUNT_PRIMARY_BUTTON_CLASS } from '@/components/library/account-ui'
+import type { GuideDetail, GuideSummary } from '@/lib/services/help.service'
+import type { ActivationGuidesLabels } from '@/lib/translations/activation-guides'
+import { guideImageUrl, OTHER_GROUP } from './guide-groups'
+import GuidesBreadcrumb from './GuidesBreadcrumb'
 import styles from './GuideContent.module.css'
-import { notFound } from 'next/navigation'
 
 interface ActivationGuideDetailProps {
-  id: string // slug from the URL
-  translatedContent?: GuideDetail
+  locale: string
+  labels: ActivationGuidesLabels
+  guide: GuideDetail
+  // The other guides to suggest, already in order.
+  otherGuides: GuideSummary[]
+  // The guide's category as the list names it (translated); null when it has none.
+  categoryName: string | null
 }
 
-const CMS_BASE_URL = cmsClient.defaults.baseURL || ''
-
-function formatDate(dateString: string): string {
-  const date = new Date(dateString)
-  return date.toLocaleDateString('en-GB', {
-    day: '2-digit',
-    month: 'short',
-    year: 'numeric',
-  })
-}
-
-function timeAgo(dateString: string): string {
-  const date = new Date(dateString)
-  const now = new Date()
-  const diffMs = now.getTime() - date.getTime()
-  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24))
-  if (diffDays === 0) return 'Today'
-  if (diffDays === 1) return '1 day ago'
-  if (diffDays < 30) return `${diffDays} days ago`
-  const diffMonths = Math.floor(diffDays / 30)
-  if (diffMonths === 1) return '1 month ago'
-  if (diffMonths < 12) return `${diffMonths} months ago`
-  const diffYears = Math.floor(diffMonths / 12)
-  return diffYears === 1 ? '1 year ago' : `${diffYears} years ago`
-}
-
-// Skeleton placeholder
-function DetailSkeleton() {
-  return (
-    <div className="flex animate-pulse flex-col pb-16 md:pb-24">
-      <div className="container [--max-width-container:1280px]">
-        <article className="mx-auto flex w-full max-w-[1120px] flex-col gap-[72px]">
-          <div className="flex flex-col gap-12">
-            <div className="flex flex-col gap-[48px]">
-              <div className="bg-muted/30 h-12 w-3/4 rounded" />
-              <div className="space-y-3">
-                <div className="bg-muted/20 h-4 w-full rounded" />
-                <div className="bg-muted/20 h-4 w-5/6 rounded" />
-                <div className="bg-muted/20 h-4 w-4/6 rounded" />
-              </div>
-            </div>
-            <div className="bg-muted/30 relative aspect-[16/9] w-full rounded-[12px]" />
-          </div>
-          <div className="space-y-4">
-            <div className="bg-muted/30 h-6 w-1/3 rounded" />
-            <div className="bg-muted/20 h-4 w-full rounded" />
-            <div className="bg-muted/20 h-4 w-full rounded" />
-          </div>
-        </article>
-      </div>
-    </div>
-  )
-}
-
-export default function ActivationGuideDetail({
-  id,
-  translatedContent,
-}: ActivationGuideDetailProps) {
-  const { data: response, isLoading } = useActivationGuideDetail(id)
-
-  const guide: GuideDetail | null = useMemo(() => {
-    if (translatedContent) return translatedContent
-    if (!response?.data?.length) return null
-    return response.data[0]
-  }, [response, translatedContent])
-
-  const relatedGuides: GuideCardProps[] = useMemo(() => {
-    if (!guide?.related_guides) return []
-    return guide.related_guides.map((item, index) => {
-      const g = item.related_guides_id
-      return {
-        id: String(index + 1),
-        title: g.title,
-        date: formatDate(g.published_date),
-        image: `${CMS_BASE_URL}/assets/${g.image}`,
-        href: `/activation-guides/${g.slug}`,
-      }
+function formatDate(value: string, locale: string): string | null {
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return null
+  try {
+    return date.toLocaleDateString(locale.toLowerCase() === 'en' ? 'en-GB' : locale, {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric',
     })
-  }, [guide])
-
-  if (!translatedContent && isLoading) return <DetailSkeleton />
-
-  if (!guide) {
-    notFound()
+  } catch {
+    return date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
   }
+}
+
+// One guide: breadcrumb, title, "By ... · Updated ..." only when set, optional header image, the
+// steps from Directus, a ticket box, and other guides beside it (below it on phones).
+export default function ActivationGuideDetail({
+  locale,
+  labels,
+  guide,
+  otherGuides,
+  categoryName,
+}: ActivationGuideDetailProps) {
+  const image = guideImageUrl(guide.image)
+  const updated = guide.date_updated || guide.published_date
+  const updatedText = updated ? formatDate(updated, locale) : null
+  const meta = [
+    guide.author_name?.trim() ? labels.by.replace('{name}', guide.author_name.trim()) : null,
+    updatedText ? labels.updated.replace('{date}', updatedText) : null,
+  ]
+    .filter(Boolean)
+    .join(' · ')
+  const categorySlug = guide.category?.slug || OTHER_GROUP
 
   return (
-    <div className="flex flex-col pt-8 pb-16 md:pt-15 md:pb-24">
-      <div className="container [--max-width-container:1280px]">
-        <article className="mx-auto flex w-full max-w-[1120px] flex-col gap-[72px]">
-          {/* Intro Block: Title + Description + Banner */}
-          <div className="flex flex-col gap-12">
-            <div className="flex flex-col gap-[48px]">
-              {/* Title */}
-              <h1 className="text-3xl font-bold text-white/95 capitalize">
-                {guide.title}
-              </h1>
+    <div className="container pt-6 pb-16 md:pt-8 md:pb-24">
+      <GuidesBreadcrumb
+        locale={locale}
+        items={[
+          { name: labels.helpCentre, path: '/help' },
+          { name: labels.pageTitle, path: '/activation-guides' },
+          ...(categoryName ? [{ name: categoryName, path: `/activation-guides?category=${categorySlug}` }] : []),
+        ]}
+      />
 
-              {/* Description */}
-              <p className="text-base text-white/95">
-                {guide.description}
-              </p>
+      <div className="mt-3.5 grid items-start gap-10 lg:grid-cols-[minmax(0,1fr)_300px]">
+        <article className="min-w-0 max-w-190">
+          <h1 className="text-2xl leading-tight font-bold text-white/95 md:text-3xl">{guide.title}</h1>
+          {meta ? <p className="mt-2.5 text-sm text-white/50">{meta}</p> : null}
+          {guide.description?.trim() ? (
+            <p className="mt-4 text-base text-white/65">{guide.description}</p>
+          ) : null}
+
+          {image ? (
+            <div className="bg-secondary mt-6 overflow-hidden rounded-xl">
+              <img src={image} alt={guide.title} className="max-h-90 w-full object-cover" />
             </div>
+          ) : null}
 
-            {/* Hero Banner */}
-            <div className="bg-secondary relative aspect-[16/9] w-full overflow-hidden rounded-[12px]">
-              <img
-                src={`${CMS_BASE_URL}/assets/${guide.image}`}
-                alt={guide.title}
-                className="absolute inset-0 h-full w-full object-cover object-center"
-              />
+          <div className={cn(styles.content, 'mt-6')} dangerouslySetInnerHTML={{ __html: guide.content || '' }} />
+
+          <div className={cn(ACCOUNT_CARD_CLASS, 'mt-10 flex flex-wrap items-center justify-between gap-4 px-5 py-4')}>
+            <div>
+              <p className="text-base font-bold text-white/95">{labels.articleHelpTitle}</p>
+              <p className="text-sm text-white/65">{labels.articleHelpText}</p>
             </div>
-          </div>
-
-          {/* Rich HTML Content */}
-          <div
-            className={styles.content}
-            dangerouslySetInnerHTML={{ __html: guide.content }}
-          />
-
-          {/* Tags + Author Row */}
-          <div className="flex flex-col gap-6">
-            {/* Tags */}
-            {guide.tags?.length > 0 && (
-              <div className="border-secondary flex flex-col gap-3 border-t pt-4">
-                <div className="flex flex-wrap items-center gap-2">
-                  {guide.tags.map((tag, idx) => (
-                    <span
-                      key={idx}
-                      className="bg-secondary inline-flex cursor-default items-center justify-center rounded-[6px] p-4  text-sm font-medium text-white/95"
-                    >
-                      {tag}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Author Row */}
-            <div className="border-secondary flex flex-col items-start gap-4 border-t border-b py-4 sm:flex-row sm:items-center sm:justify-between">
-              <div className="flex items-center gap-3">
-                {guide.author_profile ? (
-                  <div className="border-border relative h-14 w-14 shrink-0 overflow-hidden rounded-full border bg-[var(--neutral-200)]">
-                    <img
-                      src={`${CMS_BASE_URL}/assets/${guide.author_profile}`}
-                      alt={guide.author_name ?? 'Author'}
-                      className="absolute inset-0 h-full w-full object-cover"
-                    />
-                  </div>
-                ) : (
-                  <div className="bg-secondary flex h-14 w-14 shrink-0 items-center justify-center rounded-full text-xl font-bold text-white/95">
-                    {(guide.author_name?.[0] ?? 'A').toUpperCase()}
-                  </div>
-                )}
-                <div className="flex flex-col gap-1">
-                  <span className="text-white/65 text-xs capitalize">
-                    written by
-                  </span>
-                  <span className="text-base font-bold text-white/95 capitalize">
-                    {guide.author_name}
-                  </span>
-                </div>
-              </div>
-              <span className="text-white/65 text-base font-medium capitalize">
-                {guide.date_updated
-                  ? `Last Updated ${timeAgo(guide.date_updated)}`
-                  : formatDate(guide.published_date)}
-              </span>
-            </div>
+            <Link href={localizedHref(locale, '/help/create-ticket')} className={ACCOUNT_PRIMARY_BUTTON_CLASS}>
+              {labels.createTicket}
+            </Link>
           </div>
         </article>
-      </div>
 
-      {/* Read Next */}
-      {relatedGuides.length > 0 && (
-        <div className="container mt-20 [--max-width-container:1280px] md:mt-28">
-          <h2 className="mb-8 text-2xl md:text-3xl font-bold text-white/95 capitalize">
-            Read Next
-          </h2>
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {relatedGuides.map((guide) => (
-              <GuideCard key={guide.id} {...guide} />
-            ))}
-          </div>
-        </div>
-      )}
+        <aside className={cn(ACCOUNT_CARD_CLASS, 'p-5')}>
+          <p className="mb-1.5 text-base font-bold text-white/95">{labels.otherGuides}</p>
+          {otherGuides.length > 0 ? (
+            <ul>
+              {otherGuides.map((other) => (
+                <li key={other.slug} className="border-border border-b">
+                  <Link
+                    href={localizedHref(locale, `/activation-guides/${other.slug}`)}
+                    className="block py-2.5 text-sm text-white/80 transition-colors hover:text-white"
+                  >
+                    {other.title}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          ) : null}
+          <Link
+            href={localizedHref(locale, '/activation-guides')}
+            className="mt-3 inline-flex items-center gap-1 text-sm font-medium text-[#5B93F0] hover:underline"
+          >
+            {labels.allGuides}
+            <ChevronRight className="size-3.5" />
+          </Link>
+        </aside>
+      </div>
     </div>
   )
 }

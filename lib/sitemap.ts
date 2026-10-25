@@ -36,7 +36,7 @@ async function productPages(): Promise<SitemapPage[]> {
 }
 
 async function guidePages(): Promise<SitemapPage[]> {
-  const { data } = await cmsClient.get('/items/guides?fields=slug,date_updated,published_date&limit=-1')
+  const { data } = await cmsClient.get('/items/guides?fields=slug,date_updated,published_date&filter[status][_eq]=published&limit=-1')
   return (data.data ?? [])
     .filter((guide: { slug?: string }) => guide.slug)
     .map((guide: { slug: string; date_updated?: string | null; published_date?: string | null }) => ({
