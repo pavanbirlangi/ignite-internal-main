@@ -53,7 +53,8 @@ export default function NotFoundContent({ featuredDeals = [] }: { featuredDeals?
           className="bg-card border-border mt-7 flex h-13 w-full max-w-140 cursor-text items-center gap-3 rounded-xl border px-4.5 text-left text-base text-white/45 transition-colors outline-none hover:border-white/20 focus-visible:ring-2 focus-visible:ring-white/40"
         >
           <Search className="size-4.5 shrink-0" />
-          Search games, gift cards and software
+          <span className="truncate sm:hidden">Search games and more</span>
+          <span className="hidden truncate sm:inline">Search games, gift cards and software</span>
         </button>
 
         <nav aria-label="Platforms" className="mt-4 flex flex-wrap justify-center gap-2">
