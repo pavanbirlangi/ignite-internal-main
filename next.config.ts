@@ -3,8 +3,12 @@ import type { NextConfig } from 'next'
 const nextConfig: NextConfig = {
   compress: true,
   images: {
-    // Next.js image optimization enabled — serves WebP/AVIF and resizes to display dimensions
-    formats: ['image/avif', 'image/webp'],
+    // Next.js image optimization: resized to the displayed size, served as WebP. On Cloudflare
+    // every size and format is a billed "unique transformation" (5,000 a month included), so
+    // WebP only (every current browser) and a short list of widths keep that count low.
+    formats: ['image/webp'],
+    deviceSizes: [640, 828, 1200, 1920],
+    imageSizes: [96, 256, 384],
     // Cache optimized images on the server for 24 hours
     minimumCacheTTL: 86400,
     // Show images in the browser when opened on their own ("Open image in new tab") instead of

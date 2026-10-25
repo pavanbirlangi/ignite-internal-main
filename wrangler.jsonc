@@ -22,6 +22,10 @@
       "id": "bf82d88d070643c48dc0ab9e02b58aa8"
     }
   ],
+  // Cloudflare Images: resizes /_next/image requests (without it the originals are sent).
+  "images": {
+    "binding": "IMAGES"
+  },
   // Keep the *.workers.dev test address alongside the live domains.
   "workers_dev": true,
   // The live site. Cloudflare creates the DNS records for these names.
