@@ -1,7 +1,7 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "increddy-storefront",
-  "main": ".open-next/worker.js",
+  "main": "custom-worker.js",
   "compatibility_date": "2026-10-01",
   "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
   "assets": {
@@ -22,6 +22,11 @@
       "id": "bf82d88d070643c48dc0ab9e02b58aa8"
     }
   ],
+  // Run the worker near the backend (Mumbai) when that's faster than near the visitor: pages make
+  // several backend calls each.
+  "placement": {
+    "mode": "smart"
+  },
   // Cloudflare Images: resizes /_next/image requests (without it the originals are sent).
   "images": {
     "binding": "IMAGES"
