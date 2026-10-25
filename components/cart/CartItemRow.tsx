@@ -42,7 +42,9 @@ export function CartItemRow({
     />
   )
   const coverClass = cn(
-    'bg-secondary relative block aspect-[3/4] w-18 shrink-0 overflow-hidden rounded-[10px] sm:w-22',
+    // self-start: the row is a stretching flex row, and some browsers let that stretch beat
+    // aspect-ratio, so a taller row (e.g. with a sale price) pulled the cover out of shape.
+    'bg-secondary relative block aspect-[3/4] w-18 shrink-0 self-start overflow-hidden rounded-[10px] sm:w-22',
     soldOut ? 'opacity-50 grayscale' : 'transition-opacity hover:opacity-90',
   )
 
