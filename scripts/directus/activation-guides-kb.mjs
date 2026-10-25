@@ -106,8 +106,8 @@ const STATUS_CHOICES = [
 
 async function main() {
   await login()
-  const me = await get('/users/me?fields=email,role.name,role.admin_access')
-  console.log(`Signed in to ${BASE} as ${me.email}`)
+  const me = await get('/users/me?fields=email,role.name')
+  console.log(`Signed in to ${BASE} as ${me.email} (${me.role?.name ?? 'no role'})`)
 
   // Directus 11 keeps permissions on policies; 10 on roles. Find the public one either way.
   const policies = await tryGet('/policies?fields=id,name&limit=-1')
