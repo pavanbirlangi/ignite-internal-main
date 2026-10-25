@@ -43,6 +43,7 @@ import { MobileSearch } from './MobileSearch'
 import { PlatformNav, type PlatformNavItem } from './navbar/PlatformNav'
 import { UserMenu } from './navbar/UserMenu'
 import type { NavbarData } from '@/lib/services/navbar.service'
+import { OPEN_SEARCH_EVENT } from '@/lib/utils/open-search'
 
 // Used when the CMS navbar has no items. Each icon sits in a div so it lifts like the CMS icons.
 const DEFAULT_PLATFORM_ITEMS: PlatformNavItem[] = [
@@ -135,6 +136,17 @@ export default function Navbar({
     }
     window.addEventListener('keydown', onShortcut)
     return () => window.removeEventListener('keydown', onShortcut)
+  }, [navHidden, openSearch])
+
+  // Other parts of the page can open the search too (openSiteSearch, e.g. the 404 page).
+  useEffect(() => {
+    if (navHidden) return
+    const onOpen = () => {
+      if (window.matchMedia('(min-width: 1024px)').matches) openSearch()
+      else setMobileSearchOpen(true)
+    }
+    window.addEventListener(OPEN_SEARCH_EVENT, onOpen)
+    return () => window.removeEventListener(OPEN_SEARCH_EVENT, onOpen)
   }, [navHidden, openSearch])
 
   useEffect(() => {
