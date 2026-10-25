@@ -26,7 +26,9 @@ const resetSchema = z
 
 type ResetFormValues = z.infer<typeof resetSchema>
 
-export function ResetPasswordForm({ token }: { token: string }) {
+// `setup`: the customer signs in with Google or an email code and is choosing a first password
+// (the "set a password" email links here with &set=1, R-94); only the wording differs.
+export function ResetPasswordForm({ token, setup = false }: { token: string; setup?: boolean }) {
   const [isLoading, setIsLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
@@ -61,17 +63,25 @@ export function ResetPasswordForm({ token }: { token: string }) {
 
         useUserStore.getState().setIsAuthenticated(true)
 
-        toast.success('Password reset successful. You are now logged in.')
+        toast.success(
+          setup
+            ? 'Password set. You can now also sign in with your email and password.'
+            : 'Password reset successful. You are now logged in.',
+        )
         router.push('/')
       } else {
-        toast.success('Password updated. Please log in with your new password.')
+        toast.success(
+          setup
+            ? 'Password set. Please sign in with your email and new password.'
+            : 'Password updated. Please log in with your new password.',
+        )
         router.push('/')
       }
     } catch (err: any) {
       console.error('Reset failed:', err)
       const message =
         err?.response?.data?.message ||
-        'This reset link is invalid or has expired. Please request a new one.'
+        `This ${setup ? 'link' : 'reset link'} is invalid or has expired. Please request a new one.`
       toast.error(message)
     } finally {
       setIsLoading(false)
@@ -81,7 +91,7 @@ export function ResetPasswordForm({ token }: { token: string }) {
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="w-full">
       <div className="mb-5 flex flex-col gap-4">
-        <Field label="New password" error={errors.password?.message}>
+        <Field label={setup ? 'Password' : 'New password'} error={errors.password?.message}>
           <span className="relative block">
             <Input
               type={showPassword ? 'text' : 'password'}
@@ -100,7 +110,7 @@ export function ResetPasswordForm({ token }: { token: string }) {
           </span>
         </Field>
 
-        <Field label="Confirm new password" error={errors.confirmPassword?.message}>
+        <Field label={setup ? 'Confirm password' : 'Confirm new password'} error={errors.confirmPassword?.message}>
           <span className="relative block">
             <Input
               type={showConfirmPassword ? 'text' : 'password'}
@@ -121,7 +131,7 @@ export function ResetPasswordForm({ token }: { token: string }) {
       </div>
 
       <Button type="submit" variant="primary" loading={isLoading} className={SUBMIT_CLASS}>
-        Reset password
+        {setup ? 'Set password' : 'Reset password'}
       </Button>
     </form>
   )
