@@ -25,7 +25,11 @@ const imageCachingWorker = {
 
     const cache = caches.default
     const cached = await cache.match(cacheKey)
-    if (cached) return cached
+    if (cached) {
+      const hit = new Response(cached.body, cached)
+      hit.headers.set('X-Image-Cache', 'HIT')
+      return hit
+    }
 
     const response = await worker.fetch(request, env, ctx)
     if (!response.ok) return response
@@ -33,6 +37,7 @@ const imageCachingWorker = {
     const cacheable = new Response(response.body, response)
     cacheable.headers.set('Cache-Control', `public, max-age=${IMAGE_CACHE_SECONDS}`)
     ctx.waitUntil(cache.put(cacheKey, cacheable.clone()))
+    cacheable.headers.set('X-Image-Cache', 'MISS')
     return cacheable
   },
 }
