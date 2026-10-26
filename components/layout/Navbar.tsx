@@ -262,8 +262,11 @@ export default function Navbar({
                 width={100}
                 height={100}
                 className="h-4 sm:h-5 w-auto"
-                quality={100}
-                unoptimized
+                // Directus serves the logo as an 889 px PNG (73 KB) for a ~200 px slot: resized to
+                // WebP like other images (an SVG fallback is served as is by lib/image-loader.ts).
+                // At the top of every page, so it isn't lazy-loaded.
+                sizes="(max-width: 640px) 150px, 210px"
+                loading="eager"
               />
             </Link>
           </div>
