@@ -41,13 +41,16 @@ export default function GoogleAnalytics({ gaId }: { gaId: string }) {
 
   return (
     <>
+      {/* lazyOnload: the 180 KB tag waits until the page has loaded, so it doesn't compete with
+          the hero image and the page's own scripts (it cost Lighthouse ~130 ms of main thread).
+          Page views are still sent once it's ready. */}
       <Script
         src={`https://www.googletagmanager.com/gtag/js?id=${gaId}`}
-        strategy="afterInteractive"
+        strategy="lazyOnload"
       />
       <Script
         id="google-analytics"
-        strategy="afterInteractive"
+        strategy="lazyOnload"
         onReady={() => setReady(true)}
       >
         {`
