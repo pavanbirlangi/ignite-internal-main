@@ -1,9 +1,9 @@
 // Cloudflare Worker entry: the OpenNext worker, plus two edge caches.
 //
 // 1. Resized images. OpenNext resizes /_next/image through the Cloudflare Images binding on every
-//    request and caches nothing, so each view paid ~0.6 s for a fresh resize. The resized image is
-//    kept for a week, keyed by the URL and by whether the browser takes WebP (the only format
-//    next.config.ts asks for).
+//    request and caches nothing, so each view paid ~0.6 s or more for a fresh resize. The resized
+//    image is kept for a week (data centre cache + KV), keyed by the URL and by whether the browser
+//    takes WebP (the only format next.config.ts asks for).
 // 2. Pages for signed-out visitors. Every page is rendered per request (prices follow the
 //    visitor's currency), which took ~1 s of server time before the first byte. A rendered page is
 //    kept (in KV, global) per address + region cookies + IP country and served from there: fresh for 60 s,
@@ -108,11 +108,14 @@ async function handlePage(request, env, ctx, key) {
   return out
 }
 
+// Resized images: the data centre's cache first, then KV (global: a resize made anywhere is
+// reused everywhere), and only then a fresh resize.
 async function handleImage(request, env, ctx, url) {
   const format = (request.headers.get('accept') || '').includes('image/webp') ? 'webp' : 'original'
   const cacheUrl = new URL(url)
   cacheUrl.searchParams.set('_format', format)
   const cacheKey = new Request(cacheUrl.toString(), { method: 'GET' })
+  const kvKey = `img:${format}:${url.search}`.slice(0, 512)
 
   const cache = caches.default
   const cached = await cache.match(cacheKey)
@@ -122,12 +125,30 @@ async function handleImage(request, env, ctx, url) {
     return hit
   }
 
+  if (env.PAGE_CACHE_KV) {
+    const { value, metadata } = await env.PAGE_CACHE_KV.getWithMetadata(kvKey, { type: 'arrayBuffer' })
+    if (value) {
+      const fromKv = new Response(value, {
+        headers: { 'Content-Type': metadata?.contentType || 'image/webp', 'Cache-Control': `public, max-age=${IMAGE_CACHE_SECONDS}` },
+      })
+      ctx.waitUntil(cache.put(cacheKey, fromKv.clone()))
+      fromKv.headers.set('X-Image-Cache', 'HIT-KV')
+      return fromKv
+    }
+  }
+
   const response = await worker.fetch(request, env, ctx)
   if (!response.ok) return response
 
-  const cacheable = new Response(response.body, response)
-  cacheable.headers.set('Cache-Control', `public, max-age=${IMAGE_CACHE_SECONDS}`)
+  const body = await response.arrayBuffer()
+  const contentType = response.headers.get('content-type') || 'image/webp'
+  const cacheable = new Response(body, {
+    headers: { 'Content-Type': contentType, 'Cache-Control': `public, max-age=${IMAGE_CACHE_SECONDS}` },
+  })
   ctx.waitUntil(cache.put(cacheKey, cacheable.clone()))
+  if (env.PAGE_CACHE_KV && body.byteLength < 25 * 1024 * 1024) {
+    ctx.waitUntil(env.PAGE_CACHE_KV.put(kvKey, body, { expirationTtl: IMAGE_CACHE_SECONDS, metadata: { contentType } }))
+  }
   cacheable.headers.set('X-Image-Cache', 'MISS')
   return cacheable
 }
