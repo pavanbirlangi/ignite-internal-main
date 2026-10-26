@@ -106,6 +106,7 @@ export interface HelpTopic {
   create_ticket_global?: boolean
   issue_type: {
     name: string
+    slug?: string
     create_ticket_global?: boolean
     redirect?: string | null
   }
@@ -122,6 +123,7 @@ export interface HelpArticle {
   create_ticket_global?: boolean
   help_subtopics: {
     title: string
+    slug?: string
     create_ticket_global?: boolean
     redirect?: string | null
   }
@@ -143,6 +145,23 @@ export const HelpService = {
   getHelpItems: async (): Promise<HelpDataResponse> => {
     const response = await cmsClient.get(
       '/items/help?fields=*,issue_types.help_issues_types_id.*,seo.*',
+    )
+    return response.data
+  },
+
+  // Every published topic with its issue type (the hub's search, a category page, the topic
+  // page's "other topics"), in the editor's order.
+  getAllHelpTopics: async (): Promise<{ data: HelpTopic[] }> => {
+    const response = await cmsClient.get(
+      '/items/help_subtopics?filter[status][_eq]=published&sort=sort,title&limit=-1&fields=id,status,title,description,slug,redirect,create_ticket_global,issue_type.name,issue_type.slug,issue_type.create_ticket_global,issue_type.redirect',
+    )
+    return response.data
+  },
+
+  // Every published answer with its topic (searched on the hub).
+  getAllHelpArticles: async (): Promise<{ data: HelpArticle[] }> => {
+    const response = await cmsClient.get(
+      '/items/help_articles?filter[status][_eq]=published&sort=sort&limit=-1&fields=id,status,title,body,cta_label,cta_url,help_subtopics.slug,help_subtopics.title',
     )
     return response.data
   },

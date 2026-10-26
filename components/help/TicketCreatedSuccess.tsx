@@ -1,69 +1,44 @@
 'use client'
 
-import Image from 'next/image'
+import Link from 'next/link'
 import { CheckCircle2 } from 'lucide-react'
+import { cn } from '@/lib/utils'
+import {
+  ACCOUNT_CARD_CLASS,
+  ACCOUNT_PRIMARY_BUTTON_CLASS,
+  ACCOUNT_SECONDARY_BUTTON_CLASS,
+} from '@/components/library/account-ui'
+import { TicketOrderLine } from '@/components/help/ticket/ticket-ui'
 import type { TicketCreatedSuccessProps } from '@/types/HelpTypes'
 
-export function TicketCreatedSuccess({
-  order,
-  ticketId,
-  shortId,
-  onViewDetails,
-}: TicketCreatedSuccessProps) {
+// After a ticket is sent (order ticket or general form): its reference, the order it's about,
+// and where the replies show.
+export function TicketCreatedSuccess({ order, shortId, ticketsHref, helpHref }: TicketCreatedSuccessProps) {
   return (
-    <div className="mx-auto w-full max-w-[780px]">
-      <div className="border-border bg-secondary/40 rounded-[20px] border p-6 md:p-10">
-        <h1 className="mb-2 text-xl font-bold text-white/95 md:text-3xl">
-          Ticket Created for Order Below
-        </h1>
-        <p className="text-white/65 font-medium mb-6 max-w-2xl text-sm">
-          You can check your mail or open tickets for further resolution &amp;
-          follow-ups. Please keep checking your email for future updates while
-          our team gets back to you.
-        </p>
-
-        {/* Ticket reference badge */}
-        {shortId && (
-          <div className="mb-8 flex items-center gap-3 rounded-[12px] border border-green-500/20 bg-green-500/10 px-5 py-3.5">
-            <CheckCircle2 className="size-5 shrink-0 text-green-400" />
-            <div>
-              <p className="text-xs font-medium text-green-300/80">
-                Your ticket reference
-              </p>
-              <p className="text-base font-bold text-green-300">
-                #{shortId}
-              </p>
-            </div>
-          </div>
-        )}
-
-        {/* Order Details Card */}
-        <div className="bg-secondary/30 border-border/50 flex flex-col items-start justify-between gap-4 rounded-[12px] border py-3 px-5 sm:flex-row sm:items-center">
-          <div className="flex w-full items-start gap-4 sm:w-auto">
-            {order.image ? (
-              <div className="relative h-[79px] w-[62px] shrink-0 overflow-hidden rounded-md">
-                <Image
-                  src={order.image}
-                  alt={order.id}
-                  fill
-                  className="object-cover"
-                />
-              </div>
-            ) : (
-              <div className="bg-secondary h-[79px] w-[62px] shrink-0 rounded-md" />
-            )}
-            <span className="truncate text-base font-bold text-white/95 md:text-xl">
-              {order.id}
-            </span>
-          </div>
-
-          <button
-            onClick={onViewDetails}
-            className="border-muted-foreground/50 w-full cursor-pointer rounded-[6px] border bg-transparent px-6 py-3 text-center text-sm font-bold text-white/95 transition-colors hover:bg-white/5 sm:w-auto"
-          >
-            View Details
-          </button>
+    <div className="max-w-180">
+      <div className={cn(ACCOUNT_CARD_CLASS, 'flex items-center gap-3 border-[#22C55E]/25 bg-[#22C55E]/8 px-5 py-4')}>
+        <CheckCircle2 className="size-6 shrink-0 text-[#4ADE80]" />
+        <div>
+          <p className="text-base font-bold text-white/95">Ticket sent{shortId ? ` · #${shortId}` : ''}</p>
+          <p className="text-sm text-white/65">We&apos;ll email you when we reply. Keep an eye on your inbox and spam folder.</p>
         </div>
+      </div>
+
+      {order ? (
+        <div className="mt-5">
+          <TicketOrderLine order={order} />
+        </div>
+      ) : null}
+
+      <div className="mt-6 flex flex-wrap gap-3">
+        {ticketsHref ? (
+          <Link href={ticketsHref} className={ACCOUNT_PRIMARY_BUTTON_CLASS}>
+            View my tickets
+          </Link>
+        ) : null}
+        <Link href={helpHref} className={ACCOUNT_SECONDARY_BUTTON_CLASS}>
+          Back to Help Centre
+        </Link>
       </div>
     </div>
   )

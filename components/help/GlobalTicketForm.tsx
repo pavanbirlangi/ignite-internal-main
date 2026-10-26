@@ -1,243 +1,119 @@
 'use client'
 
-import { useState, useRef } from 'react'
-import { Upload, X, Loader2 } from 'lucide-react'
-import { getValidAttachments, mergeAttachments } from '@/lib/help/ticket-form'
-import Link from 'next/link'
+import { useState } from 'react'
+import { Loader2 } from 'lucide-react'
+import { cn } from '@/lib/utils'
+import {
+  ACCOUNT_INPUT_CLASS,
+  ACCOUNT_PRIMARY_BUTTON_CLASS,
+  ACCOUNT_SECONDARY_BUTTON_CLASS,
+} from '@/components/library/account-ui'
+import {
+  TICKET_LABEL_CLASS,
+  TICKET_TEXTAREA_CLASS,
+  TicketAttachments,
+} from '@/components/help/ticket/ticket-ui'
 
 interface GlobalTicketFormProps {
-  onBack: () => void
-  onSubmit: (data: {
-    orderId: string
-    description: string
-    attachments: File[]
-    email: string
-  }) => Promise<void>
+  // The signed-in customer's email, filled in for them.
+  defaultEmail?: string
+  onSubmit: (data: { orderId: string; description: string; attachments: File[]; email: string }) => Promise<void>
   onCancel: () => void
   isSubmitting?: boolean
 }
 
-export function GlobalTicketForm({
-  onBack,
-  onSubmit,
-  onCancel,
-  isSubmitting = false,
-}: GlobalTicketFormProps) {
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+
+// The general ticket: no account needed. For questions that aren't about one order, or from
+// visitors who aren't signed in.
+export function GlobalTicketForm({ defaultEmail = '', onSubmit, onCancel, isSubmitting = false }: GlobalTicketFormProps) {
   const [orderId, setOrderId] = useState('')
-  const [email, setEmail] = useState('')
+  const [email, setEmail] = useState(defaultEmail)
   const [description, setDescription] = useState('')
   const [attachments, setAttachments] = useState<File[]>([])
   const [validationError, setValidationError] = useState('')
-  const fileInputRef = useRef<HTMLInputElement>(null)
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const validFiles = getValidAttachments(e.target.files)
-
-    setAttachments((currentAttachments) =>
-      mergeAttachments(currentAttachments, validFiles),
-    )
-
-    if (fileInputRef.current) {
-      fileInputRef.current.value = ''
-    }
-  }
-
-  const removeAttachment = (index: number) => {
-    setAttachments((prev) => prev.filter((_, i) => i !== index))
-  }
 
   const handleSubmit = async () => {
-    if (!description.trim()) {
-      setValidationError('Please describe the issue.')
-      return
-    }
-    if (!email.trim()) {
-      setValidationError('Please enter your email address.')
-      return
-    }
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-    if (!emailRegex.test(email)) {
-      setValidationError('Please enter a valid email address.')
-      return
-    }
-
+    if (!description.trim()) return setValidationError('Tell us what happened.')
+    if (!EMAIL_PATTERN.test(email.trim())) return setValidationError('Enter an email address we can reply to.')
     setValidationError('')
-
-    await onSubmit({
-      orderId,
-      description,
-      attachments,
-      email,
-    })
+    await onSubmit({ orderId: orderId.trim().replace(/^#/, ''), description, attachments, email: email.trim() })
   }
 
   return (
-    <div className="mx-auto w-full max-w-[680px]">
-      <div className="border-border bg-secondary/40 rounded-[20px] border p-6 md:px-10 md:py-6">
-        {/* Header */}
-        <div className="mb-1 flex items-center gap-3">
-          <button
-            onClick={onBack}
-            disabled={isSubmitting}
-            className="hover:text-muted-foreground cursor-pointer text-white/95 transition-colors disabled:opacity-50"
-            aria-label="Go back"
-          >
-            <svg
-              width="24"
-              height="24"
-              viewBox="0 0 24 24"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                d="M19 12H5M5 12L12 19M5 12L12 5"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-          </button>
-          <h1 className="text-xl font-bold text-white/95 md:text-3xl">
-            Create ticket
-          </h1>
-        </div>
-        <p className="text-white/65 mb-8 ml-9 text-sm font-medium">
-          Please provide details about the issue you are facing
-        </p>
+    <div className="max-w-180">
+      <h1 data-display className="text-2xl leading-tight font-bold text-white/95 md:text-3xl">Send us a ticket</h1>
+      <p className="mt-2 text-base text-white/65">Tell us what happened and we&apos;ll reply by email.</p>
 
-        <div className="space-y-6">
-          {/* Order ID */}
-          <div>
-            <label className="mb-2 block text-sm font-bold text-white/95">
-              Order ID
-            </label>
-            <input
-              type="text"
-              value={orderId}
-              onChange={(e) => setOrderId(e.target.value)}
-              disabled={isSubmitting}
-              placeholder="Enter the order id you are facing an issue with. Ex: F74h178"
-              className="bg-secondary placeholder:text-muted-foreground focus:ring-primary w-full rounded-lg px-4 py-3.5 text-sm text-white/95 focus:ring-1 focus:outline-none disabled:opacity-60"
-            />
-          </div>
+      <div className="mt-6">
+        <label htmlFor="ticket-email" className={TICKET_LABEL_CLASS}>
+          Your email<span className="ml-0.5 text-[#FF6B76]">*</span>
+        </label>
+        <input
+          id="ticket-email"
+          type="email"
+          autoComplete="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          disabled={isSubmitting}
+          placeholder="you@example.com"
+          className={ACCOUNT_INPUT_CLASS}
+        />
+      </div>
 
-          {/* Description */}
-          <div>
-            <label className="mb-2 block text-sm font-bold text-white/95">
-              Please describe the issue you are facing
-              <span className="text-red ml-0.5">*</span>
-            </label>
-            <textarea
-              value={description}
-              onChange={(e) => {
-                setDescription(e.target.value)
-                if (validationError) setValidationError('')
-              }}
-              disabled={isSubmitting}
-              placeholder="Please describe the issue in detail here"
-              rows={4}
-              className="bg-secondary placeholder:text-muted-foreground focus:ring-primary w-full resize-none rounded-lg px-4 py-3.5 text-sm text-white/95 focus:ring-1 focus:outline-none disabled:opacity-60"
-            />
-          </div>
+      <div className="mt-6">
+        <label htmlFor="ticket-order" className={TICKET_LABEL_CLASS}>
+          Order number <span className="font-normal text-white/50">(if it&apos;s about an order)</span>
+        </label>
+        <input
+          id="ticket-order"
+          inputMode="numeric"
+          value={orderId}
+          onChange={(e) => setOrderId(e.target.value)}
+          disabled={isSubmitting}
+          placeholder="e.g. 10001"
+          className={cn(ACCOUNT_INPUT_CLASS, 'max-w-60')}
+        />
+      </div>
 
-          {/* Email Address */}
-          <div>
-            <label className="mb-2 block text-sm font-bold text-white/95">
-              Enter an email address where we can contact you
-              <span className="text-red ml-0.5">*</span>
-            </label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              disabled={isSubmitting}
-              placeholder="Enter your email address"
-              className="bg-secondary placeholder:text-muted-foreground focus:ring-primary w-full rounded-lg px-4 py-3.5 text-sm text-white/95 focus:ring-1 focus:outline-none disabled:opacity-60"
-            />
-          </div>
+      <div className="mt-6">
+        <label htmlFor="ticket-description" className={TICKET_LABEL_CLASS}>
+          Tell us what happened<span className="ml-0.5 text-[#FF6B76]">*</span>
+        </label>
+        <textarea
+          id="ticket-description"
+          value={description}
+          onChange={(e) => {
+            setDescription(e.target.value)
+            if (validationError) setValidationError('')
+          }}
+          disabled={isSubmitting}
+          placeholder="The more detail, the faster we can help."
+          rows={5}
+          className={TICKET_TEXTAREA_CLASS}
+        />
+      </div>
 
-          {/* File Upload */}
-          <div>
-            <label className="mb-2 block text-sm font-bold text-white/95">
-              Provide any relevant attachments to explain your issue (upto 5
-              files).
-            </label>
-            <div
-              onClick={() => !isSubmitting && fileInputRef.current?.click()}
-              className="bg-secondary hover:bg-border flex cursor-pointer items-center justify-center gap-2 rounded-lg py-4 transition-colors aria-disabled:cursor-not-allowed aria-disabled:opacity-60"
-              aria-disabled={isSubmitting}
-            >
-              <Upload className="size-5 text-white/95" />
-              <span className="text-white/65 text-sm">
-                Upload Files (max. 2MB file)
-              </span>
-            </div>
-            <input
-              ref={fileInputRef}
-              type="file"
-              multiple
-              onChange={handleFileChange}
-              className="hidden"
-              accept="image/*,.pdf,.doc,.docx,.txt"
-              disabled={isSubmitting}
-            />
+      <div className="mt-6">
+        <TicketAttachments files={attachments} onChange={setAttachments} disabled={isSubmitting} />
+      </div>
 
-            {/* Attached files list */}
-            {attachments.length > 0 && (
-              <div className="mt-3 flex flex-wrap gap-2">
-                {attachments.map((file, i) => (
-                  <div
-                    key={`${file.name}-${i}`}
-                    className="border-border bg-secondary flex items-center gap-2 rounded-md border px-3 py-1.5 text-xs text-white/95"
-                  >
-                    <span className="max-w-[150px] truncate">{file.name}</span>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        removeAttachment(i)
-                      }}
-                      disabled={isSubmitting}
-                      className="hover:text-red cursor-pointer transition-colors disabled:cursor-not-allowed"
-                    >
-                      <X className="size-3.5" />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
+      {validationError ? <p className="mt-5 text-sm font-medium text-[#FF6B76]">{validationError}</p> : null}
 
-        {/* Validation Error */}
-        {validationError && (
-          <p className="text-red mb-4 text-sm font-medium">{validationError}</p>
-        )}
-
-        {/* Actions */}
-        <div className="mt-10 flex items-center gap-4">
-          <button
-            onClick={handleSubmit}
-            disabled={isSubmitting}
-            className="bg-primary hover:bg-primary/90 inline-flex cursor-pointer items-center gap-2 rounded-[6px] px-8 py-3 text-sm font-bold text-white/95 transition-colors disabled:cursor-not-allowed disabled:opacity-70"
-          >
-            {isSubmitting ? (
-              <>
-                <Loader2 className="size-4 animate-spin" />
-                Creating…
-              </>
-            ) : (
-              'Create ticket'
-            )}
-          </button>
-          <button
-            onClick={onCancel}
-            disabled={isSubmitting}
-            className="bg-secondary hover:bg-border cursor-pointer rounded-[6px] px-8 py-3.5 text-sm font-bold text-white/95 transition-colors disabled:cursor-not-allowed disabled:opacity-70"
-          >
-            Cancel
-          </button>
-        </div>
+      <div className="mt-7 flex items-center gap-3">
+        <button type="button" onClick={handleSubmit} disabled={isSubmitting} className={cn(ACCOUNT_PRIMARY_BUTTON_CLASS, 'h-11 px-6')}>
+          {isSubmitting ? (
+            <>
+              <Loader2 className="animate-spin" />
+              Sending…
+            </>
+          ) : (
+            'Send ticket'
+          )}
+        </button>
+        <button type="button" onClick={onCancel} disabled={isSubmitting} className={cn(ACCOUNT_SECONDARY_BUTTON_CLASS, 'h-11 px-5')}>
+          Cancel
+        </button>
       </div>
     </div>
   )

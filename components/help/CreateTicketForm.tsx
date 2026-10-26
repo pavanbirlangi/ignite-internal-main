@@ -1,353 +1,182 @@
 'use client'
 
-import { useState, useRef, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
-import Image from 'next/image'
-import { ChevronDown, Upload, X, Loader2 } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { Loader2 } from 'lucide-react'
+import { cn } from '@/lib/utils'
 import {
-  createTicketFormPayload,
-  getValidAttachments,
-  mergeAttachments,
-} from '@/lib/help/ticket-form'
+  ACCOUNT_PRIMARY_BUTTON_CLASS,
+  ACCOUNT_SECONDARY_BUTTON_CLASS,
+} from '@/components/library/account-ui'
+import {
+  TICKET_LABEL_CLASS,
+  TICKET_TEXTAREA_CLASS,
+  TicketAttachments,
+  TicketOrderLine,
+  ticketChipClass,
+} from '@/components/help/ticket/ticket-ui'
+import { createTicketFormPayload } from '@/lib/help/ticket-form'
+import { suggestedTicketIssue } from '@/lib/help/help-links'
 import type { CreateTicketFormProps } from '@/types/HelpTypes'
 
+type TicketOptions = { issues: string[]; resolutions: string[] }
+
+// The issue and resolution choices are edited in Directus (`ticket_options`).
+async function fetchTicketOptions(): Promise<TicketOptions> {
+  const baseUrl = process.env.NEXT_PUBLIC_CMS_API_URL?.replace(/\/+$/, '') || ''
+  const json = await fetch(`${baseUrl}/items/ticket_options`).then((r) => r.json())
+  const names = (list?: { name: string }[]) => (list ?? []).map((item) => item.name).filter(Boolean)
+  return { issues: names(json?.data?.issue_types), resolutions: names(json?.data?.resolution_types) }
+}
+
+// Step 2 of an order ticket: the order, what's wrong (suggested from the topic the customer read),
+// what happened, the wished resolution, and files.
 export function CreateTicketForm({
   order,
-  onBack,
+  topic,
+  onChangeOrder,
   onSubmit,
   onCancel,
   isSubmitting = false,
 }: CreateTicketFormProps) {
-  const router = useRouter()
+  const [options, setOptions] = useState<TicketOptions>({ issues: [], resolutions: [] })
   const [issue, setIssue] = useState('')
   const [description, setDescription] = useState('')
   const [resolutionType, setResolutionType] = useState('')
   const [attachments, setAttachments] = useState<File[]>([])
-  const [issueOpen, setIssueOpen] = useState(false)
-  const [resolutionOpen, setResolutionOpen] = useState(false)
   const [validationError, setValidationError] = useState('')
-  const [issueOptions, setIssueOptions] = useState<string[]>([])
-  const [resolutionOptions, setResolutionOptions] = useState<string[]>([])
-  const fileInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
-    async function fetchTicketOptions() {
-      try {
-        const baseUrl = process.env.NEXT_PUBLIC_CMS_API_URL?.replace(/\/+$/, '') || ''
-        const response = await fetch(`${baseUrl}/items/ticket_options`)
-        const json = await response.json()
-        if (json.data) {
-          if (json.data.issue_types) {
-            setIssueOptions(json.data.issue_types.map((type: { name: string }) => type.name))
-          }
-          if (json.data.resolution_types) {
-            setResolutionOptions(json.data.resolution_types.map((type: { name: string }) => type.name))
-          }
-        }
-      } catch (error) {
-        console.error('Failed to fetch ticket options:', error)
-      }
-    }
+    let cancelled = false
     fetchTicketOptions()
-  }, [])
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const validFiles = getValidAttachments(e.target.files)
-
-    setAttachments((currentAttachments) =>
-      mergeAttachments(currentAttachments, validFiles),
-    )
-
-    if (fileInputRef.current) {
-      fileInputRef.current.value = ''
+      .then((loaded) => {
+        if (cancelled) return
+        setOptions(loaded)
+        setIssue((current) => current || suggestedTicketIssue(topic?.issueTypeSlug, loaded.issues))
+      })
+      .catch((error) => console.error('Failed to fetch ticket options:', error))
+    return () => {
+      cancelled = true
     }
-  }
-
-  const removeAttachment = (index: number) => {
-    setAttachments((prev) => prev.filter((_, i) => i !== index))
-  }
+  }, [topic?.issueTypeSlug])
 
   const handleSubmit = async () => {
-    if (!issue) {
-      setValidationError('Please select an issue type.')
-      return
-    }
-    if (!description.trim()) {
-      setValidationError('Please describe the issue.')
-      return
-    }
+    if (!issue) return setValidationError("Choose what's wrong.")
+    if (!description.trim()) return setValidationError('Tell us what happened.')
     setValidationError('')
-
-    await onSubmit(
-      createTicketFormPayload(
-        order.id,
-        issue,
-        description,
-        resolutionType,
-        attachments,
-      ),
-    )
+    await onSubmit(createTicketFormPayload(order.id, issue, description, resolutionType, attachments))
   }
 
   return (
-    <div className="mx-auto w-full max-w-[680px]">
-      <div className="border-border bg-secondary/40 rounded-[20px] border p-6 md:px-10 md:py-6">
-        {/* Header */}
-        <div className="mb-1 flex items-center gap-3">
-          <button
-            onClick={onBack}
-            disabled={isSubmitting}
-            className="hover:text-muted-foreground cursor-pointer text-white/95 transition-colors disabled:opacity-50"
-            aria-label="Go back"
-          >
-            <svg
-              width="24"
-              height="24"
-              viewBox="0 0 24 24"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                d="M19 12H5M5 12L12 19M5 12L12 5"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-          </button>
-          <h1 className="text-xl font-bold text-white/95 md:text-3xl">
-            Create Ticket
-          </h1>
-        </div>
-        <p className="text-white/65 mb-8 ml-9 text-sm font-medium">
-          Please enter the fields to describe the issue facing regarding the
-          selected order.
-        </p>
+    <div className="max-w-180">
+      <h1 data-display className="text-2xl leading-tight font-bold text-white/95 md:text-3xl">Create a ticket</h1>
+      <p className="mt-2 text-base text-white/65">
+        We&apos;ll email you when we reply, and the conversation shows in My tickets.
+      </p>
 
-        {/* Selected Order Info */}
-        <div className="bg-secondary/20 border-border/20 mb-8 flex flex-col items-center justify-between gap-4 rounded-[12px] border px-5 py-3 sm:flex-row">
-          <div className="flex w-full items-center gap-4 sm:w-auto">
-            {order.image ? (
-              <div className="relative h-[79px] w-[62px] shrink-0 overflow-hidden rounded-md">
-                <Image
-                  src={order.image}
-                  alt={order.id}
-                  fill
-                  className="object-cover"
-                />
-              </div>
-            ) : (
-              <div className="bg-secondary h-[79px] w-[62px] shrink-0 rounded-md" />
-            )}
-            <div className="flex flex-col gap-1 overflow-hidden">
-              <span
-                className="text-base font-bold line-clamp-2 text-white/95 md:text-xl"
-                title={order.products}
-              >
-                {order.products || 'Product Name Not Available'}
-              </span>
-              <span className="text-white/65 text-xs font-medium uppercase">
-                Order #{order.id}
-              </span>
-            </div>
-          </div>
-          <button
-            type="button"
-            onClick={() => router.push(`/dashboard/my-orders/${order.id}`)}
-            className="border-muted-foreground/30 w-full shrink-0 cursor-pointer rounded-[6px] border bg-transparent px-6 py-3 text-center text-sm font-bold text-white/95 transition-colors hover:bg-white/5 sm:w-auto"
-          >
-            View Details
-          </button>
-        </div>
-
-        {/* Select Issue */}
-        <div className="mb-6">
-          <label className="mb-2 block text-sm font-bold text-white/95">
-            Select Issue<span className="text-red ml-0.5">*</span>
-          </label>
-          <div className="relative">
+      <div className="mt-6">
+        <span className={TICKET_LABEL_CLASS}>Order</span>
+        <TicketOrderLine
+          order={order}
+          action={
             <button
               type="button"
+              onClick={onChangeOrder}
               disabled={isSubmitting}
-              onClick={() => {
-                setIssueOpen(!issueOpen)
-                setResolutionOpen(false)
-              }}
-              className="bg-secondary hover:bg-border flex w-full cursor-pointer items-center justify-between rounded-lg p-4 text-left text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-60"
+              className="shrink-0 cursor-pointer px-1 text-sm font-medium text-[#5B93F0] hover:underline disabled:opacity-50"
             >
-              <span className={issue ? 'text-white/95' : 'text-white/65'}>
-                {issue || 'Please select your issues'}
-              </span>
-              <ChevronDown
-                className={`text-white/65 size-4 transition-transform ${issueOpen ? 'rotate-180' : ''}`}
-              />
+              Change
             </button>
-            {issueOpen && (
-              <div className="border-border bg-secondary absolute z-10 mt-1 w-full overflow-hidden rounded-lg border shadow-lg">
-                {issueOptions.map((opt) => (
-                  <button
-                    key={opt}
-                    onClick={() => {
-                      setIssue(opt)
-                      setIssueOpen(false)
-                      setValidationError('')
-                    }}
-                    className="hover:bg-border block w-full cursor-pointer px-4 py-3 text-left text-sm text-white/95 transition-colors"
-                  >
-                    {opt}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
+          }
+        />
+      </div>
 
-        {/* Description */}
-        <div className="mb-6">
-          <label className="mb-2 block text-sm font-bold text-white/95">
-            Please describe the issue you are facing
-            <span className="text-red ml-0.5">*</span>
-          </label>
-          <textarea
-            value={description}
-            onChange={(e) => {
-              setDescription(e.target.value)
-              if (validationError) setValidationError('')
-            }}
-            disabled={isSubmitting}
-            placeholder="Please describe the issue you are facing"
-            rows={4}
-            className="bg-secondary placeholder:text-muted-foreground focus:ring-primary w-full resize-none rounded-lg px-4 py-3.5 text-sm text-white/95 focus:ring-1 focus:outline-none disabled:opacity-60"
-          />
-        </div>
-
-        {/* Resolution Type */}
-        <div className="mb-6">
-          <label className="mb-2 block text-sm font-bold text-white/95">
-            Resolution Type
-          </label>
-          <div className="relative">
+      <fieldset className="mt-6" disabled={isSubmitting}>
+        <legend className={TICKET_LABEL_CLASS}>
+          What&apos;s wrong?<span className="ml-0.5 text-[#FF6B76]">*</span>
+        </legend>
+        <div className="flex flex-wrap gap-2">
+          {options.issues.map((option) => (
             <button
+              key={option}
               type="button"
-              disabled={isSubmitting}
+              aria-pressed={issue === option}
               onClick={() => {
-                setResolutionOpen(!resolutionOpen)
-                setIssueOpen(false)
+                setIssue(option)
+                setValidationError('')
               }}
-              className="bg-secondary hover:bg-border flex w-full cursor-pointer items-center justify-between rounded-lg px-4 py-3.5 text-left text-sm transition-colors disabled:cursor-not-allowed disabled:opacity-60"
+              className={ticketChipClass(issue === option)}
             >
-              <span
-                className={
-                  resolutionType ? 'text-white/95' : 'text-white/65'
-                }
-              >
-                {resolutionType ||
-                  'Select the type of resolution you would want'}
-              </span>
-              <ChevronDown
-                className={`text-white/65 size-4 transition-transform ${resolutionOpen ? 'rotate-180' : ''}`}
-              />
+              {option}
             </button>
-            {resolutionOpen && (
-              <div className="border-border bg-secondary absolute z-10 mt-1 w-full overflow-hidden rounded-lg border shadow-lg">
-                {resolutionOptions.map((opt) => (
-                  <button
-                    key={opt}
-                    onClick={() => {
-                      setResolutionType(opt)
-                      setResolutionOpen(false)
-                    }}
-                    className="hover:bg-border block w-full cursor-pointer px-4 py-3 text-left text-sm text-white/95 transition-colors"
-                  >
-                    {opt}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
+          ))}
         </div>
+        {topic ? <p className="mt-2 text-xs text-white/50">From the help topic you read: {topic.title}</p> : null}
+      </fieldset>
 
-        {/* File Upload */}
-        <div className="mb-8">
-          <label className="mb-2 block text-sm font-bold text-white/95">
-            Provide any relevant attachments to explain your issue (upto 5
-            files)
-          </label>
-          <div
-            onClick={() => !isSubmitting && fileInputRef.current?.click()}
-            className="bg-secondary hover:bg-border flex cursor-pointer items-center justify-center gap-2 rounded-lg py-4 transition-colors aria-disabled:cursor-not-allowed aria-disabled:opacity-60"
-            aria-disabled={isSubmitting}
-          >
-            <Upload className="size-5 text-white/95" />
-            <span className="text-white/65 text-sm">
-              Upload Files (max 2MB)
-            </span>
+      <div className="mt-6">
+        <label htmlFor="ticket-description" className={TICKET_LABEL_CLASS}>
+          Tell us what happened<span className="ml-0.5 text-[#FF6B76]">*</span>
+        </label>
+        <textarea
+          id="ticket-description"
+          value={description}
+          onChange={(e) => {
+            setDescription(e.target.value)
+            if (validationError) setValidationError('')
+          }}
+          disabled={isSubmitting}
+          placeholder="e.g. Steam says the key is invalid. A screenshot of the message helps."
+          rows={5}
+          className={TICKET_TEXTAREA_CLASS}
+        />
+      </div>
+
+      {options.resolutions.length > 0 ? (
+        <fieldset className="mt-6" disabled={isSubmitting}>
+          <legend className={TICKET_LABEL_CLASS}>
+            What would you like? <span className="font-normal text-white/50">(optional)</span>
+          </legend>
+          <div className="flex flex-wrap gap-2">
+            {options.resolutions.map((option) => (
+              <button
+                key={option}
+                type="button"
+                aria-pressed={resolutionType === option}
+                onClick={() => setResolutionType(resolutionType === option ? '' : option)}
+                className={ticketChipClass(resolutionType === option)}
+              >
+                {option}
+              </button>
+            ))}
           </div>
-          <input
-            ref={fileInputRef}
-            type="file"
-            multiple
-            onChange={handleFileChange}
-            className="hidden"
-            accept="image/*,.pdf,.doc,.docx,.txt"
-            disabled={isSubmitting}
-          />
+        </fieldset>
+      ) : null}
 
-          {/* Attached files list */}
-          {attachments.length > 0 && (
-            <div className="mt-3 flex flex-wrap gap-2">
-              {attachments.map((file, i) => (
-                <div
-                  key={`${file.name}-${i}`}
-                  className="border-border bg-secondary flex items-center gap-2 rounded-md border px-3 py-1.5 text-xs text-white/95"
-                >
-                  <span className="max-w-[150px] truncate">{file.name}</span>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      removeAttachment(i)
-                    }}
-                    disabled={isSubmitting}
-                    className="hover:text-red cursor-pointer transition-colors disabled:cursor-not-allowed"
-                  >
-                    <X className="size-3.5" />
-                  </button>
-                </div>
-              ))}
-            </div>
+      <div className="mt-6">
+        <TicketAttachments files={attachments} onChange={setAttachments} disabled={isSubmitting} />
+      </div>
+
+      {validationError ? <p className="mt-5 text-sm font-medium text-[#FF6B76]">{validationError}</p> : null}
+
+      <div className="mt-7 flex items-center gap-3">
+        <button
+          type="button"
+          onClick={handleSubmit}
+          disabled={isSubmitting}
+          className={cn(ACCOUNT_PRIMARY_BUTTON_CLASS, 'h-11 px-6')}
+        >
+          {isSubmitting ? (
+            <>
+              <Loader2 className="animate-spin" />
+              Sending…
+            </>
+          ) : (
+            'Send ticket'
           )}
-        </div>
-
-        {/* Validation Error */}
-        {validationError && (
-          <p className="text-red mb-4 text-sm font-medium">{validationError}</p>
-        )}
-
-        {/* Actions */}
-        <div className="flex items-center gap-4">
-          <button
-            onClick={handleSubmit}
-            disabled={isSubmitting}
-            className="bg-primary hover:bg-primary/90 inline-flex cursor-pointer items-center gap-2 rounded-[6px] px-6 py-3 text-sm font-bold text-white/95 transition-colors disabled:cursor-not-allowed disabled:opacity-70"
-          >
-            {isSubmitting ? (
-              <>
-                <Loader2 className="size-4 animate-spin" />
-                Creating…
-              </>
-            ) : (
-              'Create Ticket'
-            )}
-          </button>
-          <button
-            onClick={onCancel}
-            disabled={isSubmitting}
-            className="bg-secondary hover:bg-border cursor-pointer rounded-[6px] px-6 py-3.5 text-sm font-bold text-white/95 transition-colors disabled:cursor-not-allowed disabled:opacity-70"
-          >
-            Cancel
-          </button>
-        </div>
+        </button>
+        <button type="button" onClick={onCancel} disabled={isSubmitting} className={cn(ACCOUNT_SECONDARY_BUTTON_CLASS, 'h-11 px-5')}>
+          Cancel
+        </button>
       </div>
     </div>
   )
