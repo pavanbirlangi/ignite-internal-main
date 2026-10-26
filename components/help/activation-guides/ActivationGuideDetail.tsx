@@ -65,7 +65,7 @@ export default function ActivationGuideDetail({
 
       <div className="mt-3.5 grid items-start gap-10 lg:grid-cols-[minmax(0,1fr)_300px]">
         <article className="min-w-0 max-w-190">
-          <h1 className="text-2xl leading-tight font-bold text-white/95 md:text-3xl">{guide.title}</h1>
+          <h1 data-display className="text-2xl leading-tight font-bold text-white/95 md:text-3xl">{guide.title}</h1>
           {meta ? <p className="mt-2.5 text-sm text-white/50">{meta}</p> : null}
           {guide.description?.trim() ? (
             <p className="mt-4 text-base text-white/65">{guide.description}</p>

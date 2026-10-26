@@ -119,7 +119,7 @@ export default function ActivationGuidesPage({
     <div className="container pt-6 pb-16 md:pt-8 md:pb-24">
       <GuidesBreadcrumb locale={locale} items={[{ name: labels.helpCentre, path: '/help' }, { name: labels.pageTitle }]} />
 
-      <h1 className="mt-3.5 text-2xl leading-tight font-bold text-white/95 md:text-3xl">{labels.pageTitle}</h1>
+      <h1 data-display className="mt-3.5 text-2xl leading-tight font-bold text-white/95 md:text-3xl">{labels.pageTitle}</h1>
       <p className="mt-2 text-base text-white/65">{labels.subtitle}</p>
 
       <div className="relative mt-6 max-w-160">
