@@ -28,12 +28,9 @@
       "id": "f6f7cbe5b5d340f1a24794c75100e8ad"
     }
   ],
-  // Run the worker next to the backend (api.increddy.com, AWS Mumbai): a page makes several backend
-  // calls, so a far-away visitor pays one long hop instead of one per call. Smart placement never
-  // engaged (US pages took 1-1.8 s of server time).
-  "placement": {
-    "region": "aws:ap-south-1"
-  },
+  // No placement setting: the worker runs in the data centre nearest each visitor. Pages are served
+  // from the KV page cache there; only cache misses and background refreshes call the backend in
+  // Mumbai. (Pinning the worker to Mumbai made every cache hit travel there first: 0.6-2 s.)
   // The deployed version's id: part of the page-cache key (custom-worker.js), so a new deploy never
   // serves pages that point at the previous build's script files.
   "version_metadata": {
