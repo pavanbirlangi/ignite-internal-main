@@ -83,6 +83,11 @@ const nextConfig: NextConfig = {
   // Enable source maps in production (replacing Webpack's custom devtool configuration)
   // to allow Turbopack builds which do not support custom Webpack devtool functions.
   productionBrowserSourceMaps: true,
+  experimental: {
+    // Styles go in the HTML instead of a separate file the browser must fetch before the first
+    // paint (Lighthouse: 150-440 ms of render-blocking CSS).
+    inlineCss: true,
+  },
 }
 
 export default nextConfig
