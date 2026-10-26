@@ -89,7 +89,7 @@ export default async function Store({
         <div className="relative z-20 mt-5">
           <Suspense
             fallback={
-              <div className="mx-auto flex w-full max-w-360 flex-col gap-8 px-4 pb-32">
+              <div className="mx-auto flex w-full max-w-360 flex-col gap-8 px-4 pb-16 md:pb-20">
                 <div className="grid grid-cols-2 justify-items-center gap-x-3 gap-y-6 sm:gap-x-4 sm:gap-y-8 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
                   {Array.from({ length: 12 }).map((_, i) => (
                     <ProductSkeleton key={i} />

@@ -322,7 +322,7 @@ const StoreListing = ({ translations }: StoreListingProps) => {
   const failedLabel = translations?.failedToLoad ?? 'Failed to load products'
 
   return (
-    <div className="mx-auto flex w-full max-w-360 flex-col gap-8 px-4 pb-32">
+    <div className="mx-auto flex w-full max-w-360 flex-col gap-8 px-4 pb-16 md:pb-20">
       <StoreHeader
         title={
           filters.searchQuery
@@ -401,7 +401,7 @@ const StoreListing = ({ translations }: StoreListingProps) => {
           )}
 
           {products.length > 0 && totalPages > 1 && (
-            <div className="mt-6 flex justify-center md:mt-14">
+            <div className="mt-2 flex justify-center md:mt-4">
               <Pagination
                 currentPage={filters.currentPage}
                 totalPages={totalPages}
