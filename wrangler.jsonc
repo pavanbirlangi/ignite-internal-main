@@ -20,6 +20,12 @@
       // Next's data cache (unstable_cache, ISR pages).
       "binding": "NEXT_INC_CACHE_KV",
       "id": "bf82d88d070643c48dc0ab9e02b58aa8"
+    },
+    {
+      // Rendered pages for signed-out visitors (custom-worker.js): global, unlike the per-data-
+      // centre Cache API, so a page rendered once is a hit from any location.
+      "binding": "PAGE_CACHE_KV",
+      "id": "f6f7cbe5b5d340f1a24794c75100e8ad"
     }
   ],
   // Run the worker next to the backend (api.increddy.com, AWS Mumbai): a page makes several backend
