@@ -320,7 +320,10 @@ const StoreCard: React.FC<ProductCardProps> = ({ product, wishlisted }) => {
             }
             fill
             loading="lazy"
-            sizes="(max-width: 640px) 58vw, (max-width: 768px) 38vw, (max-width: 1024px) 32vw, 20vw"
+            // Measured card widths: ~148 px in home rows and ~170 px in the two-column store grid on
+            // phones, ~222 px on tablets, at most ~220 px on desktop. The old 58vw made phones fetch
+            // the 640 px image for a 148 px card.
+            sizes="(max-width: 640px) 45vw, (max-width: 1024px) 31vw, 220px"
             className={cn(
               'object-cover object-top transition-transform duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-105 motion-reduce:transition-none',
               !isInStock && 'opacity-55 grayscale-[0.6]',

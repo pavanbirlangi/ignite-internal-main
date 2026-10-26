@@ -82,7 +82,7 @@ export default function NewsletterSection({
                       alt=""
                       width={120}
                       height={156}
-                      sizes="120px"
+                      sizes="150px"
                       loading="lazy"
                       className="aspect-[1/1.3] w-[120px] rounded-xl object-cover object-top shadow-[0_10px_24px_rgba(0,0,0,0.5)]"
                     />
