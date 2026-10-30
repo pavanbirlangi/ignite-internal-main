@@ -5,7 +5,7 @@ import { getProductsActivationInfo } from '@/lib/services/product.service'
 import { formatOrderDate } from './order-formatters'
 import { parseCredentialKey } from './parse-credential-key'
 import { getVariantDisplayName } from '@/lib/orders/variant-title'
-import { loadPdfLogo, pdfLogoHeight } from '@/lib/orders/pdf-logo'
+import { loadPdfLogo, pdfLogoSize } from '@/lib/orders/pdf-logo'
 import { drawLinkRun } from '@/lib/orders/pdf-links'
 
 type RGB = readonly [number, number, number]
@@ -31,7 +31,6 @@ const MARGIN = 20
 const CARD_PAD = 5
 const CONTENT_BOTTOM = 272
 const LOGO_WIDTH = 44
-const LOGO_HEIGHT = pdfLogoHeight(LOGO_WIDTH)
 
 const PENDING_TEXT = "On the way. We'll email it to you and show it in My Orders as soon as it's ready."
 const REFUNDED_TEXT = 'Refunded: this key is no longer part of your order.'
@@ -133,7 +132,8 @@ export async function generateKeysPdf(order: OrderDetails, keysData: KeyAssignme
   doc.rect(0, 0, pageWidth, 4, 'F')
   let y = 22
   if (logo) {
-    doc.addImage(logo, 'PNG', MARGIN, y - LOGO_HEIGHT, LOGO_WIDTH, LOGO_HEIGHT, undefined, 'FAST')
+    const { width, height } = pdfLogoSize(logo, LOGO_WIDTH)
+    doc.addImage(logo.dataUrl, 'PNG', MARGIN, y - height, width, height, undefined, 'FAST')
   } else {
     setText(20, INK, 'bold')
     doc.text('Increddy', MARGIN, y)

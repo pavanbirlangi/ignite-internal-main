@@ -3,7 +3,7 @@ import type { OrderDetails } from '@/lib/services/order.service'
 import { formatOrderDate, formatOrderPrice } from './order-formatters'
 import { getVariantDisplayName } from '@/lib/orders/variant-title'
 import { getForeignCharge, getPaymentMethodName } from '@/lib/orders/payment-method'
-import { loadPdfLogo, pdfLogoHeight } from '@/lib/orders/pdf-logo'
+import { loadPdfLogo, pdfLogoSize } from '@/lib/orders/pdf-logo'
 import { drawLinkRun, type LinkPart } from '@/lib/orders/pdf-links'
 
 type RGB = readonly [number, number, number]
@@ -34,7 +34,6 @@ const SOCIAL_LINKS: Array<[string, string]> = [
   ['LinkedIn', 'https://www.linkedin.com/company/increddy'],
 ]
 const LOGO_WIDTH = 44
-const LOGO_HEIGHT = pdfLogoHeight(LOGO_WIDTH)
 const PAGE_BOTTOM = 270
 
 const toNumber = (amount?: string | number) => {
@@ -112,7 +111,8 @@ export async function generateReceiptPdf(order: OrderDetails): Promise<void> {
   let y = 22
   if (logo) {
     // Bottom edge on the text baseline the name used to sit on.
-    doc.addImage(logo, 'PNG', MARGIN, y - LOGO_HEIGHT, LOGO_WIDTH, LOGO_HEIGHT, undefined, 'FAST')
+    const { width, height } = pdfLogoSize(logo, LOGO_WIDTH)
+    doc.addImage(logo.dataUrl, 'PNG', MARGIN, y - height, width, height, undefined, 'FAST')
   } else {
     setText(20, INK, 'bold')
     doc.text('Increddy', MARGIN, y)
