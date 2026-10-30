@@ -138,7 +138,7 @@ export function RevealProductModal({
       >
         <div className="flex max-h-[calc(92vh-2px)] flex-col overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           <DialogHeader className="border-border flex flex-row items-center justify-between space-y-0 border-b px-6 py-4 text-left">
-            <DialogTitle className="text-xl font-bold">Your key</DialogTitle>
+            <DialogTitle className="text-xl font-bold">{keys.length > 1 ? 'Your keys' : 'Your key'}</DialogTitle>
             <DialogClose
               aria-label="Close"
               className="grid size-9 cursor-pointer place-items-center rounded-full bg-white/5 text-white/65 transition-colors outline-none hover:bg-white/10 hover:text-white focus-visible:ring-2 focus-visible:ring-white/40"
