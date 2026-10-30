@@ -9,6 +9,7 @@ import MobileNav from '@/components/layout/MobileNav'
 import GoogleSignInReturn from '@/components/auth/GoogleSignInReturn'
 import { Toaster } from 'sonner'
 import QueryProvider from '@/components/providers/QueryProvider'
+import { SiteLogoProvider } from '@/components/providers/SiteLogoProvider'
 import NextTopLoader from 'nextjs-toploader'
 import { FooterService } from '@/lib/services/footer.service'
 import { NavbarService } from '@/lib/services/navbar.service'
@@ -105,14 +106,16 @@ export default async function RootLayout({
           }}
         />
         <QueryProvider>
-          <NextTopLoader color="#2468DF" showSpinner={false} />
-          <ScrollToTop />
-          <Navbar navbarData={navbarData} />
-          <main className="flex flex-col gap-24">{children}</main>
-          <ConditionalFooter footerData={footerData} translations={footerTranslations} />
-          <MobileNav />
-          <Toaster position="top-center" />
-          <GoogleSignInReturn />
+          <SiteLogoProvider logoId={navbarData?.logo}>
+            <NextTopLoader color="#2468DF" showSpinner={false} />
+            <ScrollToTop />
+            <Navbar navbarData={navbarData} />
+            <main className="flex flex-col gap-24">{children}</main>
+            <ConditionalFooter footerData={footerData} translations={footerTranslations} />
+            <MobileNav />
+            <Toaster position="top-center" />
+            <GoogleSignInReturn />
+          </SiteLogoProvider>
         </QueryProvider>
         {process.env.NODE_ENV === 'production' &&
           process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID && (

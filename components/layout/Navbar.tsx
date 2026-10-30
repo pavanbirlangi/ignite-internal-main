@@ -44,6 +44,7 @@ import { PlatformNav, type PlatformNavItem } from './navbar/PlatformNav'
 import { UserMenu } from './navbar/UserMenu'
 import type { NavbarData } from '@/lib/services/navbar.service'
 import { OPEN_SEARCH_EVENT } from '@/lib/utils/open-search'
+import { useSiteLogo } from '@/components/providers/SiteLogoProvider'
 
 // Used when the CMS navbar has no items. Each icon sits in a div so it lifts like the CMS icons.
 const DEFAULT_PLATFORM_ITEMS: PlatformNavItem[] = [
@@ -76,6 +77,7 @@ export default function Navbar({
   const [isClient, setIsClient] = useState(false)
   const { isAuthenticated, user, fetchUser } = useUserStore()
   const [logoutDialogOpen, setLogoutDialogOpen] = useState(false)
+  const logoSrc = useSiteLogo()
   const [isScrolled, setIsScrolled] = useState(false)
 
   // Closing the search clears its text (the effect on searchOpen below).
@@ -253,11 +255,7 @@ export default function Navbar({
             {/* Logo */}
             <Link href="/" className="flex shrink-0 items-center">
               <Image
-                src={
-                  navbarData?.logo
-                    ? `${process.env.NEXT_PUBLIC_CMS_API_URL}/assets/${navbarData.logo}`
-                    : '/images/common/logo.svg'
-                }
+                src={logoSrc}
                 alt="Logo"
                 width={100}
                 height={100}

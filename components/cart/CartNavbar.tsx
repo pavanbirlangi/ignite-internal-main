@@ -6,6 +6,7 @@ import Image from 'next/image'
 import { UserMenu } from '../layout/navbar/UserMenu'
 import { CartDrawer } from './CartDrawer'
 import { Check } from 'lucide-react'
+import { useSiteLogo } from '@/components/providers/SiteLogoProvider'
 
 interface CartNavbarProps {
   currentStep?: number
@@ -16,6 +17,7 @@ export function CartNavbar({
   currentStep = 1,
   itemCount = 0,
 }: CartNavbarProps) {
+  const logoSrc = useSiteLogo()
   const steps = [
     { number: 1, label: 'Cart' },
     { number: 2, label: 'Checkout' },
@@ -27,12 +29,14 @@ export function CartNavbar({
       <div className="absolute top-4 flex w-full max-w-310 items-center justify-between px-4 lg:top-10">
         <Link href="/" className="flex shrink-0 items-center">
           <Image
-            src="/images/common/logo.svg"
+            src={logoSrc}
             alt="Logo"
             width={100}
             height={100}
             className="h-4 w-auto sm:h-5"
-            quality={100}
+            // Same as the main header: the Directus PNG resized to WebP, at the top so not lazy.
+            sizes="(max-width: 640px) 150px, 210px"
+            loading="eager"
           />
         </Link>
 

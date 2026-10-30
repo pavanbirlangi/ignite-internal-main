@@ -7,6 +7,7 @@ import XIcon from '@/components/icons/XIcon'
 import { ChevronRight } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { NavItemType } from '@/lib/services/navbar.service'
+import { useSiteLogo } from '@/components/providers/SiteLogoProvider'
 
 interface MobileSidebarProps {
   isOpen: boolean
@@ -15,6 +16,7 @@ interface MobileSidebarProps {
 }
 
 export function MobileSidebar({ isOpen, onClose, navItems = [] }: MobileSidebarProps) {
+  const logoSrc = useSiteLogo()
   // Prevent scrolling on mount when open
   useEffect(() => {
     if (isOpen) {
@@ -52,11 +54,12 @@ export function MobileSidebar({ isOpen, onClose, navItems = [] }: MobileSidebarP
             className="flex shrink-0 items-center"
           >
             <Image
-              src="/images/common/logo.svg"
+              src={logoSrc}
               alt="Increddy Logo"
               width={100}
               height={16}
               className="h-4 w-auto object-contain"
+              sizes="150px"
             />
           </Link>
           <button
