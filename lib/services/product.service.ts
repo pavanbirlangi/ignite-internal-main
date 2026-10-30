@@ -653,6 +653,14 @@ const _fetchProductRecommendations = async (
   return products.sort((a, b) => (position.get(a.id) ?? 0) - (position.get(b.id) ?? 0))
 }
 
+// The store's sort as /store/products/filtered understands it (price_asc | price_desc | newest).
+// "Best selling" has no backend sort yet, so it keeps the backend's default order.
+function backendSort(sortKey: string | undefined, reverse: boolean | undefined): string | undefined {
+  if (sortKey === 'PRICE') return reverse ? 'price_desc' : 'price_asc'
+  if (sortKey === 'CREATED_AT') return 'newest'
+  return undefined
+}
+
 const _fetchProductsByIds = async (
   ids: string[],
   regionId: string | undefined,
@@ -744,6 +752,10 @@ export const ProductService = {
         on_sale: params.onSale,
         featured: params.featured,
         q: params.query,
+        // Sorted on the backend across the whole catalogue (the store used to re-sort only the
+        // page it got, and never asked for newest first). Price sorting needs the region's prices.
+        sort: backendSort(params.sortKey, params.reverse),
+        region_id: regionId,
         page,
         limit,
       },
@@ -761,13 +773,7 @@ export const ProductService = {
       (a, b) => (orderIndex.get(a.id) ?? 0) - (orderIndex.get(b.id) ?? 0),
     )
 
-    if (params.sortKey === 'PRICE') {
-      products = [...products].sort((a, b) => {
-        const av = Number(a.price?.amount ?? 0)
-        const bv = Number(b.price?.amount ?? 0)
-        return params.reverse ? bv - av : av - bv
-      })
-    } else if (params.sortKey === 'TITLE') {
+    if (params.sortKey === 'TITLE') {
       products = [...products].sort((a, b) =>
         params.reverse ? b.title.localeCompare(a.title) : a.title.localeCompare(b.title),
       )
