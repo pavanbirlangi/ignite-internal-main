@@ -63,10 +63,15 @@ export const KeyList = ({ keys }: KeyListProps) => {
         const credential = parseCredentialKey(key)
 
         if (credential) {
+          // Several logins: each pair is numbered (as in the keys PDF) and set apart by a line.
+          const suffix = keys.length > 1 ? ` (${globalIndex + 1} of ${keys.length})` : ''
           return (
-            <div key={globalIndex} className="flex flex-col gap-3.5">
-              {renderField('Email', credential.email, `${globalIndex}-email`, 'Copy email')}
-              {renderField('Password', credential.password, `${globalIndex}-password`, 'Copy password')}
+            <div
+              key={globalIndex}
+              className={cn('flex flex-col gap-3.5', index > 0 && 'border-border border-t pt-4')}
+            >
+              {renderField(`Email${suffix}`, credential.email, `${globalIndex}-email`, 'Copy email')}
+              {renderField(`Password${suffix}`, credential.password, `${globalIndex}-password`, 'Copy password')}
             </div>
           )
         }
