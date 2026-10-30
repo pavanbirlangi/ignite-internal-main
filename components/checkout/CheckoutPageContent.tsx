@@ -162,8 +162,10 @@ export function CheckoutPageContent() {
     setPickedMethodId(methodId)
   }, [])
 
-  // Drawn at once: the same layout with grey blocks until this visit's cart has loaded.
-  if (!cartReady || !cart || !cartId) {
+  // Drawn at once: from the cart already in memory when the customer comes from the cart page
+  // (refreshed in the background; the fee and payment session wait for the fresh copy), or the
+  // same layout with grey blocks until the cart has loaded on a direct visit.
+  if (!cart || !cartId) {
     return (
       <div className="bg-background min-h-screen font-sans">
         <CartNavbar currentStep={2} />
