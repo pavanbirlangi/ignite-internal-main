@@ -4,6 +4,7 @@ import cmsClient from '../cms-axios'
 import {
   ProductService,
   GetProductRecommendationsParams,
+  prefetchActivationGuides,
   resolveProductPlatform,
 } from './product.service'
 import { ProductListItem } from '@/types/product'
@@ -181,6 +182,10 @@ export const cartService = {
 
   getCart: async (cartId: string): Promise<CartResponse> => {
     const encodedId = encodeURIComponent(cartId)
+    // Display currencies and platform guides (both cached) load alongside the cart instead of one
+    // after the other once it arrives; toCart needs them to map it.
+    getDisplayConverter(DEFAULT_CURRENCY).catch(() => {})
+    prefetchActivationGuides()
     const { data } = await medusaClient.get(`/store/carts/${encodedId}`, {
       params: { fields: CART_FIELDS },
     })

@@ -256,6 +256,11 @@ function getActivationGuides(): Promise<Map<string, SharedActivationGuide>> {
   return promise
 }
 
+// Starts loading the guides early (e.g. alongside a cart request whose items need them).
+export function prefetchActivationGuides(): void {
+  void getActivationGuides()
+}
+
 async function fetchActivationGuide(
   guideId: string | undefined,
 ): Promise<SharedActivationGuide | null> {
