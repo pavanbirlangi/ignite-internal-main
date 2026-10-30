@@ -374,9 +374,6 @@ export default async function ProductPage({ params }: PageProps) {
                 releaseDate: labels.detailsReleaseDate,
                 languages: labels.detailsLanguages,
                 ageRating: labels.detailsAgeRating,
-                delivery: labels.detailsDelivery,
-                deliveryInstant: labels.detailsDeliveryInstant,
-                deliveryStandard: labels.detailsDeliveryStandard,
                 activation: labels.detailsActivation,
                 howToActivate: labels.detailsHowToActivate,
               }}

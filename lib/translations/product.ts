@@ -31,9 +31,6 @@ export interface ProductPageTranslations {
   detailsReleaseDate: string
   detailsLanguages: string
   detailsAgeRating: string
-  detailsDelivery: string
-  detailsDeliveryInstant: string
-  detailsDeliveryStandard: string
   detailsActivation: string
   detailsHowToActivate: string
   // WarningBox
@@ -87,9 +84,6 @@ const defaultLabels: ProductPageTranslations = {
   detailsReleaseDate: 'Release date',
   detailsLanguages: 'Languages',
   detailsAgeRating: 'Age rating',
-  detailsDelivery: 'Delivery',
-  detailsDeliveryInstant: 'Instant, by email and in My Library',
-  detailsDeliveryStandard: 'By email and in My Library',
   detailsActivation: 'Activation',
   detailsHowToActivate: 'How to activate',
   importantNotice: 'Important notice:',

@@ -19,15 +19,12 @@ interface ProductFactsPanelProps {
     releaseDate: string
     languages: string
     ageRating: string
-    delivery: string
-    deliveryInstant: string
-    deliveryStandard: string
     activation: string
     howToActivate: string
   }
 }
 
-// Languages shown before the "+N" that reveals the rest.
+// Languages shown before the "+N" that reveals the rest ("Show less" folds them again).
 const LANGUAGES_SHOWN = 4
 
 const ROW_CLASS = 'border-border flex items-start justify-between gap-4 border-b py-3 text-sm last:border-b-0'
@@ -47,17 +44,18 @@ function formatReleaseDate(value: string, locale?: string) {
 function LanguageList({ languages }: { languages: string[] }) {
   const [expanded, setExpanded] = useState(false)
   const hidden = languages.length - LANGUAGES_SHOWN
-  if (expanded || hidden <= 0) return <>{languages.join(', ')}</>
+  if (hidden <= 0) return <>{languages.join(', ')}</>
   return (
     <>
-      {languages.slice(0, LANGUAGES_SHOWN).join(', ')}{' '}
+      {(expanded ? languages : languages.slice(0, LANGUAGES_SHOWN)).join(', ')}{' '}
       <button
         type="button"
-        onClick={() => setExpanded(true)}
-        aria-label={`Show all ${languages.length} languages`}
-        className="cursor-pointer font-medium text-[#7DB0FF] transition-colors hover:text-[#A9C9FF]"
+        onClick={() => setExpanded(!expanded)}
+        aria-expanded={expanded}
+        aria-label={expanded ? 'Show fewer languages' : `Show all ${languages.length} languages`}
+        className="cursor-pointer font-medium whitespace-nowrap text-[#7DB0FF] transition-colors hover:text-[#A9C9FF]"
       >
-        +{hidden}
+        {expanded ? 'Show less' : `+${hidden}`}
       </button>
     </>
   )
@@ -65,7 +63,7 @@ function LanguageList({ languages }: { languages: string[] }) {
 
 // The game's facts beside "About this game" on desktop (below it on phones): publisher,
 // developer, release date, languages and PEGI rating from the product in Directus (each row only
-// when filled in), then how it's delivered and activated. Platform, region and genre are already
+// when filled in), then how to activate it. Platform, region and genre are already
 // in the hero and under About, so they aren't repeated here.
 export default function ProductFactsPanel({ product, gameFacts, locale, labels }: ProductFactsPanelProps) {
   const guide = product.activationGuide
@@ -85,10 +83,6 @@ export default function ProductFactsPanel({ product, gameFacts, locale, labels }
       center: true,
     })
   }
-  rows.push({
-    label: labels.delivery,
-    value: product.instantDelivery ? labels.deliveryInstant : labels.deliveryStandard,
-  })
   if (guide && (guide.guide || guide.link)) {
     rows.push({
       label: labels.activation,
