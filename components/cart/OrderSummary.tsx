@@ -92,7 +92,7 @@ export function OrderSummary({
                   tipOpen ? 'translate-y-0 opacity-100' : 'translate-y-1 opacity-0',
                 )}
               >
-                A small service fee and any taxes are added at checkout.
+                A small service fee is added at checkout.
               </span>
             </span>
           </div>
