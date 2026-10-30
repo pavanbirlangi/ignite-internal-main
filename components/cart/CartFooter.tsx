@@ -35,7 +35,7 @@ export const CartFooter = ({ total, count, currencyCode, blockedReason }: CartFo
   }
 
   return (
-    <div className="border-border bg-card absolute right-0 bottom-0 left-0 z-20 flex w-full flex-col gap-4 border-t px-6 pt-4 pb-5">
+    <div className="border-border bg-card flex w-full shrink-0 flex-col gap-4 border-t px-6 pt-4 pb-5">
       {/* Savings are shown on the cart page; the drawer keeps to the total. */}
       <div className="flex w-full items-baseline justify-between">
         <span className="text-base font-medium text-white/65">Cart total</span>

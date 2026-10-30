@@ -309,14 +309,8 @@ export function CartDrawer() {
           </SheetClose>
         </SheetHeader>
 
-        {/* Scrollable Content */}
-        <div
-          className={`scrollbar-hide no-scrollbar flex flex-1 flex-col gap-8 overflow-y-auto p-6 ${
-            // No promotion module exists yet, so a discount line never
-            // renders in CartFooter -- see cart.service.ts.
-            cartCount > 0 ? 'pb-64' : 'pb-6'
-          }`}
-        >
+        {/* Scrollable Content: ends at the footer below it, so it only scrolls when items overflow */}
+        <div className="scrollbar-hide no-scrollbar flex min-h-0 flex-1 flex-col gap-8 overflow-y-auto p-6">
           {/* Cart Items List */}
           <div className="flex flex-col">
             {isLoading && cartItems.length === 0 ? (
