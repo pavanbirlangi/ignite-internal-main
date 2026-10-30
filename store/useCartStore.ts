@@ -182,8 +182,15 @@ const maybeRefreshRecommendations = (
   previousCart: CartResponse | null,
 ) => {
   if (getSeedProductId(previousCart) === getSeedProductId(get().cart)) return
+  // Not while paying: the drawer is closed there and these requests would compete with the
+  // payment's; the drawer loads them if it's opened (CartDrawer).
+  if (typeof window !== 'undefined' && /\/checkout(\/|$)/.test(window.location.pathname)) return
   void get().loadRecommendations()
 }
+
+// The cart read in flight: a second caller for the same cart (e.g. the header's cart drawer and
+// the page both loading on mount) waits for it instead of sending its own.
+let cartLoadInFlight: { cartId: string; promise: Promise<void> } | null = null
 
 export const useCartStore = create<CartState>()((set, get) => ({
   cartId: getCartIdFromCookie(),
@@ -253,30 +260,38 @@ export const useCartStore = create<CartState>()((set, get) => ({
       set({ cartId })
     }
 
-    try {
-      set({ isLoading: true, error: null })
-      const previousCart = get().cart
-      const cart = await ensureUsdCart(set, get, await cartService.getCart(cartId))
+    if (cartLoadInFlight?.cartId === cartId) return cartLoadInFlight.promise
+    const load = async () => {
+      try {
+        set({ isLoading: true, error: null })
+        const previousCart = get().cart
+        const cart = await ensureUsdCart(set, get, await cartService.getCart(cartId))
 
-      set({ cart, isLoading: false })
-      maybeRefreshRecommendations(get, previousCart)
-    } catch (error: any) {
-      const errorMessage = extractApiErrorMessage(error, 'Failed to load cart')
-      console.error('Error loading cart', error)
-      if (isCartNotFoundError(error) || isCartCompletedError(error)) {
-        clearCartIdCookie()
-        set({
-          cartId: null,
-          cart: null,
-          recommendations: [],
-          isLoading: false,
-          error: null,
-          recommendationsError: null,
-        })
-        return
+        set({ cart, isLoading: false })
+        maybeRefreshRecommendations(get, previousCart)
+      } catch (error: any) {
+        const errorMessage = extractApiErrorMessage(error, 'Failed to load cart')
+        console.error('Error loading cart', error)
+        if (isCartNotFoundError(error) || isCartCompletedError(error)) {
+          clearCartIdCookie()
+          set({
+            cartId: null,
+            cart: null,
+            recommendations: [],
+            isLoading: false,
+            error: null,
+            recommendationsError: null,
+          })
+          return
+        }
+        set({ error: errorMessage, isLoading: false })
       }
-      set({ error: errorMessage, isLoading: false })
     }
+    const promise = load().finally(() => {
+      if (cartLoadInFlight?.promise === promise) cartLoadInFlight = null
+    })
+    cartLoadInFlight = { cartId, promise }
+    return promise
   },
 
   loadRecommendations: async (params = { intent: 'RELATED', limit: 4 }) => {

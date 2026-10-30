@@ -101,6 +101,7 @@ export function CartDrawer() {
     isLoading,
     itemsAdded,
     isRecommendationsLoading,
+    loadRecommendations,
     removeItem,
     initCart,
     updateItem,
@@ -112,6 +113,17 @@ export function CartDrawer() {
   React.useEffect(() => {
     initCart()
   }, [initCart])
+
+  // Recommendations aren't loaded while paying (see maybeRefreshRecommendations): fetched when the
+  // drawer is opened there.
+  const hasItems = Boolean(cart?.items.length)
+  React.useEffect(() => {
+    if (open && hasItems && recommendations.length === 0 && !isRecommendationsLoading) {
+      void loadRecommendations()
+    }
+    // Only on opening; an empty result isn't retried while it stays open.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, hasItems])
 
   // Adds from a product card fly the cover here and hop the cart when it
   // lands (lib/fly-to-cart), so those skip the instant hop below.
