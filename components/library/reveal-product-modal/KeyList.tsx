@@ -26,7 +26,8 @@ export const KeyList = ({ keys }: KeyListProps) => {
     setTimeout(() => setCopiedId(null), 2000)
   }
 
-  const renderCopyButton = (value: string, id: string, title: string, size: 'md' | 'sm' = 'md', text = 'Copy') => {
+  // compact: just the icon on phones (rows inside an account card), the word from sm up.
+  const renderCopyButton = (value: string, id: string, title: string, size: 'md' | 'sm' = 'md', text = 'Copy', compact = false) => {
     const copied = copiedId === id
     return (
       <button
@@ -36,11 +37,12 @@ export const KeyList = ({ keys }: KeyListProps) => {
         className={cn(
           'inline-flex shrink-0 cursor-pointer items-center gap-1.5 rounded-lg font-medium transition-colors outline-none focus-visible:ring-2 focus-visible:ring-white/40',
           size === 'md' ? 'h-10 px-3 text-sm' : 'h-8 px-2.5 text-[13px]',
+          compact && 'px-2 sm:px-2.5',
           copied ? 'bg-[#22C55E]/12 text-[#4ADE80]' : 'bg-secondary text-white/95 hover:bg-white/10',
         )}
       >
         {copied ? <Check className="size-4" /> : <Copy className="size-4" />}
-        {copied ? 'Copied' : text}
+        <span className={cn(compact && 'sr-only sm:not-sr-only')}>{copied ? 'Copied' : text}</span>
       </button>
     )
   }
@@ -50,10 +52,15 @@ export const KeyList = ({ keys }: KeyListProps) => {
   const renderCredential = (email: string, password: string, globalIndex: number) => {
     const title = keys.length > 1 ? `Account ${globalIndex + 1} of ${keys.length}` : 'Account'
     const row = (label: string, value: string, id: string, copyTitle: string) => (
-      <div className="grid grid-cols-[72px_minmax(0,1fr)_auto] items-center gap-3 py-2 pr-2 pl-4 sm:grid-cols-[84px_minmax(0,1fr)_auto]">
-        <span className="text-[13px] text-white/55">{label}</span>
-        <span className="font-mono text-[15px] font-medium tracking-[0.4px] break-all text-white/95">{value}</span>
-        {renderCopyButton(value, id, copyTitle, 'sm')}
+      // Phones: the label sits above the value, so the value gets the whole width.
+      <div className="flex items-center gap-3 py-2 pr-2 pl-4">
+        <div className="flex min-w-0 flex-1 flex-col gap-0.5 sm:flex-row sm:items-center sm:gap-3">
+          <span className="text-xs text-white/55 sm:w-[84px] sm:shrink-0 sm:text-[13px]">{label}</span>
+          <span className="font-mono text-sm font-medium tracking-[0.4px] break-all text-white/95 sm:text-[15px]">
+            {value}
+          </span>
+        </div>
+        {renderCopyButton(value, id, copyTitle, 'sm', 'Copy', true)}
       </div>
     )
     return (
