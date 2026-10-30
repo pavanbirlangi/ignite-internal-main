@@ -9,6 +9,8 @@ import {
   type Appearance,
   type CssFontSource,
   type PaymentIntent,
+  type StripeElements,
+  type StripeElementsOptions,
   type StripeExpressCheckoutElementConfirmEvent,
   type StripeExpressCheckoutElementReadyEvent,
 } from '@stripe/stripe-js'
@@ -94,9 +96,31 @@ const STRIPE_FONTS: CssFontSource[] = [
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
+// Stripe amounts are in the currency's smallest unit; these follow Stripe's own lists.
+const ZERO_DECIMAL = new Set(['bif', 'clp', 'djf', 'gnf', 'jpy', 'kmf', 'krw', 'mga', 'pyg', 'rwf', 'ugx', 'vnd', 'vuv', 'xaf', 'xof', 'xpf'])
+const THREE_DECIMAL = new Set(['bhd', 'jod', 'kwd', 'omr', 'tnd'])
+const toStripeAmount = (amount: number, currency: string) => {
+  const code = currency.toLowerCase()
+  if (ZERO_DECIMAL.has(code)) return Math.round(amount)
+  // Three-decimal amounts must end in 0 for Stripe.
+  if (THREE_DECIMAL.has(code)) return Math.round(amount * 100) * 10
+  return Math.round(amount * 100)
+}
+
+export interface CheckoutChargeAmount {
+  currency: string
+  amount: number
+}
+
 interface CheckoutFormProps {
   cartId: string
-  clientSecret: string
+  // What the payment will be, for Stripe's form (deferred mode: the form shows the methods from
+  // this alone; the payment itself is only created when the customer pays).
+  charge: CheckoutChargeAmount
+  // The Stripe types the payment will be pinned to (null while the methods load: skeleton only).
+  paymentMethodTypes: string[] | null
+  // The payment session's client secret, created on demand (or the one prepared in the background).
+  getClientSecret: () => Promise<string>
   email: string
   locale: string
   onOrderCompleted: () => void
@@ -110,7 +134,6 @@ interface CheckoutFormProps {
   localMethods?: PaymentMethodOption[]
   selectedMethodId?: string | null
   onSelectMethod?: (methodId: string | null) => void
-  switchingMethod?: boolean
   methodError?: string | null
 }
 
@@ -232,8 +255,56 @@ function EmailStep({
   )
 }
 
+// The wallet buttons (Apple Pay, Google Pay, Link) in their own Stripe group, so confirming one
+// only checks the wallet, never the empty card fields below it.
+function ExpressButtons({
+  hidden,
+  onReady,
+  onConfirm,
+}: {
+  hidden: boolean
+  onReady: (event: StripeExpressCheckoutElementReadyEvent) => void
+  onConfirm: (event: StripeExpressCheckoutElementConfirmEvent, elements: StripeElements) => void
+}) {
+  const elements = useElements()
+  return (
+    <div className={hidden ? 'invisible h-0 overflow-hidden' : 'mb-4'}>
+      <ExpressCheckoutElement
+        options={{
+          // 'always' also offers Apple Pay in Chrome/Edge/Firefox on desktop (the customer
+          // scans a code with their iPhone); 'auto' shows it in Safari only. Link gets its
+          // own one-click button here too (it is offered in every region).
+          paymentMethods: {
+            applePay: 'always',
+            googlePay: 'always',
+            link: 'auto',
+            amazonPay: 'never',
+            paypal: 'never',
+            klarna: 'never',
+          },
+          buttonHeight: 48,
+        }}
+        onReady={onReady}
+        onConfirm={(event) => elements && onConfirm(event, elements)}
+      />
+    </div>
+  )
+}
+
+// Same grey blocks as the other skeletons on the site, in the shape of Stripe's form (method rows).
+function PaymentSkeleton() {
+  return (
+    <div aria-hidden className="flex flex-col gap-3">
+      <div className="h-12 animate-pulse rounded-[6px] bg-white/10" />
+      <div className="h-12 animate-pulse rounded-[6px] bg-white/10" />
+      <div className="h-12 animate-pulse rounded-[6px] bg-white/10" />
+    </div>
+  )
+}
+
 function CheckoutFormInner({
   cartId,
+  getClientSecret,
   email: initialEmail,
   locale,
   onOrderCompleted,
@@ -242,9 +313,9 @@ function CheckoutFormInner({
   localMethods = [],
   selectedMethodId = null,
   onSelectMethod,
-  switchingMethod = false,
   methodError = null,
-}: Omit<CheckoutFormProps, 'clientSecret'>) {
+  expressOptions,
+}: Omit<CheckoutFormProps, 'charge' | 'paymentMethodTypes'> & { expressOptions: StripeElementsOptions }) {
   const stripe = useStripe()
   const elements = useElements()
   const router = useRouter()
@@ -258,6 +329,8 @@ function CheckoutFormInner({
   // Express buttons (Apple Pay, Google Pay, Link) shown above the card form only when at least one
   // is available, so there's no empty gap otherwise.
   const [hasWallets, setHasWallets] = useState(false)
+  // Stripe draws its form a moment after the page; our skeleton holds its place until then.
+  const [paymentReady, setPaymentReady] = useState(false)
 
   const returnUrl = () =>
     `${window.location.origin}${localizedHref(locale, '/checkout/complete')}?cart_id=${cartId}`
@@ -340,8 +413,7 @@ function CheckoutFormInner({
     setErrorMessage(null)
 
     try {
-      await prepareCart()
-
+      // Checked first, right after the click: Stripe wants this before any other waiting.
       const { error: submitError } = await elements.submit()
       if (submitError) {
         setErrorMessage(
@@ -351,8 +423,12 @@ function CheckoutFormInner({
         return
       }
 
+      await prepareCart()
+      const clientSecret = await getClientSecret()
+
       const { error, paymentIntent } = await stripe.confirmPayment({
         elements,
+        clientSecret,
         confirmParams: { return_url: returnUrl() },
         redirect: 'if_required',
       })
@@ -384,11 +460,14 @@ function CheckoutFormInner({
     }
   }
 
-  // Apple Pay / Google Pay: the customer approved the payment in the wallet sheet. Same steps as
-  // "Pay now", without the card form's own validation (elements.submit), which would fail on the
-  // empty card fields. Telling the sheet about a failure closes it with an error.
-  const handleExpressConfirm = async (event: StripeExpressCheckoutElementConfirmEvent) => {
-    if (!stripe || !elements) return
+  // Apple Pay / Google Pay / Link: the customer approved the payment in the wallet sheet. Same
+  // steps as "Pay now", on the wallet buttons' own Stripe group (so the empty card fields aren't
+  // checked). Telling the sheet about a failure closes it with an error.
+  const handleExpressConfirm = async (
+    event: StripeExpressCheckoutElementConfirmEvent,
+    expressElements: StripeElements,
+  ) => {
+    if (!stripe) return
 
     if (!EMAIL_PATTERN.test(email.trim())) {
       event.paymentFailed({ reason: 'fail' })
@@ -400,10 +479,20 @@ function CheckoutFormInner({
     setErrorMessage(null)
 
     try {
+      const { error: submitError } = await expressElements.submit()
+      if (submitError) {
+        event.paymentFailed({ reason: 'fail' })
+        setErrorMessage(submitError.message ?? 'Payment failed. Please try again.')
+        setSubmitting(false)
+        return
+      }
+
       await prepareCart()
+      const clientSecret = await getClientSecret()
 
       const { error, paymentIntent } = await stripe.confirmPayment({
-        elements,
+        elements: expressElements,
+        clientSecret,
         confirmParams: { return_url: returnUrl() },
         redirect: 'if_required',
       })
@@ -460,7 +549,7 @@ function CheckoutFormInner({
           <div role="radiogroup" aria-label="Payment method" className="mb-4 flex flex-col gap-2">
             <MethodOption
               selected={!selectedMethodId}
-              disabled={switchingMethod}
+              disabled={submitting}
               title="Card, wallets & Alipay"
               detail="Charged in USD"
               onSelect={() => onSelectMethod?.(null)}
@@ -469,7 +558,7 @@ function CheckoutFormInner({
               <MethodOption
                 key={method.id}
                 selected={selectedMethodId === method.id}
-                disabled={switchingMethod}
+                disabled={submitting}
                 title={method.label}
                 detail={
                   method.chargeAmount !== null
@@ -483,27 +572,15 @@ function CheckoutFormInner({
           </div>
         )}
         {/* Wallet and Link buttons belong to the USD payment; a local method's payment can't use them. */}
-        <div className={hasWallets && !selectedMethodId ? 'mb-4' : 'invisible h-0 overflow-hidden'}>
-          <ExpressCheckoutElement
-            options={{
-              // 'always' also offers Apple Pay in Chrome/Edge/Firefox on desktop (the customer
-              // scans a code with their iPhone); 'auto' shows it in Safari only. Link gets its
-              // own one-click button here too (it is offered in every region).
-              paymentMethods: {
-                applePay: 'always',
-                googlePay: 'always',
-                link: 'auto',
-                amazonPay: 'never',
-                paypal: 'never',
-                klarna: 'never',
-              },
-              buttonHeight: 48,
-            }}
-            onReady={handleExpressReady}
-            onConfirm={handleExpressConfirm}
-          />
+        {!selectedMethodId && (
+          <Elements stripe={stripePromise} options={expressOptions}>
+            <ExpressButtons hidden={!hasWallets} onReady={handleExpressReady} onConfirm={handleExpressConfirm} />
+          </Elements>
+        )}
+        {!paymentReady && <PaymentSkeleton />}
+        <div className={paymentReady ? undefined : 'h-0 overflow-hidden'}>
+          <PaymentElement onReady={() => setPaymentReady(true)} />
         </div>
-        <PaymentElement />
         <p className="text-white/65 mt-2 text-xs">
           Some cards ask for a billing postal code here. That's Stripe
           verifying the card, not a separate address form.
@@ -517,7 +594,7 @@ function CheckoutFormInner({
       {/* Same hover and loading as the cart's Proceed button */}
       <button
         type="submit"
-        disabled={!stripe || switchingMethod || submitting}
+        disabled={!stripe || !paymentReady || submitting}
         aria-busy={submitting || undefined}
         className="group/cta bg-primary relative flex h-13 w-full cursor-pointer items-center justify-center overflow-hidden rounded-[10px] text-[15px] font-medium text-white shadow-[0_10px_30px_-8px_var(--primary-glow-60)] transition-all duration-200 outline-none hover:-translate-y-px hover:brightness-110 focus-visible:ring-2 focus-visible:ring-white/40 active:translate-y-0 disabled:cursor-default disabled:hover:translate-y-0 disabled:hover:brightness-100"
       >
@@ -541,7 +618,9 @@ function CheckoutFormInner({
 
 export function CheckoutForm({
   cartId,
-  clientSecret,
+  charge,
+  paymentMethodTypes,
+  getClientSecret,
   email,
   locale,
   onOrderCompleted,
@@ -550,24 +629,41 @@ export function CheckoutForm({
   localMethods,
   selectedMethodId,
   onSelectMethod,
-  switchingMethod,
   methodError,
 }: CheckoutFormProps) {
+  // Deferred mode: Stripe draws the methods from the amount and currency alone, so the form shows
+  // as soon as the page does; the payment itself is created when the customer pays (and a new
+  // amount, e.g. after a coupon, just updates the form instead of remounting it).
+  if (!paymentMethodTypes) {
+    return (
+      <div aria-busy className="flex flex-col gap-8">
+        <div className="flex flex-col gap-4">
+          <h2 className="text-xl font-bold text-white/95">Email</h2>
+          <div className="h-14 animate-pulse rounded-xl bg-white/10" />
+        </div>
+        <div>
+          <h2 className="mb-4 text-xl font-bold text-white/95">Payment method</h2>
+          <PaymentSkeleton />
+        </div>
+        <div className="h-13 animate-pulse rounded-[10px] bg-white/10" />
+      </div>
+    )
+  }
+  const options: StripeElementsOptions = {
+    mode: 'payment',
+    amount: Math.max(toStripeAmount(charge.amount, charge.currency), 1),
+    currency: charge.currency.toLowerCase(),
+    captureMethod: 'automatic',
+    paymentMethodTypes,
+    appearance: stripeAppearance,
+    fonts: STRIPE_FONTS,
+  }
   return (
-    // Keyed on clientSecret: @stripe/react-stripe-js does not reinitialize Elements when the
-    // clientSecret option changes on an already-mounted provider, so a corrected payment session
-    // (see onServiceFeeStale) needs a real remount to take effect.
-    <Elements
-      key={clientSecret}
-      stripe={stripePromise}
-      options={{
-        clientSecret,
-        appearance: stripeAppearance,
-        fonts: STRIPE_FONTS,
-      }}
-    >
+    // Keyed on the currency and types: switching to a local method needs a fresh form.
+    <Elements key={`${options.currency}|${paymentMethodTypes.join(',')}`} stripe={stripePromise} options={options}>
       <CheckoutFormInner
         cartId={cartId}
+        getClientSecret={getClientSecret}
         email={email}
         locale={locale}
         onOrderCompleted={onOrderCompleted}
@@ -576,8 +672,8 @@ export function CheckoutForm({
         localMethods={localMethods}
         selectedMethodId={selectedMethodId}
         onSelectMethod={onSelectMethod}
-        switchingMethod={switchingMethod}
         methodError={methodError}
+        expressOptions={options}
       />
     </Elements>
   )

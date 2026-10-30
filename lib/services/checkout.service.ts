@@ -55,6 +55,9 @@ export interface PaymentMethodOption {
   // local: shown only to its country (e.g. Bancontact in BE), charged in its own currency.
   kind: 'global' | 'local'
   providerId: string
+  // The Stripe payment method types the backend pins the method's PaymentIntent to; Stripe's form
+  // must offer the same ones (see CheckoutPageContent).
+  stripeTypes: string[]
   chargeCurrency: string
   chargeAmount: number | null
   available: boolean
@@ -77,6 +80,7 @@ export const checkoutService = {
       label: m.label,
       kind: m.kind === 'local' ? 'local' : 'global',
       providerId: m.provider_id,
+      stripeTypes: Array.isArray(m.stripe_payment_method_types) ? m.stripe_payment_method_types.map(String) : [],
       chargeCurrency: String(m.charge_currency).toLowerCase(),
       chargeAmount: typeof m.charge_amount === 'number' ? m.charge_amount : null,
       available: Boolean(m.available),
@@ -147,7 +151,7 @@ export const checkoutService = {
       {
         params: {
           fields:
-            'id,+payment_collection.id,+payment_collection.payment_sessions.id,+payment_collection.payment_sessions.provider_id,+payment_collection.payment_sessions.data',
+            'id,total,+payment_collection.id,+payment_collection.amount,+payment_collection.payment_sessions.id,+payment_collection.payment_sessions.provider_id,+payment_collection.payment_sessions.data',
         },
       },
     )
@@ -166,10 +170,15 @@ export const checkoutService = {
       ? (existingSession.data.metadata.method_id ?? null)
       : null
     const wantedMethodId = options.methodId ?? null
+    // A session made before the total changed (service fee, coupon) would charge the old amount.
+    const amountCurrent =
+      cartData.cart?.payment_collection?.amount == null ||
+      Number(cartData.cart.payment_collection.amount) === Number(cartData.cart?.total)
     if (
       existingSession?.data?.client_secret &&
       !options.forceRefresh &&
-      existingMethodId === wantedMethodId
+      existingMethodId === wantedMethodId &&
+      amountCurrent
     ) {
       return {
         id: existingSession.id,

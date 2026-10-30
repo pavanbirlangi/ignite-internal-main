@@ -10,7 +10,6 @@ import { useCartStore } from '@/store/useCartStore'
 import { useUserStore } from '@/store/useUserStore'
 import { checkoutService, type PaymentMethodOption } from '@/lib/services/checkout.service'
 import { IP_COUNTRY_COOKIE } from '@/lib/utils/display-currency'
-import { extractApiErrorMessage } from '@/lib/utils/api-error'
 
 export function CheckoutPageContent() {
   const { locale } = useParams<{ locale: string }>()
@@ -19,15 +18,10 @@ export function CheckoutPageContent() {
   const user = useUserStore((state) => state.user)
 
   const [checkoutEmail, setCheckoutEmail] = React.useState<string | null>(null)
-  const [clientSecret, setClientSecret] = React.useState<string | null>(null)
-  const [sessionError, setSessionError] = React.useState<string | null>(null)
-  const [sessionLoading, setSessionLoading] = React.useState(true)
   const [paymentMethods, setPaymentMethods] = React.useState<PaymentMethodOption[]>([])
   // The local method the customer picked (e.g. "bancontact"), or null for the usual USD methods
   // (card, wallets, Link, Alipay). Only visitors whose country has local methods ever see the choice.
-  const [selectedMethodId, setSelectedMethodId] = React.useState<string | null>(null)
-  const [switchingMethod, setSwitchingMethod] = React.useState(false)
-  const [methodError, setMethodError] = React.useState<string | null>(null)
+  const [pickedMethodId, setPickedMethodId] = React.useState<string | null>(null)
   // Flipped the instant an order finishes, before the cart is cleared or any
   // navigation happens. `router.push` doesn't block -- clearing the cart
   // right after a successful payment triggers a synchronous re-render of
@@ -39,13 +33,12 @@ export function CheckoutPageContent() {
   // Tracks whether THIS mount's own cart fetch has resolved at least once -- `cart`/`cartId`/
   // `isLoading` are global store state that can still hold a stale, truthy value left over from
   // whatever page the customer was just on (e.g. right after logging in, which transfers the guest
-  // cart to the new customer). Without this, the effect below could fire off a premature session
-  // request against that stale cart, then fire again once `initCart` lands with the real one --
-  // racing two payment-session creations for the same brand-new cart/customer. For a customer's
-  // very first session ever, that races the backend's one-time Stripe account-holder creation too,
-  // which is what actually 500s. A reload fixes it only because the store resets to a genuinely
-  // empty initial state, so the stale/duplicate fire can't happen.
+  // cart to the new customer). Acting on that stale cart could race two payment-session creations
+  // for the same cart/customer, which for a customer's very first session also races the backend's
+  // one-time Stripe account-holder creation (a 500).
   const [cartReady, setCartReady] = React.useState(false)
+  // The service fee has been brought up to date for this visit (or failed trying).
+  const [feeReady, setFeeReady] = React.useState(false)
 
   React.useEffect(() => {
     let cancelled = false
@@ -65,50 +58,35 @@ export function CheckoutPageContent() {
     if (hasCompletedOrderRef.current) return
     if (!cartId || !cart || cart.items.length === 0) {
       router.replace('/cart')
-      return
     }
+  }, [cartReady, isLoading, cartId, cart, router])
 
+  // The fee must be current before a payment session is created, not just before /complete --
+  // otherwise the session Stripe sees carries a stale amount (item 14). Runs in the background:
+  // the page and the payment form don't wait for it, only the session does.
+  React.useEffect(() => {
+    if (!cartReady || !cartId) return
     let cancelled = false
-    setSessionLoading(true)
-    setSessionError(null)
-
-    // The fee must be current before a payment session is created, not just before /complete --
-    // otherwise the first session Stripe ever sees already carries a stale amount (item 14).
     applyServiceFee()
       .catch((error) => {
         console.error('Failed to apply service fee before checkout', error)
       })
-      .then(() => checkoutService.getOrCreateStripeSession(cartId))
-      .then((session) => {
-        if (!cancelled) setClientSecret(session.clientSecret)
-      })
-      .catch((error) => {
-        if (!cancelled) {
-          setSessionError(
-            extractApiErrorMessage(
-              error,
-              'Could not start checkout. Please try again.',
-            ),
-          )
-        }
-      })
       .finally(() => {
-        if (!cancelled) setSessionLoading(false)
+        if (!cancelled) setFeeReady(true)
       })
-
     return () => {
       cancelled = true
     }
-    // Only re-run when the cart identity actually changes, not on every
-    // cart mutation (quantity changes etc. shouldn't re-create the session).
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [cartReady, cartId, isLoading])
+  }, [cartReady, cartId])
 
   // What checkout offers and what each method charges. Refetched whenever the cart's real total
   // changes (service fee, coupon), so the "You will pay" amount always matches the charge.
+  // Starts as soon as the cart id is known (not after the cart has loaded): Stripe's form needs the
+  // method types from it before it can draw.
   const chargeTotal = cart?.chargeTotal
   React.useEffect(() => {
-    if (!cartReady || !cartId) return
+    if (!cartId) return
     let cancelled = false
     const ipCountry = Cookies.get(IP_COUNTRY_COOKIE) || Cookies.get('user_country')
     checkoutService
@@ -122,81 +100,95 @@ export function CheckoutPageContent() {
     return () => {
       cancelled = true
     }
-  }, [cartReady, cartId, chargeTotal])
-
-  // Forces a fresh Stripe session (a real re-POST, not the cached one) whenever the cart's total
-  // changes after a session already exists: a stale service fee (item 14's 409) and applying or
-  // removing a coupon code both land here, for the same reason -- Elements is keyed on
-  // clientSecret (see CheckoutForm.tsx) so this also remounts the payment form with the new total.
-  const refreshPaymentSession = React.useCallback(() => {
-    if (!cartId) return
-    checkoutService
-      .getOrCreateStripeSession(cartId, { forceRefresh: true, methodId: selectedMethodId })
-      .then((session) => setClientSecret(session.clientSecret))
-      .catch((error) => {
-        console.error('Failed to refresh payment session', error)
-      })
-  }, [cartId, selectedMethodId])
-
-  // Switching between the usual methods and a local one needs a new payment in the other
-  // currency, so a new session (and payment form) for it.
-  const selectMethod = React.useCallback(
-    (methodId: string | null) => {
-      if (!cartId || methodId === selectedMethodId || switchingMethod) return
-      setSwitchingMethod(true)
-      setMethodError(null)
-      checkoutService
-        .getOrCreateStripeSession(cartId, { methodId })
-        .then((session) => {
-          setSelectedMethodId(methodId)
-          setClientSecret(session.clientSecret)
-        })
-        .catch((error) => {
-          setMethodError(
-            extractApiErrorMessage(error, 'This payment method is not available right now.'),
-          )
-        })
-        .finally(() => setSwitchingMethod(false))
-    },
-    [cartId, selectedMethodId, switchingMethod],
-  )
+  }, [cartId, chargeTotal])
 
   // A local method that is no longer offered (e.g. switched off in Stripe) falls back to the usual ones.
+  const selectedMethodId =
+    pickedMethodId && paymentMethods.length && !paymentMethods.some((m) => m.id === pickedMethodId && m.kind === 'local')
+      ? null
+      : pickedMethodId
+
+  // Stripe's form must offer exactly the types the backend pins the payment to
+  // (pin-payment-method-types): every global method's types for the usual USD payment, or the
+  // chosen local method's own. Null until the methods have loaded.
+  const paymentMethodTypes = React.useMemo(() => {
+    const available = paymentMethods.filter((m) => m.available)
+    if (!available.length) return null
+    const chosen = selectedMethodId ? available.filter((m) => m.id === selectedMethodId) : available.filter((m) => m.kind === 'global')
+    const types = [...new Set(chosen.flatMap((m) => m.stripeTypes))]
+    return types.length ? types : null
+  }, [paymentMethods, selectedMethodId])
+
+  // The payment session (Stripe PaymentIntent) for the current total and method. The form no
+  // longer waits for it: it's prepared in the background once the fee is current, and "Pay now"
+  // uses that one, or waits for it, or makes a new one if the total or method changed since.
+  const sessionRef = React.useRef<{ key: string; promise: Promise<string> } | null>(null)
+  const staleSessionRef = React.useRef(false)
+  const sessionKey = `${cartId}|${chargeTotal}|${selectedMethodId ?? ''}`
+  const getClientSecret = React.useCallback((): Promise<string> => {
+    if (!cartId) return Promise.reject(new Error('No cart'))
+    if (sessionRef.current?.key === sessionKey) return sessionRef.current.promise
+    const forceRefresh = staleSessionRef.current
+    staleSessionRef.current = false
+    const promise = checkoutService
+      .getOrCreateStripeSession(cartId, { forceRefresh, methodId: selectedMethodId })
+      .then((session) => session.clientSecret)
+    const entry = { key: sessionKey, promise }
+    sessionRef.current = entry
+    // A failed attempt isn't kept: the next one tries again.
+    promise.catch(() => {
+      if (sessionRef.current === entry) sessionRef.current = null
+    })
+    return promise
+  }, [cartId, sessionKey, selectedMethodId])
+
   React.useEffect(() => {
-    if (!selectedMethodId || !paymentMethods.length) return
-    if (!paymentMethods.some((m) => m.id === selectedMethodId && m.kind === 'local')) {
-      selectMethod(null)
-    }
-  }, [paymentMethods, selectedMethodId, selectMethod])
+    if (!feeReady || !cartId || hasCompletedOrderRef.current) return
+    getClientSecret().catch((error) => {
+      console.error('Failed to prepare the payment session', error)
+    })
+  }, [feeReady, cartId, getClientSecret])
 
-  if (isLoading || sessionLoading || !cart) {
+  // The total changed after a session already exists: a stale service fee (item 14's 409) and
+  // applying or removing a coupon code both land here. The next session is made fresh.
+  const refreshPaymentSession = React.useCallback(() => {
+    sessionRef.current = null
+    staleSessionRef.current = true
+  }, [])
+
+  // Switching between the usual methods and a local one changes the payment's currency; the form
+  // follows at once and the matching session is made when the customer pays.
+  const selectMethod = React.useCallback((methodId: string | null) => {
+    setPickedMethodId(methodId)
+  }, [])
+
+  // Drawn at once: the same layout with grey blocks until this visit's cart has loaded.
+  if (!cartReady || !cart || !cartId) {
     return (
       <div className="bg-background min-h-screen font-sans">
         <CartNavbar currentStep={2} />
-        <div className="flex min-h-100 items-center justify-center px-6 py-16">
-          <p className="text-white/65 text-base">
-            Preparing checkout...
-          </p>
-        </div>
-      </div>
-    )
-  }
-
-  if (sessionError || !clientSecret) {
-    return (
-      <div className="bg-background min-h-screen font-sans">
-        <CartNavbar currentStep={2} />
-        <div className="flex min-h-100 flex-col items-center justify-center gap-3 px-6 py-16 text-center">
-          <p className="text-red text-base font-bold">
-            {sessionError ?? 'Could not start checkout.'}
-          </p>
-          <button
-            onClick={() => router.push('/cart')}
-            className="text-primary text-sm font-bold underline"
-          >
-            Back to cart
-          </button>
-        </div>
+        <section
+          aria-busy
+          className="mx-auto grid w-full max-w-310 grid-cols-1 gap-10 px-4 py-10 lg:grid-cols-[1fr_380px] lg:py-16"
+        >
+          <div className="flex flex-col gap-8">
+            <div className="flex flex-col gap-4">
+              <div className="h-6 w-20 animate-pulse rounded bg-white/10" />
+              <div className="h-14 animate-pulse rounded-xl bg-white/10" />
+            </div>
+            <div className="flex flex-col gap-3">
+              <div className="mb-1 h-6 w-40 animate-pulse rounded bg-white/10" />
+              <div className="h-12 animate-pulse rounded-[6px] bg-white/10" />
+              <div className="h-12 animate-pulse rounded-[6px] bg-white/10" />
+              <div className="h-12 animate-pulse rounded-[6px] bg-white/10" />
+            </div>
+            <div className="h-13 animate-pulse rounded-[10px] bg-white/10" />
+          </div>
+          <div className="flex flex-col gap-4">
+            <div className="h-6 w-36 animate-pulse rounded bg-white/10" />
+            <div className="h-64 animate-pulse rounded-2xl bg-white/10" />
+          </div>
+        </section>
       </div>
     )
   }
@@ -223,8 +215,10 @@ export function CheckoutPageContent() {
 
       <section className="mx-auto grid w-full max-w-310 grid-cols-1 gap-10 px-4 py-10 lg:grid-cols-[1fr_380px] lg:py-16">
         <CheckoutForm
-          cartId={cartId!}
-          clientSecret={clientSecret}
+          cartId={cartId}
+          charge={charge}
+          paymentMethodTypes={paymentMethodTypes}
+          getClientSecret={getClientSecret}
           email={checkoutEmail ?? cart.email ?? user?.email ?? ''}
           onEmailChange={setCheckoutEmail}
           locale={locale}
@@ -235,8 +229,6 @@ export function CheckoutPageContent() {
           localMethods={localMethods}
           selectedMethodId={selectedMethodId}
           onSelectMethod={selectMethod}
-          switchingMethod={switchingMethod}
-          methodError={methodError}
         />
         <CheckoutSummary cart={cart} charge={charge} onCartChanged={refreshPaymentSession} />
       </section>
