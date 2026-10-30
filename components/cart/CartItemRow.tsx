@@ -81,14 +81,14 @@ export function CartItemRow({
               </span>
             )}
             {item.platformInfo && (
-              <span className="inline-flex min-w-0 items-center gap-1.5 text-[13px] leading-[18px] text-white/65">
+              <span className="inline-flex min-w-0 items-center gap-2 text-sm leading-5 font-medium text-white/78">
                 {item.platformInfo.icon && (
                   <Image
                     src={item.platformInfo.icon}
                     alt=""
-                    width={16}
-                    height={16}
-                    className="size-4 shrink-0 object-contain"
+                    width={20}
+                    height={20}
+                    className="size-5 shrink-0 object-contain"
                   />
                 )}
                 <span className="truncate">{item.platformInfo.name}</span>
