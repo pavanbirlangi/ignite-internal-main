@@ -26,7 +26,7 @@ export const KeyList = ({ keys }: KeyListProps) => {
     setTimeout(() => setCopiedId(null), 2000)
   }
 
-  const renderCopyButton = (value: string, id: string, title: string) => {
+  const renderCopyButton = (value: string, id: string, title: string, size: 'md' | 'sm' = 'md', text = 'Copy') => {
     const copied = copiedId === id
     return (
       <button
@@ -34,13 +34,38 @@ export const KeyList = ({ keys }: KeyListProps) => {
         onClick={() => handleCopy(value, id)}
         aria-label={title}
         className={cn(
-          'inline-flex h-10 shrink-0 cursor-pointer items-center gap-1.5 rounded-lg px-3 text-sm font-medium transition-colors outline-none focus-visible:ring-2 focus-visible:ring-white/40',
+          'inline-flex shrink-0 cursor-pointer items-center gap-1.5 rounded-lg font-medium transition-colors outline-none focus-visible:ring-2 focus-visible:ring-white/40',
+          size === 'md' ? 'h-10 px-3 text-sm' : 'h-8 px-2.5 text-[13px]',
           copied ? 'bg-[#22C55E]/12 text-[#4ADE80]' : 'bg-secondary text-white/95 hover:bg-white/10',
         )}
       >
         {copied ? <Check className="size-4" /> : <Copy className="size-4" />}
-        {copied ? 'Copied' : 'Copy'}
+        {copied ? 'Copied' : text}
       </button>
+    )
+  }
+
+  // An account login: one card per account ("Account 2 of 3" + Copy both), Email and Password as
+  // rows inside it, so several logins read as separate accounts rather than a list of fields.
+  const renderCredential = (email: string, password: string, globalIndex: number) => {
+    const title = keys.length > 1 ? `Account ${globalIndex + 1} of ${keys.length}` : 'Account'
+    const row = (label: string, value: string, id: string, copyTitle: string) => (
+      <div className="grid grid-cols-[72px_minmax(0,1fr)_auto] items-center gap-3 py-2 pr-2 pl-4 sm:grid-cols-[84px_minmax(0,1fr)_auto]">
+        <span className="text-[13px] text-white/55">{label}</span>
+        <span className="font-mono text-[15px] font-medium tracking-[0.4px] break-all text-white/95">{value}</span>
+        {renderCopyButton(value, id, copyTitle, 'sm')}
+      </div>
+    )
+    return (
+      <div className="bg-background border-border overflow-hidden rounded-xl border">
+        <div className="border-border flex items-center justify-between gap-3 border-b bg-white/3 py-2 pr-2 pl-4">
+          <span className="text-sm font-bold text-white/95">{title}</span>
+          {renderCopyButton(`${email}\n${password}`, `${globalIndex}-both`, `Copy email and password of ${title}`, 'sm', 'Copy both')}
+        </div>
+        {row('Email', email, `${globalIndex}-email`, 'Copy email')}
+        <div className="border-border border-t" />
+        {row('Password', password, `${globalIndex}-password`, 'Copy password')}
+      </div>
     )
   }
 
@@ -63,17 +88,7 @@ export const KeyList = ({ keys }: KeyListProps) => {
         const credential = parseCredentialKey(key)
 
         if (credential) {
-          // Several logins: each pair is numbered (as in the keys PDF) and set apart by a line.
-          const suffix = keys.length > 1 ? ` (${globalIndex + 1} of ${keys.length})` : ''
-          return (
-            <div
-              key={globalIndex}
-              className={cn('flex flex-col gap-3.5', index > 0 && 'border-border border-t pt-4')}
-            >
-              {renderField(`Email${suffix}`, credential.email, `${globalIndex}-email`, 'Copy email')}
-              {renderField(`Password${suffix}`, credential.password, `${globalIndex}-password`, 'Copy password')}
-            </div>
-          )
+          return <div key={globalIndex}>{renderCredential(credential.email, credential.password, globalIndex)}</div>
         }
 
         // Plain key: only the first one carries the label.
