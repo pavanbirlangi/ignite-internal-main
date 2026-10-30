@@ -637,10 +637,7 @@ export function CheckoutForm({
   if (!paymentMethodTypes) {
     return (
       <div aria-busy className="flex flex-col gap-8">
-        <div className="flex flex-col gap-4">
-          <h2 className="text-xl font-bold text-white/95">Email</h2>
-          <div className="h-14 animate-pulse rounded-xl bg-white/10" />
-        </div>
+        <EmailStep email={email} onChange={(nextEmail) => onEmailChange?.(nextEmail)} />
         <div>
           <h2 className="mb-4 text-xl font-bold text-white/95">Payment method</h2>
           <PaymentSkeleton />
