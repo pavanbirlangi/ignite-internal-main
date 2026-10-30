@@ -158,14 +158,6 @@ export const HelpService = {
     return response.data
   },
 
-  // Every published answer with its topic (searched on the hub).
-  getAllHelpArticles: async (): Promise<{ data: HelpArticle[] }> => {
-    const response = await cmsClient.get(
-      '/items/help_articles?filter[status][_eq]=published&sort=sort&limit=-1&fields=id,status,title,body,cta_label,cta_url,help_subtopics.slug,help_subtopics.title',
-    )
-    return response.data
-  },
-
   getHelpTopics: async (
     categorySlug: string,
   ): Promise<{ data: HelpTopic[] }> => {
