@@ -137,11 +137,25 @@ function mapDropdownGroup(
   }
 }
 
+/** Game facts for the Details panel; each is null (row hidden) when not filled in. */
+export interface CmsGameFacts {
+  publisher: string | null
+  developer: string | null
+  /** YYYY-MM-DD */
+  releaseDate: string | null
+  /** PEGI age: "3", "7", "12", "16" or "18" */
+  ageRating: string | null
+  languages: string[]
+}
+
 export interface CmsProductResult {
   gallery: ProductGalleryItem[]
   systemRequirements: CmsMappedSystemRequirement[]
   dropdownOptions: CmsMappedDropdownGroup[]
+  gameFacts: CmsGameFacts
 }
+
+const text = (value: string | null | undefined) => value?.trim() || null
 
 const _fetchProductCmsData = async (
   slug: string,
@@ -153,7 +167,7 @@ const _fetchProductCmsData = async (
         params: {
           'filter': JSON.stringify({ slug: { _eq: slug } }),
           'fields':
-            'system_requirements.system_requirements_id.*,gallery.product_gallery_id.*,dropdown_options.dropdown_options_id.*,dropdown_options.dropdown_options_id.group_name.*,dropdown_options.dropdown_options_id.group_options.group_options_id.*',
+            'publisher,developer,release_date,age_rating,languages,system_requirements.system_requirements_id.*,gallery.product_gallery_id.*,dropdown_options.dropdown_options_id.*,dropdown_options.dropdown_options_id.group_name.*,dropdown_options.dropdown_options_id.group_options.group_options_id.*',
         },
       },
     )
@@ -178,7 +192,17 @@ const _fetchProductCmsData = async (
       .map((item) => mapDropdownGroup(item.dropdown_options_id, slug))
       .filter((item): item is CmsMappedDropdownGroup => item !== null)
 
-    return { gallery, systemRequirements, dropdownOptions }
+    const gameFacts: CmsGameFacts = {
+      publisher: text(product.publisher),
+      developer: text(product.developer),
+      releaseDate: text(product.release_date),
+      ageRating: text(product.age_rating),
+      languages: (Array.isArray(product.languages) ? product.languages : [])
+        .map((language) => String(language).trim())
+        .filter(Boolean),
+    }
+
+    return { gallery, systemRequirements, dropdownOptions, gameFacts }
   } catch (error) {
     console.error(
       `[CmsProductService] Failed to fetch CMS data for slug: ${slug}`,

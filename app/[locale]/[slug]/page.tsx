@@ -365,12 +365,15 @@ export default async function ProductPage({ params }: PageProps) {
           details={
             <ProductFactsPanel
               product={product}
+              gameFacts={cmsData?.gameFacts}
+              locale={locale}
               labels={{
                 heading: labels.detailsHeading,
-                platform: labels.detailsPlatform,
-                region: labels.detailsRegion,
-                worksOn: labels.detailsWorksOn,
-                genre: labels.detailsGenre,
+                publisher: labels.detailsPublisher,
+                developer: labels.detailsDeveloper,
+                releaseDate: labels.detailsReleaseDate,
+                languages: labels.detailsLanguages,
+                ageRating: labels.detailsAgeRating,
                 delivery: labels.detailsDelivery,
                 deliveryInstant: labels.detailsDeliveryInstant,
                 deliveryStandard: labels.detailsDeliveryStandard,

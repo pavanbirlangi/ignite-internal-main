@@ -26,10 +26,11 @@ export interface ProductPageTranslations {
   readLess: string
   // Details panel beside the description
   detailsHeading: string
-  detailsPlatform: string
-  detailsRegion: string
-  detailsWorksOn: string
-  detailsGenre: string
+  detailsPublisher: string
+  detailsDeveloper: string
+  detailsReleaseDate: string
+  detailsLanguages: string
+  detailsAgeRating: string
   detailsDelivery: string
   detailsDeliveryInstant: string
   detailsDeliveryStandard: string
@@ -81,10 +82,11 @@ const defaultLabels: ProductPageTranslations = {
   readMore: 'Read more',
   readLess: 'Read less',
   detailsHeading: 'Details',
-  detailsPlatform: 'Platform',
-  detailsRegion: 'Region',
-  detailsWorksOn: 'Works on',
-  detailsGenre: 'Genre',
+  detailsPublisher: 'Publisher',
+  detailsDeveloper: 'Developer',
+  detailsReleaseDate: 'Release date',
+  detailsLanguages: 'Languages',
+  detailsAgeRating: 'Age rating',
   detailsDelivery: 'Delivery',
   detailsDeliveryInstant: 'Instant, by email and in My Library',
   detailsDeliveryStandard: 'By email and in My Library',

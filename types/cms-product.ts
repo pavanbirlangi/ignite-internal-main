@@ -60,6 +60,12 @@ export interface CmsProductData {
   dropdown_options?: Array<{
     dropdown_options_id: CmsDropdownOptionGroup
   }>
+  // Game facts for the product page's Details panel (all optional).
+  publisher?: string | null
+  developer?: string | null
+  release_date?: string | null
+  age_rating?: string | null
+  languages?: string[] | null
 }
 
 export interface CmsProductResponse {
