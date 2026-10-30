@@ -50,6 +50,7 @@ export const RecommendationRow = ({
             src={getProxyImageUrl(product.image)}
             alt={product.title}
             fill
+            sizes="48px"
             className="object-cover"
           />
         </Link>
@@ -59,6 +60,7 @@ export const RecommendationRow = ({
             src={getProxyImageUrl(product.image)}
             alt={product.title}
             fill
+            sizes="48px"
             className="object-cover"
           />
         </div>

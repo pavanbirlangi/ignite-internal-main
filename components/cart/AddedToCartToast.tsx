@@ -69,6 +69,7 @@ function AddedToCartToast({
               src={getProxyImageUrl(thumbnail)}
               alt={title}
               fill
+              sizes="52px"
               className="object-cover"
             />
           ) : null}

@@ -55,6 +55,7 @@ export const CartDrawerItem = ({
               src={getProxyImageUrl(product.image)}
               alt={product.title}
               fill
+              sizes="64px"
               className="object-cover"
             />
           </Link>
@@ -66,6 +67,7 @@ export const CartDrawerItem = ({
               src={getProxyImageUrl(product.image)}
               alt={product.title}
               fill
+              sizes="64px"
               className="object-cover"
             />
           </div>
