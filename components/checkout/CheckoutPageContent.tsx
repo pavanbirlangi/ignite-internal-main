@@ -19,6 +19,8 @@ export function CheckoutPageContent() {
 
   const [checkoutEmail, setCheckoutEmail] = React.useState<string | null>(null)
   const [paymentMethods, setPaymentMethods] = React.useState<PaymentMethodOption[]>([])
+  // The backend's risk check put this cart on review: card only, authorized now, captured on approval.
+  const [reviewRequired, setReviewRequired] = React.useState(false)
   // The local method the customer picked (e.g. "bancontact"), or null for the usual USD methods
   // (card, wallets, Link, Alipay). Only visitors whose country has local methods ever see the choice.
   const [pickedMethodId, setPickedMethodId] = React.useState<string | null>(null)
@@ -91,8 +93,10 @@ export function CheckoutPageContent() {
     const ipCountry = Cookies.get(IP_COUNTRY_COOKIE) || Cookies.get('user_country')
     checkoutService
       .getPaymentMethods(cartId, ipCountry)
-      .then((methods) => {
-        if (!cancelled) setPaymentMethods(methods)
+      .then(({ methods, reviewRequired: review }) => {
+        if (cancelled) return
+        setPaymentMethods(methods)
+        setReviewRequired(review)
       })
       .catch((error) => {
         console.error('Failed to load payment methods', error)
@@ -114,10 +118,12 @@ export function CheckoutPageContent() {
   const paymentMethodTypes = React.useMemo(() => {
     const available = paymentMethods.filter((m) => m.available)
     if (!available.length) return null
+    // A review cart's payment is pinned to plain card, authorized only (pin-payment-method-types).
+    if (reviewRequired) return ['card']
     const chosen = selectedMethodId ? available.filter((m) => m.id === selectedMethodId) : available.filter((m) => m.kind === 'global')
     const types = [...new Set(chosen.flatMap((m) => m.stripeTypes))]
     return types.length ? types : null
-  }, [paymentMethods, selectedMethodId])
+  }, [paymentMethods, selectedMethodId, reviewRequired])
 
   // The payment session (Stripe PaymentIntent) for the current total and method. The form no
   // longer waits for it: it's prepared in the background once the fee is current, and "Pay now"
@@ -220,6 +226,7 @@ export function CheckoutPageContent() {
           cartId={cartId}
           charge={charge}
           paymentMethodTypes={paymentMethodTypes}
+          reviewRequired={reviewRequired}
           getClientSecret={getClientSecret}
           email={checkoutEmail ?? cart.email ?? user?.email ?? ''}
           onEmailChange={setCheckoutEmail}

@@ -119,6 +119,9 @@ interface CheckoutFormProps {
   charge: CheckoutChargeAmount
   // The Stripe types the payment will be pinned to (null while the methods load: skeleton only).
   paymentMethodTypes: string[] | null
+  // Risk review (backend checkout-risk.ts): the card is authorized now (capture_method manual) and
+  // charged once an admin approves the order. Stripe's form must use the same capture method.
+  reviewRequired?: boolean
   // The payment session's client secret, created on demand (or the one prepared in the background).
   getClientSecret: () => Promise<string>
   email: string
@@ -315,6 +318,7 @@ function CheckoutFormInner({
   onSelectMethod,
   methodError = null,
   expressOptions,
+  reviewRequired = false,
 }: Omit<CheckoutFormProps, 'charge' | 'paymentMethodTypes'> & { expressOptions: StripeElementsOptions }) {
   const stripe = useStripe()
   const elements = useElements()
@@ -581,6 +585,11 @@ function CheckoutFormInner({
         <div className={paymentReady ? undefined : 'h-0 overflow-hidden'}>
           <PaymentElement onReady={() => setPaymentReady(true)} />
         </div>
+        {reviewRequired && (
+          <p className="mt-2 text-xs text-white/65">
+            Your card is authorized now and charged once we&apos;ve confirmed your order.
+          </p>
+        )}
         <p className="text-white/65 mt-2 text-xs">
           Some cards ask for a billing postal code here. That's Stripe
           verifying the card, not a separate address form.
@@ -620,6 +629,7 @@ export function CheckoutForm({
   cartId,
   charge,
   paymentMethodTypes,
+  reviewRequired = false,
   getClientSecret,
   email,
   locale,
@@ -650,14 +660,18 @@ export function CheckoutForm({
     mode: 'payment',
     amount: Math.max(toStripeAmount(charge.amount, charge.currency), 1),
     currency: charge.currency.toLowerCase(),
-    captureMethod: 'automatic',
+    captureMethod: reviewRequired ? 'manual' : 'automatic',
     paymentMethodTypes,
     appearance: stripeAppearance,
     fonts: STRIPE_FONTS,
   }
   return (
     // Keyed on the currency and types: switching to a local method needs a fresh form.
-    <Elements key={`${options.currency}|${paymentMethodTypes.join(',')}`} stripe={stripePromise} options={options}>
+    <Elements
+      key={`${options.currency}|${paymentMethodTypes.join(',')}|${options.captureMethod}`}
+      stripe={stripePromise}
+      options={options}
+    >
       <CheckoutFormInner
         cartId={cartId}
         getClientSecret={getClientSecret}
@@ -671,6 +685,7 @@ export function CheckoutForm({
         onSelectMethod={onSelectMethod}
         methodError={methodError}
         expressOptions={options}
+        reviewRequired={reviewRequired}
       />
     </Elements>
   )

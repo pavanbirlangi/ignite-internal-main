@@ -68,14 +68,16 @@ const DIGITAL_SHIPPING_OPTION_NAME = 'Digital Delivery'
 
 export const checkoutService = {
   /** `country` is the visitor's IP country (not the header picker's), which decides availability. */
+  // reviewRequired: the backend's risk check put this cart on review (checkout-risk.ts): card only,
+  // and the payment is authorized now and captured once an admin approves the order.
   getPaymentMethods: async (
     cartId: string,
     country?: string,
-  ): Promise<PaymentMethodOption[]> => {
+  ): Promise<{ methods: PaymentMethodOption[]; reviewRequired: boolean }> => {
     const { data } = await medusaClient.get('/store/payment-methods', {
       params: { cart_id: cartId, ...(country ? { country: country.toLowerCase() } : {}) },
     })
-    return (data.methods ?? []).map((m: any) => ({
+    const methods: PaymentMethodOption[] = (data.methods ?? []).map((m: any) => ({
       id: m.id,
       label: m.label,
       kind: m.kind === 'local' ? 'local' : 'global',
@@ -85,6 +87,7 @@ export const checkoutService = {
       chargeAmount: typeof m.charge_amount === 'number' ? m.charge_amount : null,
       available: Boolean(m.available),
     }))
+    return { methods, reviewRequired: data.review_required === true }
   },
 
   /**
