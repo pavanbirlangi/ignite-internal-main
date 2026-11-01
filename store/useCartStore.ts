@@ -17,6 +17,7 @@ import {
   isOutOfStockError,
 } from '@/lib/utils/api-error'
 import { getStoredAttribution } from '@/lib/utils/attribution'
+import { trackEcommerce } from '@/lib/analytics'
 import { DEFAULT_CURRENCY } from '@/lib/utils/display-currency'
 
 const CART_ID_COOKIE_NAME = 'increddy_cart_id'
@@ -143,6 +144,27 @@ const syncServiceFee = (
     .catch((error) => {
       console.error('Failed to sync service fee', error)
     })
+}
+
+// add_to_cart for analytics (lib/analytics.ts), with the quantity just added, in the cart's
+// display currency (GA4 converts to the property's USD).
+const trackItemAdded = (cart: CartResponse, variantId: string, quantity: number) => {
+  const line = cart.items.find((item) => item.variantId === variantId)
+  if (!line) return
+  trackEcommerce('add_to_cart', {
+    currency: cart.currencyCode,
+    value: line.unitPrice * quantity,
+    items: [
+      {
+        item_id: line.handle || line.productId,
+        item_name: line.title,
+        item_variant: line.variantTitle,
+        item_category: line.platform?.name,
+        price: line.unitPrice,
+        quantity,
+      },
+    ],
+  })
 }
 
 // Mini-cart confirmation popup for a successful add-to-cart. Every cart
@@ -354,6 +376,7 @@ export const useCartStore = create<CartState>()((set, get) => ({
       syncServiceFee(set, get, updatedCart.id)
       maybeRefreshRecommendations(get, previousCart)
       set({ itemsAdded: get().itemsAdded + 1 })
+      trackItemAdded(updatedCart, merchandiseId, quantity)
       if (options?.notify !== false) notifyItemAdded(updatedCart, merchandiseId)
     } catch (error: any) {
       const errorMessage = extractApiErrorMessage(
@@ -392,6 +415,7 @@ export const useCartStore = create<CartState>()((set, get) => ({
           syncServiceFee(set, get, retryCart.id)
           maybeRefreshRecommendations(get, previousCart)
           set({ itemsAdded: get().itemsAdded + 1 })
+          trackItemAdded(retryCart, merchandiseId, quantity)
           if (options?.notify !== false) notifyItemAdded(retryCart, merchandiseId)
           return
         } catch (retryError) {

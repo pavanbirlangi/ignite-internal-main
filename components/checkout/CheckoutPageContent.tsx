@@ -10,6 +10,7 @@ import { useCartStore } from '@/store/useCartStore'
 import { useUserStore } from '@/store/useUserStore'
 import { checkoutService, type PaymentMethodOption } from '@/lib/services/checkout.service'
 import { IP_COUNTRY_COOKIE } from '@/lib/utils/display-currency'
+import { trackEcommerce } from '@/lib/analytics'
 
 export function CheckoutPageContent() {
   const { locale } = useParams<{ locale: string }>()
@@ -62,6 +63,26 @@ export function CheckoutPageContent() {
       router.replace('/cart')
     }
   }, [cartReady, isLoading, cartId, cart, router])
+
+  // begin_checkout for analytics (lib/analytics.ts), once per visit, from this visit's fresh cart.
+  const checkoutTrackedRef = React.useRef(false)
+  React.useEffect(() => {
+    if (!cartReady || isLoading || !cart?.items.length || checkoutTrackedRef.current) return
+    checkoutTrackedRef.current = true
+    trackEcommerce('begin_checkout', {
+      currency: cart.currencyCode,
+      value: cart.items.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0),
+      coupon: cart.promoCodes.join(',') || undefined,
+      items: cart.items.map((item) => ({
+        item_id: item.handle || item.productId,
+        item_name: item.title,
+        item_variant: item.variantTitle,
+        item_category: item.platform?.name,
+        price: item.unitPrice,
+        quantity: item.quantity,
+      })),
+    })
+  }, [cartReady, isLoading, cart])
 
   // The fee must be current before a payment session is created, not just before /complete --
   // otherwise the session Stripe sees carries a stale amount (item 14). Runs in the background:

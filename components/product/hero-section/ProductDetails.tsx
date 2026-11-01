@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { ChevronDown } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import WishlistHeart from '@/components/shared/WishlistHeart'
@@ -10,6 +10,7 @@ import { useAuthModalStore } from '@/store/useAuthModalStore'
 import { useWishlistStatus, useAddToWishlist, useRemoveFromWishlist } from '@/hooks/useWishlist'
 import { useProductPurchase } from '@/hooks/useProductPurchase'
 import { localizedHref, cn } from '@/lib/utils'
+import { trackEcommerce } from '@/lib/analytics'
 import type { CmsMappedDropdownGroup } from '@/lib/services/cms-product.service'
 import { AddToCartButton, BuyNowButton, ProductPrice } from '@/components/product/purchase-ui'
 import { SoldOutStatus } from '@/components/shared/SoldOutStatus'
@@ -50,6 +51,19 @@ export default function ProductDetails({ product, cmsDropdownOptions = [], local
 
   const { variant, isPriced, canBuy, price, compareAtPrice, discountPercent, addState, addToCart, buyNow, isOpening } =
     useProductPurchase(product)
+
+  // view_item for analytics (lib/analytics.ts), once per product page; unpriced products are skipped.
+  const viewedPrice = variant && isPriced ? Number(variant.price.amount) : null
+  const viewedCurrency = variant?.price.currencyCode
+  useEffect(() => {
+    if (viewedPrice === null || !viewedCurrency) return
+    trackEcommerce('view_item', {
+      currency: viewedCurrency,
+      value: viewedPrice,
+      items: [{ item_id: product.handle, item_name: product.title, item_variant: variant?.title, price: viewedPrice, quantity: 1 }],
+    })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [product.handle, viewedPrice, viewedCurrency])
 
   // Each option of a Directus dropdown links to another product page; the active one matches
   // the current page (or is the first option).
