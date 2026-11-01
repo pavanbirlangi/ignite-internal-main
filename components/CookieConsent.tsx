@@ -27,8 +27,9 @@ export default function CookieConsent({ locale }: { locale: string }) {
   const [choice, setChoice] = useState<ConsentChoice>({ analytics: false, ads: false })
 
   const open = useCallback((customize: boolean) => {
-    const stored = getStoredConsent()
-    setChoice(stored ?? { analytics: false, ads: false })
+    // No choice yet: the switches show what's in effect (on outside the countries that are asked).
+    const defaultOn = !needsConsentPrompt(Cookies.get(IP_COUNTRY_COOKIE))
+    setChoice(getStoredConsent() ?? { analytics: defaultOn, ads: defaultOn })
     setCustomizing(customize)
     setMounted(true)
     // Next frame, so the card slides in from its start position.
