@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import { Geist_Mono, Inter } from 'next/font/google'
 import '../globals.css'
 import Navbar from '@/components/layout/Navbar'
-import GoogleAnalytics from '@/components/GoogleAnalytics'
+import GoogleTagManager from '@/components/GoogleTagManager'
 import AttributionTracker from '@/components/AttributionTracker'
 import { cn } from '@/lib/utils'
 import MobileNav from '@/components/layout/MobileNav'
@@ -117,10 +117,9 @@ export default async function RootLayout({
             <GoogleSignInReturn />
           </SiteLogoProvider>
         </QueryProvider>
-        {process.env.NODE_ENV === 'production' &&
-          process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID && (
-            <GoogleAnalytics gaId={process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID} />
-          )}
+        {process.env.NEXT_PUBLIC_GTM_ID && (
+          <GoogleTagManager gtmId={process.env.NEXT_PUBLIC_GTM_ID} />
+        )}
         <AttributionTracker />
       </body>
     </html>
