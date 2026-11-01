@@ -20,6 +20,7 @@ interface EcommerceData {
   items: AnalyticsItem[]
   transaction_id?: string
   coupon?: string
+  aw_merchant_id?: string
 }
 
 function push(entry: Record<string, unknown>) {
@@ -50,6 +51,7 @@ export function trackEcommerce(
 }
 
 const TRACKED_ORDERS_KEY = 'increddy_tracked_orders'
+const MERCHANT_CENTER_ID = '5875182761'
 
 // The confirmation page can be reloaded or revisited; each order is reported once per browser.
 // Google Ads also drops a repeated transaction_id, this just keeps the noise out.
@@ -64,7 +66,13 @@ export function trackPurchaseOnce(data: EcommerceData & { transaction_id: string
   if (tracked.includes(data.transaction_id)) return
 
   // user_data.email feeds enhanced conversions; the Google tag hashes it before sending.
-  trackEcommerce('purchase', data, email ? { user_data: { email: email.trim().toLowerCase() } } : undefined)
+  // aw_merchant_id: the Merchant Center account whose feed the item ids come from, for the Ads
+  // conversion's product-level sales data (no feed country: the store has a US and a Euro feed).
+  trackEcommerce(
+    'purchase',
+    { ...data, aw_merchant_id: MERCHANT_CENTER_ID },
+    email ? { user_data: { email: email.trim().toLowerCase() } } : undefined,
+  )
 
   try {
     window.localStorage.setItem(TRACKED_ORDERS_KEY, JSON.stringify([...tracked, data.transaction_id].slice(-50)))
