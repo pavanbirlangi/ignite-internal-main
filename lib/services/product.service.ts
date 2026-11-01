@@ -658,11 +658,17 @@ const _fetchProductRecommendations = async (
   return products.sort((a, b) => (position.get(a.id) ?? 0) - (position.get(b.id) ?? 0))
 }
 
-// The store's sort as /store/products/filtered understands it (price_asc | price_desc | newest).
-// "Best selling" has no backend sort yet, so it keeps the backend's default order.
-function backendSort(sortKey: string | undefined, reverse: boolean | undefined): string | undefined {
+// The store's sort as /store/products/filtered understands it (price_asc | price_desc | newest |
+// popular). "Popularity" (the store's default) is paid orders in the last 30 days (backend R-117);
+// with a search it stays on the backend's relevance order, so the best match comes first.
+function backendSort(
+  sortKey: string | undefined,
+  reverse: boolean | undefined,
+  searching: boolean,
+): string | undefined {
   if (sortKey === 'PRICE') return reverse ? 'price_desc' : 'price_asc'
   if (sortKey === 'CREATED_AT') return 'newest'
+  if (sortKey === 'BEST_SELLING' && !searching) return 'popular'
   return undefined
 }
 
@@ -759,7 +765,7 @@ export const ProductService = {
         q: params.query,
         // Sorted on the backend across the whole catalogue (the store used to re-sort only the
         // page it got, and never asked for newest first). Price sorting needs the region's prices.
-        sort: backendSort(params.sortKey, params.reverse),
+        sort: backendSort(params.sortKey, params.reverse, Boolean(params.query)),
         region_id: regionId,
         page,
         limit,
