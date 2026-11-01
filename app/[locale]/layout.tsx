@@ -3,6 +3,7 @@ import { Geist_Mono, Inter } from 'next/font/google'
 import '../globals.css'
 import Navbar from '@/components/layout/Navbar'
 import GoogleTagManager from '@/components/GoogleTagManager'
+import CookieConsent from '@/components/CookieConsent'
 import AttributionTracker from '@/components/AttributionTracker'
 import { cn } from '@/lib/utils'
 import MobileNav from '@/components/layout/MobileNav'
@@ -120,6 +121,7 @@ export default async function RootLayout({
         {process.env.NEXT_PUBLIC_GTM_ID && (
           <GoogleTagManager gtmId={process.env.NEXT_PUBLIC_GTM_ID} />
         )}
+        <CookieConsent locale={locale} />
         <AttributionTracker />
       </body>
     </html>

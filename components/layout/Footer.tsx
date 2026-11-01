@@ -7,6 +7,7 @@ import SocialIcon, { hasSocialIcon } from '@/components/icons/SocialIcon'
 
 import type { FooterData } from '@/lib/services/footer.service'
 import type { FooterTranslations } from '@/lib/translations/footer'
+import { openCookieSettings } from '@/lib/consent'
 
 export default function Footer({
   footerData,
@@ -106,6 +107,18 @@ export default function Footer({
                       </Link>
                     </li>
                   ))}
+                  {/* Reopens the cookie card (components/CookieConsent.tsx), next to the legal pages. */}
+                  {section.links.some((link) => link.to.includes('/legal/')) && (
+                    <li>
+                      <button
+                        type="button"
+                        onClick={openCookieSettings}
+                        className="cursor-pointer text-sm text-white/65 transition-colors hover:text-white"
+                      >
+                        Cookie settings
+                      </button>
+                    </li>
+                  )}
                 </ul>
               </div>
             ))}
