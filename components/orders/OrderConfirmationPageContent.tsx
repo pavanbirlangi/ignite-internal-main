@@ -16,6 +16,7 @@ import { formatOrderDate, formatOrderPrice } from '@/lib/orders/order-formatters
 import { getVariantDisplayName } from '@/lib/orders/variant-title'
 import { getForeignCharge, getPaymentMethodName } from '@/lib/orders/payment-method'
 import { orderService, type OrderDetails } from '@/lib/services/order.service'
+import { trackPurchaseOnce } from '@/lib/analytics'
 import { cn } from '@/lib/utils'
 
 // An optional summary row's amount: undefined (row hidden) when it's zero.
@@ -67,6 +68,30 @@ export default function OrderConfirmationPageContent() {
     return () => window.clearTimeout(timer)
   }, [validId, stillPreparing, checks])
   const lineItems = order?.lineItems?.edges ?? []
+
+  // The Google Ads purchase conversion (lib/analytics.ts): once per order, only for a paid order
+  // placed in the last day, so opening an old order from the account never counts as a sale.
+  // Value = what was charged (products, discounts and service fee), like the backend's GA4 purchase.
+  useEffect(() => {
+    if (!order || state === 'failed' || state === 'refunded') return
+    const placedAt = order.processedAt ? Date.parse(order.processedAt) : NaN
+    if (!Number.isFinite(placedAt) || Date.now() - placedAt > 24 * 60 * 60 * 1000) return
+    trackPurchaseOnce(
+      {
+        transaction_id: String(order.orderNumber),
+        currency: order.totalPrice?.currencyCode || 'USD',
+        value: Number(order.totalPrice?.amount ?? 0),
+        items: (order.lineItems?.edges ?? []).map(({ node }) => ({
+          item_id: node.variant?.product?.handle || node.variant?.id || node.title,
+          item_name: node.title,
+          item_variant: node.variant?.title,
+          price: Number(node.variant?.price?.amount ?? 0),
+          quantity: node.quantity,
+        })),
+      },
+      order.email,
+    )
+  }, [order, state])
 
   function openKey(item: (typeof lineItems)[number]) {
     const node = item.node
