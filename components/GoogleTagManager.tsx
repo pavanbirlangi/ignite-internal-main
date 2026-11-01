@@ -15,6 +15,12 @@ declare global {
 // read the ad click (?gclid=) on the landing page, before a quick visitor moves on.
 // Consent Mode v2 defaults come first, in the same script (lib/consent.ts): denied in the EU/EEA,
 // UK and Switzerland, granted elsewhere, then the visitor's saved choice on top.
+// Google tag gateway (set up 2026-11-02 in Tag Manager with Cloudflare): Cloudflare serves the
+// container from our own domain at this path and passes its data on to Google, so ad blockers and
+// Safari's tracking protection drop less of it. Google's own address is the fallback if the path
+// ever stops answering (gateway switched off).
+const GATEWAY_PATH = 'yfg1'
+
 export default function GoogleTagManager({ gtmId }: { gtmId: string }) {
   if (!gtmId) return null
 
@@ -36,7 +42,13 @@ export default function GoogleTagManager({ gtmId }: { gtmId: string }) {
         window.dataLayer.push({ 'gtm.start': Date.now(), event: 'gtm.js' });
         var s = document.createElement('script');
         s.async = true;
-        s.src = 'https://www.googletagmanager.com/gtm.js?id=${gtmId}';
+        s.src = '/${GATEWAY_PATH}/?id=${gtmId}';
+        s.onerror = function () {
+          var f = document.createElement('script');
+          f.async = true;
+          f.src = 'https://www.googletagmanager.com/gtm.js?id=${gtmId}';
+          document.head.appendChild(f);
+        };
         document.head.appendChild(s);
       `}
     </Script>
