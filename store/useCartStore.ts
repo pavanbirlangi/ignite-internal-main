@@ -156,7 +156,7 @@ const trackItemAdded = (cart: CartResponse, variantId: string, quantity: number)
     value: line.unitPrice * quantity,
     items: [
       {
-        item_id: line.handle || line.productId,
+        item_id: line.variantId,
         item_name: line.title,
         item_variant: line.variantTitle,
         item_category: line.platform?.name,

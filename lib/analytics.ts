@@ -2,7 +2,8 @@
 // happened, in GA4's ecommerce format; the container decides which tags get it (GA4 for the
 // shopping events, the Google Ads conversion for purchase). GA4's own `purchase` comes from the
 // backend (R-95), so the browser's purchase push is for Google Ads only.
-// Items use the product handle as item_id, like the backend's purchase event, so GA4 joins them.
+// item_id is the variant id: the Merchant Center feed's g:id, so Google Ads can match sales and
+// remarketing to feed products; the backend's GA4 purchase uses the same id.
 
 export interface AnalyticsItem {
   item_id: string

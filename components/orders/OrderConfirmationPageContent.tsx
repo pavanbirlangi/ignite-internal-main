@@ -82,7 +82,7 @@ export default function OrderConfirmationPageContent() {
         currency: order.totalPrice?.currencyCode || 'USD',
         value: Number(order.totalPrice?.amount ?? 0),
         items: (order.lineItems?.edges ?? []).map(({ node }) => ({
-          item_id: node.variant?.product?.handle || node.variant?.id || node.title,
+          item_id: node.variant?.id || node.title,
           item_name: node.title,
           item_variant: node.variant?.title,
           price: Number(node.variant?.price?.amount ?? 0),

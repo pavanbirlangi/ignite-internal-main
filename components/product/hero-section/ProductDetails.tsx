@@ -65,7 +65,7 @@ export default function ProductDetails({ product, cmsDropdownOptions = [], local
     trackEcommerce('view_item', {
       currency: viewedCurrency,
       value: viewedPrice,
-      items: [{ item_id: product.handle, item_name: product.title, item_variant: variant?.title, price: viewedPrice, quantity: 1 }],
+      items: [{ item_id: variant?.id ?? product.handle, item_name: product.title, item_variant: variant?.title, price: viewedPrice, quantity: 1 }],
     })
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [product.handle, viewedPrice, viewedCurrency])

@@ -103,7 +103,7 @@ export function CheckoutPageContent() {
       value: cart.items.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0),
       coupon: cart.promoCodes.join(',') || undefined,
       items: cart.items.map((item) => ({
-        item_id: item.handle || item.productId,
+        item_id: item.variantId,
         item_name: item.title,
         item_variant: item.variantTitle,
         item_category: item.platform?.name,
