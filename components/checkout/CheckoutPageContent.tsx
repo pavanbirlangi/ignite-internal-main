@@ -10,7 +10,36 @@ import { useCartStore } from '@/store/useCartStore'
 import { useUserStore } from '@/store/useUserStore'
 import { checkoutService, type PaymentMethodOption } from '@/lib/services/checkout.service'
 import { IP_COUNTRY_COOKIE } from '@/lib/utils/display-currency'
-import { trackEcommerce } from '@/lib/analytics'
+import { getGaVisitorIds, trackEcommerce } from '@/lib/analytics'
+import { getStoredAdClick } from '@/lib/utils/attribution'
+
+// The GA4 visitor and visit plus the latest Google Ads click, saved on the cart before the payment
+// session exists (a cart update after it could reset the session): the backend's GA4 purchase
+// (R-95) then counts in this visit, and the order shows which ad click it came from. Saved once per
+// cart and visit; never holds up checkout (a failure only costs the link).
+async function saveVisitorIds(cartId: string) {
+  const metadata: Record<string, string> = Object.fromEntries(
+    Object.entries({ ...getGaVisitorIds(), ...getStoredAdClick() }).filter(([, value]) => value),
+  ) as Record<string, string>
+  if (!Object.keys(metadata).length) return
+  const savedKey = `increddy_visitor_saved_${cartId}`
+  const fingerprint = JSON.stringify(metadata)
+  try {
+    if (window.sessionStorage.getItem(savedKey) === fingerprint) return
+  } catch {
+    // Storage blocked: just save again.
+  }
+  try {
+    await checkoutService.setCartMetadata(cartId, metadata)
+    try {
+      window.sessionStorage.setItem(savedKey, fingerprint)
+    } catch {
+      // Ignored, see above.
+    }
+  } catch (error) {
+    console.error('Failed to save analytics ids on the cart', error)
+  }
+}
 
 export function CheckoutPageContent() {
   const { locale } = useParams<{ locale: string }>()
@@ -94,6 +123,7 @@ export function CheckoutPageContent() {
       .catch((error) => {
         console.error('Failed to apply service fee before checkout', error)
       })
+      .then(() => saveVisitorIds(cartId))
       .finally(() => {
         if (!cancelled) setFeeReady(true)
       })

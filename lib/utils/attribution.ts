@@ -54,3 +54,42 @@ export function getStoredAttribution(): Attribution | null {
     return null
   }
 }
+
+const AD_CLICK_KEY = 'increddy_ad_click'
+const AD_CLICK_KEYS = ['gclid', 'gbraid', 'wbraid'] as const
+// Google Ads credits a sale to a click for up to 90 days (the Purchase conversion's window).
+const AD_CLICK_MAX_AGE_MS = 90 * 24 * 60 * 60 * 1000
+
+export type AdClick = Partial<Record<(typeof AD_CLICK_KEYS)[number], string>>
+
+/**
+ * Google Ads click ids from the landing URL (auto-tagging). Unlike the first-touch record above,
+ * the latest ad click wins: it's the one Google Ads credits. Saved on the cart with the order
+ * (cart metadata) so an order can be traced back to its ad click.
+ */
+export function captureAdClick(searchParams: URLSearchParams): void {
+  if (typeof window === 'undefined') return
+  const click: AdClick = {}
+  for (const key of AD_CLICK_KEYS) {
+    const value = searchParams.get(key)
+    if (value) click[key] = value
+  }
+  if (!Object.keys(click).length) return
+  try {
+    window.localStorage.setItem(AD_CLICK_KEY, JSON.stringify({ ...click, at: Date.now() }))
+  } catch {
+    // Storage disabled: Tag Manager's conversion linker still keeps the click for Google Ads.
+  }
+}
+
+export function getStoredAdClick(): AdClick | null {
+  if (typeof window === 'undefined') return null
+  try {
+    const raw = window.localStorage.getItem(AD_CLICK_KEY)
+    if (!raw) return null
+    const { at, ...click } = JSON.parse(raw) as AdClick & { at?: number }
+    return at && Date.now() - at < AD_CLICK_MAX_AGE_MS ? click : null
+  } catch {
+    return null
+  }
+}

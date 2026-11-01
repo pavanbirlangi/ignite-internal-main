@@ -106,6 +106,12 @@ export const checkoutService = {
     await medusaClient.post(`/store/carts/${encodedId}`, { email })
   },
 
+  // Adds keys to the cart's metadata; Medusa merges them with what's there (attribution).
+  setCartMetadata: async (cartId: string, metadata: Record<string, string>): Promise<void> => {
+    const encodedId = encodeURIComponent(cartId)
+    await medusaClient.post(`/store/carts/${encodedId}`, { metadata })
+  },
+
   /**
    * The store only ever has one real shipping option (a $0 "Digital
    * Delivery" option, provisioned per-region -- confirmed live, see
