@@ -36,6 +36,8 @@ interface ProductDetailsProps {
 const FIELD_CLASS =
   'flex h-11 w-full items-center justify-between gap-2 rounded-[10px] border border-white/10 bg-white/3 px-3.5 text-sm font-medium text-white/95'
 
+let lastViewedItem = { handle: '', at: 0 }
+
 // The buy panel in the product hero: price, variant fields, Buy now, Add to cart and wishlist.
 export default function ProductDetails({ product, cmsDropdownOptions = [], locale, labels }: ProductDetailsProps) {
   const router = useRouter()
@@ -57,6 +59,9 @@ export default function ProductDetails({ product, cmsDropdownOptions = [], local
   const viewedCurrency = variant?.price.currencyCode
   useEffect(() => {
     if (viewedPrice === null || !viewedCurrency) return
+    // React's development mode runs effects twice; one view per product.
+    if (lastViewedItem.handle === product.handle && Date.now() - lastViewedItem.at < 1000) return
+    lastViewedItem = { handle: product.handle, at: Date.now() }
     trackEcommerce('view_item', {
       currency: viewedCurrency,
       value: viewedPrice,
