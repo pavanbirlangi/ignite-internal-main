@@ -4,6 +4,7 @@ import { formatOrderDate, formatOrderPrice } from './order-formatters'
 import { getVariantDisplayName } from '@/lib/orders/variant-title'
 import { getForeignCharge, getPaymentMethodName } from '@/lib/orders/payment-method'
 import { loadPdfLogo, pdfLogoSize } from '@/lib/orders/pdf-logo'
+import { loadCompanyDetails } from '@/lib/orders/company-details'
 import { drawLinkRun, type LinkPart } from '@/lib/orders/pdf-links'
 
 type RGB = readonly [number, number, number]
@@ -73,7 +74,7 @@ function paymentMethodLabel(order: OrderDetails): string {
 // charged in (USD) -- never the display currency the customer browsed in, whose rate moves daily
 // and wouldn't match their card statement.
 export async function generateReceiptPdf(order: OrderDetails): Promise<void> {
-  const logo = await loadPdfLogo()
+  const [logo, company] = await Promise.all([loadPdfLogo(), loadCompanyDetails()])
   const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' })
   const pageWidth = doc.internal.pageSize.getWidth()
   const right = pageWidth - MARGIN
@@ -133,6 +134,23 @@ export async function generateReceiptPdf(order: OrderDetails): Promise<void> {
   doc.text(status.label, right - pillWidth / 2, y + 7.8, { align: 'center' })
 
   y += 18
+
+  // — The seller (Medusa Admin > Store settings > Invoices > Invoice details), as on invoices.
+  if (company) {
+    let lineY = y - 4
+    if (company.companyName) {
+      setText(8.5, INK, 'bold')
+      doc.text(company.companyName, MARGIN, lineY)
+      lineY += 4.2
+    }
+    setText(8, MUTED)
+    for (const line of [...company.addressLines, ...(company.taxId ? [`Tax ID: ${company.taxId}`] : [])]) {
+      doc.text(line, MARGIN, lineY)
+      lineY += 4
+    }
+    y = lineY + 2
+  }
+
   rule(y)
   y += 9
 
