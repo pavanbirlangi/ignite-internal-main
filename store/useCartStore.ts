@@ -214,6 +214,11 @@ const maybeRefreshRecommendations = (
 // the page both loading on mount) waits for it instead of sending its own.
 let cartLoadInFlight: { cartId: string; promise: Promise<void> } | null = null
 
+// The new cart being created: adds made before it exists (quick clicks on several products, or the
+// drawer and the page mounting together) share it instead of each creating a cart of their own,
+// which left the others behind with items (each got an abandoned-cart email).
+let cartCreateInFlight: Promise<void> | null = null
+
 export const useCartStore = create<CartState>()((set, get) => ({
   cartId: getCartIdFromCookie(),
   cart: null,
@@ -239,32 +244,40 @@ export const useCartStore = create<CartState>()((set, get) => ({
       return
     }
 
-    try {
-      set({ isLoading: true, error: null })
-      // Attribution feeds the admin "Order source" widget; it's attached at creation so it never
-      // needs a separate cart update (see cartService.createCart).
-      const attribution = getStoredAttribution()
-      const metadata = attribution
-        ? (Object.fromEntries(
-            Object.entries(attribution).filter(([, value]) => value),
-          ) as Record<string, string>)
-        : undefined
-      const newCart = await cartService.createCart(metadata)
-      setCartIdCookie(newCart.id)
-      set({
-        cartId: newCart.id,
-        cart: newCart,
-        recommendations: [],
-        isLoading: false,
-      })
-    } catch (error: any) {
-      const errorMessage = extractApiErrorMessage(
-        error,
-        'Failed to initialize cart',
-      )
-      console.error('Error initializing cart', error)
-      set({ error: errorMessage, isLoading: false })
+    if (cartCreateInFlight) return cartCreateInFlight
+    const createNewCart = async () => {
+      try {
+        set({ isLoading: true, error: null })
+        // Attribution feeds the admin "Order source" widget; it's attached at creation so it never
+        // needs a separate cart update (see cartService.createCart).
+        const attribution = getStoredAttribution()
+        const metadata = attribution
+          ? (Object.fromEntries(
+              Object.entries(attribution).filter(([, value]) => value),
+            ) as Record<string, string>)
+          : undefined
+        const newCart = await cartService.createCart(metadata)
+        setCartIdCookie(newCart.id)
+        set({
+          cartId: newCart.id,
+          cart: newCart,
+          recommendations: [],
+          isLoading: false,
+        })
+      } catch (error: any) {
+        const errorMessage = extractApiErrorMessage(
+          error,
+          'Failed to initialize cart',
+        )
+        console.error('Error initializing cart', error)
+        set({ error: errorMessage, isLoading: false })
+      }
     }
+    const promise = createNewCart().finally(() => {
+      if (cartCreateInFlight === promise) cartCreateInFlight = null
+    })
+    cartCreateInFlight = promise
+    return promise
   },
 
   loadCart: async () => {
