@@ -25,6 +25,7 @@ const StoreHero = ({
             fill
             className="origin-top object-cover object-top"
             priority
+            fetchPriority="high"
             quality={100}
           />
         </div>
