@@ -148,7 +148,9 @@ export default async function HomePage({
           })
 
         return ProductService.getCollectionProductsByHandle(handle)
-          .then((games) => ({ id: section.id, games }))
+          // The cards never show the description (HTML, several KB each); left out so it isn't
+          // sent to the browser with the carousel's props.
+          .then((games) => ({ id: section.id, games: games.map((game) => ({ ...game, description: '' })) }))
           .catch(() => ({ id: section.id, games: [] as ProductListItem[] }))
       }),
     ] as const),

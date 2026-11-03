@@ -1,5 +1,6 @@
 'use client'
 
+import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import {
   Carousel,
@@ -10,6 +11,11 @@ import {
 } from '@/components/ui/carousel'
 import type { ProductListItem } from '@/types/product'
 import StoreCard from '../store/StoreCard'
+
+// Cards rendered up front: a screenful even on desktop (5 visible) plus one. The rest are added
+// once the carousel comes near the screen or is touched, so a page of several carousels doesn't
+// build, send and hydrate every card (the homepage had 68; PageSpeed mobile: 1.7 s of React work).
+const INITIAL_CARDS = 6
 
 type GameCarouselSectionProps = {
   title: string
@@ -27,8 +33,36 @@ export default function GameCarouselSection({
   id,
   className = 'container flex flex-col gap-8',
 }: GameCarouselSectionProps) {
+  const sectionRef = useRef<HTMLElement>(null)
+  const [showAll, setShowAll] = useState(games.length <= INITIAL_CARDS)
+
+  useEffect(() => {
+    if (showAll) return
+    const section = sectionRef.current
+    if (!section || typeof IntersectionObserver === 'undefined') {
+      setShowAll(true)
+      return
+    }
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((entry) => entry.isIntersecting)) setShowAll(true)
+      },
+      { rootMargin: '400px 0px' },
+    )
+    observer.observe(section)
+    return () => observer.disconnect()
+  }, [showAll])
+
+  const visibleGames = showAll ? games : games.slice(0, INITIAL_CARDS)
+
   return (
-    <section id={id} className={className}>
+    <section
+      ref={sectionRef}
+      id={id}
+      className={className}
+      onPointerDown={showAll ? undefined : () => setShowAll(true)}
+      onFocusCapture={showAll ? undefined : () => setShowAll(true)}
+    >
       {/* Section Header */}
       <div className="flex items-center justify-between">
         <h2 className="trim text-xl font-bold md:text-2xl lg:text-3xl">
@@ -52,7 +86,7 @@ export default function GameCarouselSection({
             className="group/carousel w-full"
           >
             <CarouselContent>
-              {games.map((product) => (
+              {visibleGames.map((product) => (
                 <CarouselItem
                   key={product.id}
                   className="basis-[42%] sm:basis-[38%] md:basis-1/3 lg:basis-1/5"
