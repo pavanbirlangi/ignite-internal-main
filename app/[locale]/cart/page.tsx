@@ -14,8 +14,9 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { locale } = await params
 
+  // A visitor's own cart: kept out of search results.
   return generateSeoMetadata(
-    null,
+    { index: false, follow: true },
     locale,
     'cart',
     'My Cart | Increddy',

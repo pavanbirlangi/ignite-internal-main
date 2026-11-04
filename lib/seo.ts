@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import { languages } from './region-data'
 import { translateTextsWithLangbly } from './services/langbly-translation.service'
 import { DEFAULT_LOCALE, localizedHref } from './utils'
-import { SITE_URL, siteUrl } from './site'
+import { SITE_URL, siteUrl, TRANSLATIONS_ENABLED } from './site'
 import { WEBSITE_ID, breadcrumbJsonLd, type BreadcrumbItem } from './structured-data'
 
 export interface SeoData {
@@ -60,6 +60,9 @@ function buildAlternates(locale: string, pathname: string) {
   const cleanPath = pathname.replace(/^\/+|\/+$/g, '')
   const suffix = cleanPath ? `/${cleanPath}` : '/'
 
+  // Untranslated language versions are copies of the English page (see TRANSLATIONS_ENABLED).
+  if (!TRANSLATIONS_ENABLED) return { canonical: buildCanonicalUrl(DEFAULT_LOCALE, pathname) }
+
   const languageAlternates: Record<string, string> = {}
   for (const code of SUPPORTED_LOCALES) {
     languageAlternates[code] = `${base}${localizedHref(code, suffix)}`
@@ -72,6 +75,11 @@ function buildAlternates(locale: string, pathname: string) {
       'x-default': `${base}${localizedHref(DEFAULT_LOCALE, suffix)}`,
     },
   }
+}
+
+/** Canonical (and hreflang alternates when translated) for pages that build their own metadata. */
+export function seoAlternates(locale: string, pathname: string) {
+  return buildAlternates(locale.toLowerCase(), pathname)
 }
 
 /**

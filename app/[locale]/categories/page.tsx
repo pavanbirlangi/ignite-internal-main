@@ -6,7 +6,8 @@ import {
   type ExplorePlatformItem,
 } from '@/lib/services/homepage.service'
 import { translateHomepageData } from '@/lib/translations/homepage'
-import { getWebPageJsonLd } from '@/lib/seo'
+import type { Metadata } from 'next'
+import { generateSeoMetadata, getWebPageJsonLd } from '@/lib/seo'
 
 type PlatformCard = {
   name: string
@@ -22,6 +23,17 @@ type GenreCard = {
 }
 
 type CategoriesPageParams = Promise<{ locale: string }>
+
+export async function generateMetadata({ params }: { params: CategoriesPageParams }): Promise<Metadata> {
+  const { locale } = await params
+  return generateSeoMetadata(
+    null,
+    locale,
+    'categories',
+    'Categories | Increddy',
+    'Browse games, gift cards, software and subscriptions by genre and platform.',
+  )
+}
 
 function toStoreQueryHref(key: 'platform' | 'genre', value: string) {
   return `/store?${key}=${encodeURIComponent(value)}`

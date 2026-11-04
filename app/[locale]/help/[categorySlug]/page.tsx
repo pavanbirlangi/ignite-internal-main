@@ -7,7 +7,7 @@ import { ACCOUNT_CARD_CLASS } from '@/components/library/account-ui'
 import { HelpService } from '@/lib/services/help.service'
 import { ticketHref, topicHref } from '@/lib/help/help-links'
 import { cn, localizedHref } from '@/lib/utils'
-import { getWebPageJsonLd } from '@/lib/seo'
+import { getWebPageJsonLd, seoAlternates } from '@/lib/seo'
 
 interface CategoryPageProps {
   params: Promise<{ locale: string; categorySlug: string }>
@@ -26,11 +26,12 @@ async function getCategory(categorySlug: string) {
 }
 
 export async function generateMetadata({ params }: CategoryPageProps): Promise<Metadata> {
-  const { categorySlug } = await params
+  const { locale, categorySlug } = await params
   const { type } = await getCategory(categorySlug).catch(() => ({ type: undefined }))
   return {
     title: type ? `${type.name} | Help Centre | Increddy` : 'Help Centre | Increddy',
     description: type?.description || 'Browse support topics in this help category.',
+    alternates: seoAlternates(locale, `help/${categorySlug}`),
   }
 }
 

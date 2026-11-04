@@ -2,16 +2,19 @@ import medusaClient from './medusa-axios'
 import cmsClient from './cms-axios'
 import { languages } from './region-data'
 import { DEFAULT_LOCALE } from './utils'
-import { SITE_URL, siteUrl } from './site'
+import { SITE_URL, siteUrl, TRANSLATIONS_ENABLED } from './site'
 
 // The sitemap is an index (/sitemap.xml) of one file per language (/sitemaps/<locale>.xml), each
 // listing every public page once. Language alternates aren't repeated here: every page already
 // declares them in its <head> (lib/seo.ts), and listing 24 alternates per URL made the old single
 // sitemap 7 MB. A page only gets <lastmod> when we know when it really changed.
 
-export const SITEMAP_LOCALES = Array.from(new Set(languages.map((l) => l.value.toLowerCase()))).sort((a, b) =>
-  a === DEFAULT_LOCALE ? -1 : b === DEFAULT_LOCALE ? 1 : a.localeCompare(b),
-)
+// English only while the language versions aren't translated (TRANSLATIONS_ENABLED in lib/site.ts).
+export const SITEMAP_LOCALES = TRANSLATIONS_ENABLED
+  ? Array.from(new Set(languages.map((l) => l.value.toLowerCase()))).sort((a, b) =>
+      a === DEFAULT_LOCALE ? -1 : b === DEFAULT_LOCALE ? 1 : a.localeCompare(b),
+    )
+  : [DEFAULT_LOCALE]
 
 export interface SitemapPage {
   path: string

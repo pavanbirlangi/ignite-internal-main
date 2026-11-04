@@ -8,7 +8,7 @@ import { ACCOUNT_CARD_CLASS } from '@/components/library/account-ui'
 import { HelpService } from '@/lib/services/help.service'
 import { ticketHref, topicHref } from '@/lib/help/help-links'
 import { cn, localizedHref } from '@/lib/utils'
-import { getWebPageJsonLd } from '@/lib/seo'
+import { getWebPageJsonLd, seoAlternates } from '@/lib/seo'
 
 interface TopicPageProps {
   params: Promise<{ locale: string; categorySlug: string; topicSlug: string }>
@@ -22,11 +22,12 @@ async function getTopic(categorySlug: string, topicSlug: string) {
 }
 
 export async function generateMetadata({ params }: TopicPageProps): Promise<Metadata> {
-  const { categorySlug, topicSlug } = await params
+  const { locale, categorySlug, topicSlug } = await params
   const { topic } = await getTopic(categorySlug, topicSlug).catch(() => ({ topic: undefined }))
   return {
     title: topic ? `${topic.title} | Help Centre | Increddy` : 'Help Centre | Increddy',
     description: topic?.description || 'Read detailed support guidance for this topic.',
+    alternates: seoAlternates(locale, `help/${categorySlug}/${topicSlug}`),
   }
 }
 
