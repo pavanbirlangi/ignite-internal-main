@@ -27,6 +27,9 @@ const YOUTUBE_ID =
 const TILE_CLASS =
   'group focus-visible:ring-primary relative block aspect-video w-[300px] shrink-0 overflow-hidden rounded-xl bg-white/5 outline-none focus-visible:ring-2 md:w-[420px]'
 
+const ROW_ARROW_CLASS =
+  'absolute top-1/2 z-10 size-11 -translate-y-1/2 border border-white/15 bg-[#0C0C0C]/55 text-white shadow-none backdrop-blur-md transition-[background-color,border-color,opacity,transform] duration-200 hover:border-transparent hover:bg-primary active:scale-[0.94] disabled:pointer-events-none disabled:opacity-0 [@media(hover:none)]:hidden'
+
 // Trailer first, then screenshots, in one swipeable row. Screenshots open the full-screen viewer;
 // the trailer plays in its tile.
 export default function Gallery({
@@ -167,9 +170,10 @@ export default function Gallery({
             </CarouselItem>
           ))}
         </CarouselContent>
-        <div className="hidden lg:block">
-          <CarouselPrevious className="absolute top-1/2 -left-14 -translate-y-1/2" />
-          <CarouselNext className="absolute top-1/2 -right-14 -translate-y-1/2" />
+        {/* Round glass arrows over the row's edges (touch screens swipe instead); hidden at either end. */}
+        <div className="hidden md:block">
+          <CarouselPrevious className={`${ROW_ARROW_CLASS} left-3`} />
+          <CarouselNext className={`${ROW_ARROW_CLASS} right-3`} />
         </div>
       </Carousel>
 
