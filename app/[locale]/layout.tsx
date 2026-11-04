@@ -42,13 +42,14 @@ export const metadata: Metadata = {
   title: 'Increddy: Buy Digital Goods Cheaper!',
   description:
     'Level up with the best deals on games, gift cards, subscriptions, and more with Increddy. Enjoy  lowest prices, and endless gaming fun!',
+  // ?v= makes browsers fetch a new icon after it changes (they cache favicons for a long time).
   icons: {
     icon: [
-      { url: '/favicon.ico', sizes: 'any' },
-      { url: '/icon.svg', type: 'image/svg+xml' },
-      { url: '/icon.png', type: 'image/png' },
+      { url: '/favicon.ico?v=2', sizes: 'any' },
+      { url: '/icon.svg?v=2', type: 'image/svg+xml' },
+      { url: '/icon.png?v=2', type: 'image/png' },
     ],
-    apple: '/apple-icon.png',
+    apple: '/apple-icon.png?v=2',
   },
   manifest: '/manifest.json',
 }
