@@ -43,13 +43,15 @@ export const metadata: Metadata = {
   description:
     'Level up with the best deals on games, gift cards, subscriptions, and more with Increddy. Enjoy  lowest prices, and endless gaming fun!',
   // ?v= makes browsers fetch a new icon after it changes (they cache favicons for a long time).
+  // The SVG switches between a dark and a white mark with the browser theme; the .ico is the
+  // fallback, sized 32x32 rather than "any" so Chrome picks the SVG.
   icons: {
     icon: [
-      { url: '/favicon.ico?v=2', sizes: 'any' },
-      { url: '/icon.svg?v=2', type: 'image/svg+xml' },
-      { url: '/icon.png?v=2', type: 'image/png' },
+      { url: '/favicon.ico?v=3', sizes: '32x32' },
+      { url: '/icon.svg?v=3', type: 'image/svg+xml' },
+      { url: '/icon.png?v=3', type: 'image/png', sizes: '96x96' },
     ],
-    apple: '/apple-icon.png?v=2',
+    apple: '/apple-icon.png?v=3',
   },
   manifest: '/manifest.json',
 }
