@@ -76,17 +76,46 @@ export const KeyList = ({ keys }: KeyListProps) => {
     )
   }
 
-  const renderField = (label: string | null, value: string, id: string, title: string) => (
-    <div className="flex flex-col gap-2">
-      {label && <span className={ACCOUNT_SECTION_LABEL_CLASS}>{label}</span>}
-      <div className="bg-background border-border flex h-13 items-center gap-3 rounded-[10px] border py-1.5 pr-1.5 pl-4">
-        <span className="min-w-0 flex-1 truncate font-mono text-base font-medium tracking-[0.6px] text-white/95">
-          {value}
-        </span>
-        {renderCopyButton(value, id, title)}
+  // The whole key is shown (long keys wrap) and the whole box copies it; the small icon on the
+  // right says so and turns into a tick with "Copied".
+  const renderField = (label: string | null, value: string, id: string, title: string) => {
+    const copied = copiedId === id
+    return (
+      <div className="flex flex-col gap-2">
+        {label && <span className={ACCOUNT_SECTION_LABEL_CLASS}>{label}</span>}
+        <button
+          type="button"
+          onClick={() => handleCopy(value, id)}
+          aria-label={`${title}: ${value}`}
+          className={cn(
+            'bg-background group/key flex min-h-13 w-full cursor-pointer items-center gap-3 rounded-[10px] border py-2.5 pr-2 pl-4 text-left transition-colors outline-none focus-visible:ring-2 focus-visible:ring-white/40',
+            copied ? 'border-[#22C55E]/40' : 'border-border hover:border-white/20 hover:bg-white/3',
+          )}
+        >
+          {/* Wraps after a dash first, so key groups stay whole; inside a group only if one is too long. */}
+          <span className="min-w-0 flex-1 font-mono text-base font-medium tracking-[0.6px] [overflow-wrap:anywhere] text-white/95">
+            {value.split('-').map((part, i) => (
+              <React.Fragment key={i}>
+                {i > 0 && '-'}
+                {i > 0 && <wbr />}
+                {part}
+              </React.Fragment>
+            ))}
+          </span>
+          <span
+            aria-hidden
+            className={cn(
+              'flex shrink-0 items-center gap-1.5 rounded-lg px-2 py-1.5 text-[13px] font-medium transition-colors',
+              copied ? 'bg-[#22C55E]/12 text-[#4ADE80]' : 'text-white/55 group-hover/key:text-white/90',
+            )}
+          >
+            {copied ? <Check className="size-4" /> : <Copy className="size-4" />}
+            {copied && 'Copied'}
+          </span>
+        </button>
       </div>
-    </div>
-  )
+    )
+  }
 
   return (
     <div className="flex flex-col gap-4">
