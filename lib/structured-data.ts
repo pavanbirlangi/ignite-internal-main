@@ -22,13 +22,17 @@ export function organizationJsonLd(socialUrls: string[] = []) {
   return {
     '@type': 'OnlineStore',
     '@id': ORGANIZATION_ID,
-    name: 'Increddy',
+    // The company; the brand ("Increddy") stays the WebSite name, which Google shows as the site name.
+    name: 'Increddy Limited',
+    legalName: 'Increddy Limited',
+    alternateName: 'Increddy',
     url: SITE_URL,
+    // The current icon (public/icon-512.png); Google wants a square logo of at least 112px.
     logo: {
       '@type': 'ImageObject',
-      url: `${SITE_URL}/apple-icon.png`,
-      width: 180,
-      height: 180,
+      url: `${SITE_URL}/icon-512.png`,
+      width: 512,
+      height: 512,
     },
     description: SITE_DESCRIPTION,
     ...(socialUrls.length > 0 && { sameAs: socialUrls }),
