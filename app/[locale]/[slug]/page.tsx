@@ -207,6 +207,16 @@ function getProductJsonLd(
           url,
           price: Number(variant.price.amount),
           priceCurrency: variant.price.currencyCode || 'USD',
+          // On sale: the price before the discount, which Google shows struck through next to the
+          // price (as the feed's price / sale_price do for Shopping).
+          ...(Number(variant.compareAtPrice?.amount) > Number(variant.price.amount) && {
+            priceSpecification: {
+              '@type': 'UnitPriceSpecification',
+              priceType: 'https://schema.org/StrikethroughPrice',
+              price: Number(variant.compareAtPrice?.amount),
+              priceCurrency: variant.compareAtPrice?.currencyCode || variant.price.currencyCode || 'USD',
+            },
+          }),
           availability: canBuy ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
           itemCondition: 'https://schema.org/NewCondition',
           seller: { '@id': ORGANIZATION_ID },
