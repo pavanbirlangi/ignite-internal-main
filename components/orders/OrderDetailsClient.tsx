@@ -141,6 +141,7 @@ export default function OrderDetailsClient({
       variantTitle,
       selectedOptions,
       revealDate: order?.processedAt ?? new Date().toISOString(),
+      awaitingKeys: displayStatus === 'processing' || displayStatus === 'partly-delivered',
     })
     setIsKeyModalOpen(true)
   }

@@ -109,6 +109,7 @@ export default function OrderConfirmationPageContent() {
       variantTitle: variant?.title ?? '',
       selectedOptions: node?.variant_info?.selectedOptions ?? variant?.selectedOptions ?? [],
       revealDate: order?.processedAt ?? new Date().toISOString(),
+      awaitingKeys: stillPreparing,
     })
   }
 

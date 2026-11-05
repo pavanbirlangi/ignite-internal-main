@@ -21,7 +21,8 @@ export function getCustomerOrderStatus(order: {
   if (payment === 'REFUNDED') return 'refunded'
   if (payment === 'VOIDED' || delivery === 'CANCELLED' || delivery === 'CANCELED') return 'cancelled'
   if (payment === 'PARTIALLY_REFUNDED') return 'partly-refunded'
-  if (payment === 'PENDING' || payment === 'AUTHORIZED') return 'payment-pending'
+  // An authorized (held) payment is still being checked; to the customer the order is processing.
+  if (payment === 'PENDING') return 'payment-pending'
   if (delivery === 'FULFILLED') return 'completed'
   if (delivery === 'PARTIAL') return 'partly-delivered'
   return 'processing'

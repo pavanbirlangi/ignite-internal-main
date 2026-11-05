@@ -170,7 +170,7 @@ export function RevealProductModal({
                     This key was revoked because the order was refunded.
                   </p>
                 </div>
-              ) : isPending ? (
+              ) : isPending || (product.awaitingKeys && assignments.length === 0) ? (
                 <PendingNotice title="Your key is being prepared" />
               ) : keys.length > 0 ? (
                 <div className="flex flex-col gap-4">

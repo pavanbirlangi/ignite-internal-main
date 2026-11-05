@@ -143,8 +143,10 @@ function mapFinancialStatus(status?: string): string {
     // a real "Pending" tab filter needs an authorized-but-not-captured test
     // order to actually match it (confirmed live with a real uncaptured
     // order, see the requirements/plan-doc writeup for this phase).
+    // Card held but not taken yet (risk review): shown to the customer as Processing.
     case 'authorized':
     case 'partially_authorized':
+      return 'AUTHORIZED'
     case 'not_paid':
     case 'awaiting':
     case 'requires_action':
