@@ -144,7 +144,7 @@ export async function generateReceiptPdf(order: OrderDetails): Promise<void> {
       lineY += 4.2
     }
     setText(8, MUTED)
-    for (const line of [...company.addressLines, ...(company.taxId ? [`Tax ID: ${company.taxId}`] : [])]) {
+    for (const line of company.addressLines) {
       doc.text(line, MARGIN, lineY)
       lineY += 4
     }
@@ -291,25 +291,6 @@ export async function generateReceiptPdf(order: OrderDetails): Promise<void> {
     right - MARGIN,
   )
   doc.text(note, MARGIN, y)
-  y += note.length * 3.6 + 6
-
-  // Refunds, in the words of the refund policy (72 hours, faulty or not as described)
-  const refundText = doc.splitTextToSize(
-    "Problem with a key? Refund requests are accepted within 72 hours of purchase for a key that " +
-      "doesn't work or isn't as described.",
-    right - MARGIN,
-  )
-  if (y + 9 + refundText.length * 3.6 > PAGE_BOTTOM) {
-    addPage()
-    y = 20
-  }
-  setText(8.5, MUTED, 'bold')
-  doc.text('REFUNDS', MARGIN, y)
-  y += 4.5
-  setText(8.5, MUTED)
-  doc.text(refundText, MARGIN, y)
-  y += refundText.length * 3.6
-  linkRun([['Read the refund policy', `${SITE}/legal/refund-policy`]], MARGIN, y)
 
   // — Footer, on every page
   const pageCount = doc.getNumberOfPages()
