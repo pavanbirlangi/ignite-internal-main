@@ -23,10 +23,23 @@ const PAGE_KEEP_SECONDS = 24 * 60 * 60
 // Never cached: personal or transactional pages (checked without the /de-style language prefix).
 const UNCACHED_PREFIXES = ['/api', '/_next', '/cart', '/checkout', '/dashboard', '/order', '/account', '/auth', '/help/create-ticket']
 const LOCALE_PREFIX = /^\/[a-z]{2}(?=\/|$)/
+// Ad and campaign tracking parameters: unique per click and read only in the browser (attribution.ts
+// reads the address bar), so they're left out of the cache key; every ad click used to be a miss.
+const TRACKING_PARAM = /^(utm_.+|gclid|gclsrc|gbraid|wbraid|dclid|gad_source|gad_campaignid|srsltid|fbclid|msclkid|_gl)$/
+// A render that failed (the backend unreachable or restarting) is a 503 asking crawlers to come
+// back later, so Google doesn't take the page for gone.
+const RETRY_AFTER_SECONDS = 120
 
 function cookie(header, name) {
   const match = header.match(new RegExp(`(?:^|;\\s*)${name}=([^;]*)`))
   return match ? decodeURIComponent(match[1]) : ''
+}
+
+function cacheSearch(url) {
+  const params = new URLSearchParams(url.search)
+  for (const name of [...params.keys()]) if (TRACKING_PARAM.test(name)) params.delete(name)
+  const search = params.toString()
+  return search ? `?${search}` : ''
 }
 
 // The request's page-cache key, or null when the request must go straight to the app.
@@ -47,7 +60,7 @@ async function pageCacheKey(request, url, env) {
   // ?currency=), the region cookies, and the IP country (first visits; the ip_country cookie).
   const parts = [
     env.CF_VERSION_METADATA?.id || 'dev',
-    url.pathname + url.search,
+    url.pathname + cacheSearch(url),
     request.headers.get('cf-ipcountry') || '',
     cookie(cookies, 'user_country'),
     cookie(cookies, 'user_currency'),
@@ -88,6 +101,13 @@ function isCacheablePage(response) {
   return response.status === 200 && (response.headers.get('content-type') || '').includes('text/html')
 }
 
+function unavailable(response) {
+  const out = new Response(response.body, { status: 503, headers: response.headers })
+  out.headers.set('Retry-After', String(RETRY_AFTER_SECONDS))
+  out.headers.set('Cache-Control', 'no-store')
+  return out
+}
+
 async function handlePage(request, env, ctx, key) {
   const { value, metadata } = await env.PAGE_CACHE_KV.getWithMetadata(key, { type: 'arrayBuffer' })
   if (value) {
@@ -101,6 +121,7 @@ async function handlePage(request, env, ctx, key) {
   }
 
   const response = await worker.fetch(request, env, ctx)
+  if (response.status >= 500) return unavailable(response)
   if (!isCacheablePage(response)) return response
   ctx.waitUntil(storePage(env, key, response.clone()))
   const out = new Response(response.body, response)
