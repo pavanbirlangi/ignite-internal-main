@@ -1,6 +1,7 @@
 'use client'
 
 import * as React from 'react'
+import axios from 'axios'
 import { Clock, X } from 'lucide-react'
 import {
   Dialog,
@@ -76,7 +77,12 @@ export function RevealProductModal({
           setAssignments(variantAssignments)
         }
       } catch (err) {
-        if (!cancelled) {
+        if (cancelled) return
+        // The backend answers 404 while an order has no keys at all yet (e.g. a held payment in
+        // review): that's "nothing yet", not a failure, so the being-prepared notice can show.
+        if (axios.isAxiosError(err) && err.response?.status === 404) {
+          setAssignments([])
+        } else {
           console.error('Failed to fetch keys:', err)
           setError(extractApiErrorMessage(err, 'Failed to load your key. Please try again.'))
         }
