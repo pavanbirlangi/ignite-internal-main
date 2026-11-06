@@ -12,7 +12,7 @@ import WarningBox from '@/components/product/hero-section/WarningBox'
 import RatingReviews from '@/components/product/rating-reviews/rating-reviews'
 import SimilarGames from '@/components/product/SimilarGames'
 import SystemRequirements from '@/components/product/SystemRequirements'
-import { ProductService } from '@/lib/services/product.service'
+import { ProductService, isProductNotFound } from '@/lib/services/product.service'
 import {
   CmsProductService,
   type CmsProductResult,
@@ -236,7 +236,10 @@ export default async function ProductPage({ params }: PageProps) {
 
   try {
     product = await ProductService.getProductByHandle(slug)
-  } catch {
+  } catch (error) {
+    // The backend couldn't be reached: rethrown, so the page fails with a 5xx (a 503 to crawlers,
+    // see custom-worker.js) instead of telling Google the product is gone.
+    if (!isProductNotFound(error)) throw error
     // A renamed product's old URL should land on its new page, not a 404.
     const redirectTarget = await RedirectService.findProductRedirect(slug)
     if (redirectTarget) permanentRedirect(localizedHref(locale, redirectTarget))

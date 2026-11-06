@@ -1,4 +1,5 @@
 import { cache } from 'react'
+import axios from 'axios'
 import { unstable_cache } from 'next/cache'
 import medusaClient from '../medusa-axios'
 import { DEFAULT_CURRENCY, getDisplayCurrency } from '../utils/display-currency'
@@ -607,22 +608,47 @@ async function convertDisplayPrices(rawProducts: any[], currency: string): Promi
 // button that fails, so list views leave it out until the admin prices it.
 const hasPrice = (product: ProductListItem) => Boolean(product.price)
 
+// Thrown only when the backend answered and has no product with that handle: the page is a 404.
+// Any other failure (timeout, backend restarting) is not "gone", and the page answers 503.
+export class ProductNotFoundError extends Error {
+  readonly code = 'PRODUCT_NOT_FOUND'
+  constructor(handle: string) {
+    super(`No product with handle: ${handle}`)
+  }
+}
+
+export const isProductNotFound = (error: unknown) =>
+  (error as { code?: string } | null)?.code === 'PRODUCT_NOT_FOUND'
+
+// One retry after a short pause for a timeout, a dropped connection or a 5xx (e.g. the backend
+// restarting during a deploy); a 4xx is an answer and isn't retried.
+const PRODUCT_TIMEOUT_MS = 8000
+
+const getProductsWithRetry = async (params: Record<string, unknown>) => {
+  try {
+    return await medusaClient.get('/store/products', { params, timeout: PRODUCT_TIMEOUT_MS })
+  } catch (error) {
+    const status = axios.isAxiosError(error) ? error.response?.status : undefined
+    if (status !== undefined && status < 500) throw error
+    await new Promise((resolve) => setTimeout(resolve, 300))
+    return medusaClient.get('/store/products', { params, timeout: PRODUCT_TIMEOUT_MS })
+  }
+}
+
 const _fetchProductByHandle = async (
   handle: string,
   regionId: string | undefined,
   currency: string,
 ): Promise<Product> => {
-  const { data } = await medusaClient.get('/store/products', {
-    params: {
-      handle,
-      region_id: regionId,
-      fields: PRODUCT_FIELDS,
-    },
+  const { data } = await getProductsWithRetry({
+    handle,
+    region_id: regionId,
+    fields: PRODUCT_FIELDS,
   })
 
   const raw = data.products?.[0]
   if (!raw) {
-    throw new Error(`Invalid product payload for handle: ${handle}`)
+    throw new ProductNotFoundError(handle)
   }
   await convertDisplayPrices([raw], currency)
 
