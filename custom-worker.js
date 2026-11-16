@@ -45,8 +45,8 @@ function cacheSearch(url) {
 // The request's page-cache key, or null when the request must go straight to the app.
 async function pageCacheKey(request, url, env) {
   if (!env.PAGE_CACHE_KV || request.method !== 'GET') return null
-  // The bare domain only redirects to www (next.config.ts); a cached page would skip that.
-  if (url.hostname === 'increddy.com') return null
+  // www only redirects to the bare domain (next.config.ts); a cached page would skip that.
+  if (url.hostname === 'www.increddy.com') return null
   if (!(request.headers.get('accept') || '').includes('text/html')) return null
   // Next's in-app navigations and prefetches fetch RSC data, not HTML.
   if (request.headers.get('rsc') || request.headers.get('next-router-prefetch') || url.searchParams.has('_rsc')) return null

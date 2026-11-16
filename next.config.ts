@@ -62,12 +62,11 @@ const nextConfig: NextConfig = {
   },
   async redirects() {
     return [
-      // The bare domain goes to www (Vercel did this as a domain setting; on Cloudflare the worker
-      // serves both names).
+      // www goes to the bare domain, the site's address (on Cloudflare the worker serves both names).
       {
         source: '/:path*',
-        has: [{ type: 'host', value: 'increddy.com' }],
-        destination: 'https://www.increddy.com/:path*',
+        has: [{ type: 'host', value: 'www.increddy.com' }],
+        destination: 'https://increddy.com/:path*',
         permanent: true,
       },
       {

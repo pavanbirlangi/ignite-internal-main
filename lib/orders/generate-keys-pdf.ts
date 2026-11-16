@@ -26,7 +26,7 @@ const AMBER_LINE: RGB = [149, 105, 31]
 const WARN_BG: RGB = [40, 37, 36]
 const WARN_LINE: RGB = [85, 64, 31]
 
-const SITE = 'https://www.increddy.com'
+const SITE = 'https://increddy.com'
 const MARGIN = 20
 const CARD_PAD = 5
 const CONTENT_BOTTOM = 272

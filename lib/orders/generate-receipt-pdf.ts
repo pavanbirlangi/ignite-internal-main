@@ -27,7 +27,7 @@ const STATUS_STYLES: Record<string, { label: string; color: RGB }> = {
 
 const MARGIN = 20
 
-const SITE = 'https://www.increddy.com'
+const SITE = 'https://increddy.com'
 // Same accounts as the email footer (Discord and X have no URL yet).
 const SOCIAL_LINKS: Array<[string, string]> = [
   ['Facebook', 'https://facebook.com/increddycom'],
