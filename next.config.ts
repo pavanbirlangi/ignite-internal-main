@@ -83,11 +83,10 @@ const nextConfig: NextConfig = {
   // Enable source maps in production (replacing Webpack's custom devtool configuration)
   // to allow Turbopack builds which do not support custom Webpack devtool functions.
   productionBrowserSourceMaps: true,
-  experimental: {
-    // Styles go in the HTML instead of a separate file the browser must fetch before the first
-    // paint (Lighthouse: 150-440 ms of render-blocking CSS).
-    inlineCss: true,
-  },
+  // No experimental inlineCss: it sent the 232 KB stylesheet twice per page (in a <style> tag and
+  // again in the page data), and on Cloudflare `</head>` then fell outside the first streamed
+  // chunk, so Next wrote its polyfill <script> before <!DOCTYPE html> and every browser rendered
+  // the site in quirks mode. A separate stylesheet is fetched once and cached across pages.
 }
 
 export default nextConfig
