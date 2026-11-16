@@ -434,7 +434,10 @@ export default async function ProductPage({ params }: PageProps) {
           }}
         />
         <SimilarGames
-          products={recommendedProducts.filter((item) => item.handle !== slug)}
+          // The cards never show the description; sent whole it added up to ~40 KB of HTML per card.
+          products={recommendedProducts
+            .filter((item) => item.handle !== slug)
+            .map((item) => ({ ...item, description: '' }))}
           title={labels.similarToThis}
         />
       </div>
