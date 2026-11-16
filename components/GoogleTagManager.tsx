@@ -19,7 +19,12 @@ declare global {
 // container from our own domain at this path and passes its data on to Google, so ad blockers and
 // Safari's tracking protection drop less of it. Google's own address is the fallback if the path
 // ever stops answering (gateway switched off).
+// While the gateway is on, Cloudflare adds its own loader to every page (google_tags_first_party +
+// /yfg1/, even with "Set up tag" off), so the container is only loaded here when that loader isn't
+// on the page, or as a fallback when the container hasn't started a few seconds later; loading it
+// twice cost phones ~180 KB of JavaScript per page.
 const GATEWAY_PATH = 'yfg1'
+const FALLBACK_AFTER_MS = 4000
 
 export default function GoogleTagManager({ gtmId }: { gtmId: string }) {
   if (!gtmId) return null
@@ -40,16 +45,23 @@ export default function GoogleTagManager({ gtmId }: { gtmId: string }) {
           }
         } catch (e) {}
         window.dataLayer.push({ 'gtm.start': Date.now(), event: 'gtm.js' });
-        var s = document.createElement('script');
-        s.async = true;
-        s.src = '/${GATEWAY_PATH}/?id=${gtmId}';
-        s.onerror = function () {
+        var loadFromGoogle = function () {
+          if (window.google_tag_manager && window.google_tag_manager['${gtmId}']) return;
           var f = document.createElement('script');
           f.async = true;
           f.src = 'https://www.googletagmanager.com/gtm.js?id=${gtmId}';
           document.head.appendChild(f);
         };
-        document.head.appendChild(s);
+        var gatewayLoader = (window.google_tags_first_party || []).indexOf('${gtmId}') !== -1;
+        if (gatewayLoader) {
+          setTimeout(loadFromGoogle, ${FALLBACK_AFTER_MS});
+        } else {
+          var s = document.createElement('script');
+          s.async = true;
+          s.src = '/${GATEWAY_PATH}/?id=${gtmId}';
+          s.onerror = loadFromGoogle;
+          document.head.appendChild(s);
+        }
       `}
     </Script>
   )
